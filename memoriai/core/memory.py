@@ -2,7 +2,7 @@
 Main Memori class - The primary interface for memory functionality
 """
 
-import logging
+from loguru import logger
 import sqlite3
 from typing import Optional, Dict, Any, List
 from pathlib import Path
@@ -13,8 +13,6 @@ from ..utils.enums import MemoryCategory, MemoryType
 from ..utils.exceptions import MemoriError, DatabaseError
 from .database import DatabaseManager
 from .agent import MemoryAgent
-
-logger = logging.getLogger(__name__)
 
 class Memori:
     """
