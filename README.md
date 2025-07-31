@@ -1,4 +1,4 @@
-# 🧠 Memori
+# Memori
 
 <div align="center">
 
@@ -12,18 +12,18 @@
 [![Tests](https://github.com/yourusername/memoriai/workflows/Tests/badge.svg)](https://github.com/yourusername/memoriai/actions)
 [![Discord](https://img.shields.io/discord/YOUR_DISCORD_ID.svg?label=Discord&logo=discord)](https://discord.gg/memoriai)
 
-[🚀 Quick Start](#-quick-start) • [📖 Documentation](https://memoriai.readthedocs.io) • [💡 Examples](./examples) • [🤝 Contributing](./CONTRIBUTING.md)
+[Quick Start](#quick-start) • [Documentation](https://memoriai.readthedocs.io) • [Examples](./examples) • [Contributing](./CONTRIBUTING.md)
 
 </div>
 
 ---
 
-## 🎯 Why Memori?
+## Why Memori?
 
 Stop repeating context to your AI agents. **Memori** provides persistent, categorized memory that works across conversations, sessions, and even different agents.
 
 ```python
-# Before Memori 😫
+# Before Memori
 response = completion(
     model="gpt-4",
     messages=[
@@ -34,7 +34,7 @@ response = completion(
     ]
 )
 
-# After Memori 🚀
+# After Memori
 office_work = Memori(template="basic", conscious_ingest=True)
 office_work.enable()
 
@@ -42,12 +42,12 @@ response = completion(
     model="gpt-4", 
     messages=[{"role": "user", "content": "Help me with authentication"}]
 )
-# AI automatically knows your preferences, project context, and history!
+# AI automatically knows your preferences, project context, and history
 ```
 
 ---
 
-## 🧠 Philosophy
+## Philosophy
 
 **Flexible & Universal**
 - Connect to any database (SQLite, PostgreSQL, MySQL)
@@ -66,7 +66,7 @@ response = completion(
 
 ---
 
-## ⚡ Quick Start
+## 🚀 Quick Start
 
 ### Installation
 
@@ -92,7 +92,7 @@ office_work = Memori(
 # Enable memory recording (works like loguru)
 office_work.enable()
 
-# Your conversations are now automatically remembered!
+# Your conversations are now automatically remembered
 response = completion(
     model="gpt-4",
     messages=[{"role": "user", "content": "Write a Flask API for user authentication"}]
@@ -116,26 +116,26 @@ personal_space = Memori(
 personal_space.enable()
 
 # Now your AI remembers:
-# ✅ Your coding preferences
-# ✅ Project contexts
-# ✅ Personal information you've shared
-# ✅ Previous conversations and decisions
+# - Your coding preferences
+# - Project contexts
+# - Personal information you've shared
+# - Previous conversations and decisions
 ```
 
 ---
 
-## 🏗️ How It Works
+## How It Works
 
 ```mermaid
 graph LR
-    A[💬 User Input] --> B[🤖 LLM Response]
-    B --> C[🧠 Memory Agent]
-    C --> D[⚡ Enum Categorization]
-    D --> E[💾 Database Storage]
+    A[User Input] --> B[LLM Response]
+    B --> C[Memory Agent]
+    C --> D[Enum Categorization]
+    D --> E[Database Storage]
     
-    F[🔍 Future Query] --> G[🎯 Retrieval Agent]
-    G --> H[📝 Context Injection]
-    H --> I[✨ Enhanced Response]
+    F[Future Query] --> G[Retrieval Agent]
+    G --> H[Context Injection]
+    H --> I[Enhanced Response]
     
     style C fill:#e1f5fe
     style D fill:#f3e5f5
@@ -152,7 +152,7 @@ graph LR
 
 ---
 
-## 🗄️ Memory Architecture
+## Memory Architecture
 
 ### Database Schema Templates
 
@@ -206,31 +206,31 @@ class MemoryCategory(Enum):
 
 ---
 
-## 🔌 Integrations
+## Integrations
 
 ### Supported LLM Providers
-- ✅ **OpenAI** (GPT-3.5, GPT-4, GPT-4 Turbo)
-- ✅ **LiteLLM** (100+ models support)
-- ✅ **Anthropic** (Claude models)
-- 🔄 **Local Models** (Ollama, LM Studio) - Coming Soon
-- 🔄 **Azure OpenAI** - Coming Soon
+- **OpenAI** (GPT-3.5, GPT-4, GPT-4 Turbo)
+- **LiteLLM** (100+ models support)
+- **Anthropic** (Claude models)
+- **Local Models** (Ollama, LM Studio) - Coming Soon
+- **Azure OpenAI** - Coming Soon
 
 ### Supported Databases
-- ✅ **SQLite** (Perfect for development and personal use)
-- ✅ **PostgreSQL** (Production-ready, scalable)
-- ✅ **MySQL** (Wide compatibility)
-- 🔄 **MongoDB** - Coming Soon
-- 🔄 **Redis** - Coming Soon
+- **SQLite** (Perfect for development and personal use)
+- **PostgreSQL** (Production-ready, scalable)
+- **MySQL** (Wide compatibility)
+- **MongoDB** - Coming Soon
+- **Redis** - Coming Soon
 
 ### Framework Integrations
-- 🔄 **LangChain** - Coming Soon
-- 🔄 **AutoGen** - Coming Soon  
-- 🔄 **CrewAI** - Coming Soon
-- 🔄 **Semantic Kernel** - Coming Soon
+- **LangChain** - Coming Soon
+- **AutoGen** - Coming Soon  
+- **CrewAI** - Coming Soon
+- **Semantic Kernel** - Coming Soon
 
 ---
 
-## 💡 Advanced Examples
+## Advanced Examples
 
 ### Multi-Agent Memory Sharing
 
@@ -249,7 +249,7 @@ code_reviewer = Agent(memory=team_memory, role="reviewer")
 # Agent 2: Documentation Writer  
 doc_writer = Agent(memory=team_memory, role="documentation")
 
-# They share collective memory of the project!
+# They share collective memory of the project
 ```
 
 ### Custom Memory Templates
@@ -289,7 +289,7 @@ selective_memory = Memori(
 
 ---
 
-## 🛠️ Development & Testing
+## Development & Testing
 
 ### Local Development
 
@@ -324,27 +324,27 @@ docker run -v $(pwd)/data:/app/data memoriai:latest
 
 ---
 
-## 🎯 Roadmap
+## Roadmap
 
-### v0.1.0 - Core Foundation ✅
+### v0.1.0 - Core Foundation
 - [x] Basic memory storage and retrieval
 - [x] SQLite support
 - [x] OpenAI integration
 - [x] Enum-driven categorization
 
-### v0.2.0 - Enhanced Features 🔄
+### v0.2.0 - Enhanced Features
 - [ ] PostgreSQL and MySQL support
 - [ ] LiteLLM integration
 - [ ] Custom memory templates
 - [ ] Memory search and filtering
 
-### v0.3.0 - Advanced Capabilities 🔄
+### v0.3.0 - Advanced Capabilities
 - [ ] Multi-agent memory sharing
 - [ ] Memory conflict resolution
 - [ ] Advanced retrieval algorithms
 - [ ] Memory analytics dashboard
 
-### v1.0.0 - Production Ready 🎯
+### v1.0.0 - Production Ready
 - [ ] Enterprise security features
 - [ ] Horizontal scaling support
 - [ ] Framework integrations
@@ -352,7 +352,7 @@ docker run -v $(pwd)/data:/app/data memoriai:latest
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions from the community! Whether you're fixing bugs, adding features, or improving documentation, every contribution helps make Memori better.
 
@@ -374,13 +374,13 @@ See our [Contributing Guide](./CONTRIBUTING.md) for detailed instructions.
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Inspired by human memory systems and cognitive neuroscience
 - Built for the thriving AI agent community
@@ -390,10 +390,10 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 <div align="center">
 
-**⭐ If Memori helps your AI agents remember better, give us a star! ⭐**
+**If Memori helps your AI agents remember better, give us a star!**
 
-[⬆ Back to Top](#-memori)
+[Back to Top](#memori)
 
-Made with ❤️ by the Memori Team
+Made with care by the Memori Team
 
 </div>
