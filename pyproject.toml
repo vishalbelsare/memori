@@ -1,0 +1,186 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memoriai"
+version = "0.1.0"
+description = "The Open-Source Memory Layer for AI Agents & Multi-Agent Systems"
+authors = [{name = "Memori Team", email = "contact@memoriai.dev"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "sqlite3",  # Built-in, but listed for clarity
+    "loguru>=0.6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=2.0",
+    "black>=21.0",
+    "flake8>=3.8",
+    "mypy>=0.910",
+    "pre-commit>=2.15",
+    "sphinx>=4.0",
+    "sphinx-rtd-theme>=1.0",
+]
+postgres = ["psycopg2-binary>=2.9"]
+mysql = ["PyMySQL>=1.0"]
+integrations = [
+    "openai>=1.0",
+    "litellm>=1.0",
+    "anthropic>=0.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/memoriai"
+Documentation = "https://memoriai.readthedocs.io"
+Repository = "https://github.com/yourusername/memoriai.git"
+"Bug Tracker" = "https://github.com/yourusername/memoriai/issues"
+
+[project.scripts]
+memori = "memoriai.cli:main"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# requirements.txt
+# Core dependencies - keeping minimal for now
+# Database will use built-in sqlite3
+
+# requirements-dev.txt
+# Development dependencies
+pytest>=6.0.0
+pytest-cov>=2.10.0
+pytest-asyncio>=0.18.0
+black>=21.0.0
+flake8>=3.8.0
+mypy>=0.910
+pre-commit>=2.15.0
+isort>=5.9.0
+
+# Documentation
+sphinx>=4.0.0
+sphinx-rtd-theme>=1.0.0
+myst-parser>=0.15.0
+
+# Testing utilities
+coverage>=5.5
+factory-boy>=3.2.0
+freezegun>=1.2.0
+
+# Optional integrations for testing
+openai>=1.0.0
+litellm>=1.0.0
+anthropic>=0.3.0
+
+# Makefile
+.PHONY: help setup-dev test lint format clean build install docs
+
+help:
+	@echo "Memori Development Commands:"
+	@echo ""
+	@echo "  setup-dev     Setup development environment"
+	@echo "  test          Run tests"
+	@echo "  test-cov      Run tests with coverage"
+	@echo "  lint          Run linting"
+	@echo "  format        Format code"
+	@echo "  clean         Clean build artifacts"
+	@echo "  build         Build package"
+	@echo "  install       Install package in development mode"
+	@echo "  docs          Build documentation"
+	@echo ""
+
+setup-dev:
+	python -m pip install --upgrade pip
+	pip install -r requirements-dev.txt
+	pip install -e .
+	pre-commit install
+
+test:
+	pytest tests/ -v
+
+test-cov:
+	pytest tests/ --cov=memoriai --cov-report=html --cov-report=term
+
+lint:
+	flake8 src/ tests/
+	mypy src/
+	black --check src/ tests/
+
+format:
+	black src/ tests/
+	isort src/ tests/
+
+clean:
+	rm -rf build/
+	rm -rf dist/
+	rm -rf *.egg-info/
+	rm -rf .pytest_cache/
+	rm -rf .mypy_cache/
+	rm -rf htmlcov/
+	find . -type d -name __pycache__ -delete
+	find . -type f -name "*.pyc" -delete
+
+build: clean
+	python -m build
+
+install:
+	pip install -e .
+
+docs:
+	cd docs && make html
