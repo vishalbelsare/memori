@@ -26,6 +26,7 @@ classifiers = [
 
 dependencies = [
     "sqlite3",  # Built-in, but listed for clarity
+    "loguru>=0.6.0",
 ]
 
 [project.optional-dependencies]

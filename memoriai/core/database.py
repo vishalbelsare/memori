@@ -4,7 +4,7 @@ Database manager for handling memory storage operations
 
 import sqlite3
 import json
-import logging
+from loguru import logger
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -12,8 +12,6 @@ import uuid
 
 from ..utils.enums import MemoryCategory, MemoryType
 from ..utils.exceptions import DatabaseError
-
-logger = logging.getLogger(__name__)
 
 class MemoryItem:
     """Represents a memory item"""

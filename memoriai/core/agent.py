@@ -2,7 +2,7 @@
 Memory agent for intelligent memory processing and categorization
 """
 
-import logging
+from loguru import logger
 from typing import List, Dict, Any, Optional
 import re
 from datetime import datetime
@@ -10,8 +10,6 @@ from datetime import datetime
 from ..utils.enums import MemoryCategory, MemoryType, ImportanceLevel
 from ..utils.exceptions import AgentError
 from .database import MemoryItem
-
-logger = logging.getLogger(__name__)
 
 class MemoryAgent:
     """
