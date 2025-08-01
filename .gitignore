@@ -236,3 +236,5 @@ profile_results/
 test_data/
 sample_data/
 benchmark_results/
+memoriai/scripts/llm_text.py
+ingested_data.txt

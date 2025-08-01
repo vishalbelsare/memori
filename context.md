@@ -174,6 +174,8 @@ gets recorded in form of logs or other method we will se which is better.
 
 chat_history -> passed to memory_agent
 
+Memori Agent will be powered by openai-gpt4o
+
 memory_agent tools
 - structured the chat format rephrase it properly for memory
 - use ENUM driven approach to categorize it
@@ -197,12 +199,61 @@ method : agentic enum driven function call
 where the functions will run the specific queries to find the results and will return them to the memori_agent which wil refine it and pass it to the main agent !!!
 
 
-### Advanced Retrival both sql and vector 
+### Advanced Retrival sql 
 
- Hybrid Approach:
 
 SQL for structured queries (facts, preferences, rules)
-Vector similarity for semantic search (when needed)
 Temporal scoring for memory relevance
 User behavior patterns for personalization
+
+
+
+#### Memory Retrival example 
+
+
+```py
+
+from memori import Memori
+from memori import r_agent
+
+personal = Memori(
+    database_connect= "",   ## You can connect sqlite, sql, postgres
+    template= "basic",
+    mem_prompt= " Only record {python} related stuff !",  ## optional parameter
+    concious_ingest= true, ## It fetches necessary data from concious_memory, rules !!!
+    vector_db="", ## we support direct endpoints of various vector db, 
+    vector_api_key="",
+)
+
+personal.enable()  ## this approach will be similar to loguru !!!
+
+
+def memori_retrival(query){
+    return r_agent(query)
+}
+
+from litellm import completion
+from dotenv import load_dotenv
+import json
+
+load_dotenv()
+
+response =  completion(
+    model="gpt-4.1",
+    messages=[
+        {
+            "role": "user",
+            "content": "Write an essay on AI !"
+        }
+    ],
+    tools=[memori_retrival],
+)
+
+# or we could , try to somehow record the output through the response format !!
+
+print(response)
+
+
+```
+
 

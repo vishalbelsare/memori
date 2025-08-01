@@ -12,7 +12,15 @@ from datetime import datetime
 from ..utils.enums import MemoryCategory, MemoryType
 from ..utils.exceptions import MemoriError, DatabaseError
 from .database import DatabaseManager
-from .agent import MemoryAgent
+from ..agents.memory_agent import MemoryAgent
+from ..agents.retrieval_agent import RetrievalAgent
+from ..integrations import (
+    install_all_hooks, 
+    uninstall_all_hooks, 
+    register_memori_instance, 
+    unregister_memori_instance,
+    get_integration_stats
+)
 
 class Memori:
     """
@@ -31,7 +39,8 @@ class Memori:
         namespace: Optional[str] = None,
         shared_memory: bool = False,
         custom_categories: Optional[List[str]] = None,
-        memory_filters: Optional[Dict[str, Any]] = None
+        memory_filters: Optional[Dict[str, Any]] = None,
+        openai_api_key: Optional[str] = None
     ):
         """
         Initialize Memori memory system.
@@ -45,6 +54,7 @@ class Memori:
             shared_memory: Enable shared memory across agents
             custom_categories: Custom memory categories
             memory_filters: Filters for memory ingestion
+            openai_api_key: OpenAI API key for memory agent
         """
         self.database_connect = database_connect
         self.template = template
@@ -54,14 +64,29 @@ class Memori:
         self.shared_memory = shared_memory
         self.custom_categories = custom_categories or []
         self.memory_filters = memory_filters or {}
+        self.openai_api_key = openai_api_key
         
         # Initialize components
         self.db_manager = DatabaseManager(database_connect, template)
-        self.memory_agent = MemoryAgent(
-            conscious_ingest=conscious_ingest,
-            mem_prompt=mem_prompt,
-            custom_categories=custom_categories
-        )
+        
+        # Initialize agents (only if conscious_ingest is enabled and we have an API key)
+        self.memory_agent = None
+        self.retrieval_agent = None
+        
+        if conscious_ingest:
+            try:
+                self.memory_agent = MemoryAgent(api_key=openai_api_key)
+                self.retrieval_agent = RetrievalAgent(api_key=openai_api_key)
+                logger.info("OpenAI-powered memory and retrieval agents initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize OpenAI agents: {e}. Falling back to keyword-based processing.")
+                # Fallback to the original simple memory agent
+                from .agent import MemoryAgent as SimpleMemoryAgent
+                self.memory_agent = SimpleMemoryAgent(
+                    conscious_ingest=conscious_ingest,
+                    mem_prompt=mem_prompt,
+                    custom_categories=custom_categories
+                )
         
         # State tracking
         self._enabled = False
@@ -84,7 +109,8 @@ class Memori:
         """
         Enable memory recording (similar to loguru.enable())
         
-        This activates the memory system to start recording conversations
+        This activates the memory system to start recording conversations automatically
+        by installing hooks into popular LLM libraries.
         """
         if self._enabled:
             logger.warning("Memori is already enabled")
@@ -93,21 +119,37 @@ class Memori:
         self._enabled = True
         self._session_id = str(uuid.uuid4())
         
-        # Setup conversation hooks (placeholder for now)
+        # Setup conversation hooks for auto-recording
         self._setup_conversation_hooks()
         
         logger.info(f"Memori enabled for session: {self._session_id}")
     
     def disable(self):
-        """Disable memory recording"""
+        """Disable memory recording and uninstall hooks"""
+        if not self._enabled:
+            return
+            
         self._enabled = False
+        
+        # Unregister from integrations
+        unregister_memori_instance(self)
+        
         logger.info("Memori disabled")
     
     def _setup_conversation_hooks(self):
-        """Setup hooks to capture LLM conversations"""
-        # This will be implemented to intercept LLM calls
-        # For now, it's a placeholder for manual recording
-        pass
+        """Setup hooks to capture LLM conversations automatically"""
+        try:
+            # Install hooks for all available LLM libraries
+            install_all_hooks()
+            
+            # Register this instance with all integrations
+            register_memori_instance(self)
+            
+            logger.info("Auto-recording hooks installed for LLM libraries")
+            
+        except Exception as e:
+            logger.error(f"Failed to setup conversation hooks: {e}")
+            raise MemoriError(f"Failed to enable auto-recording: {e}")
     
     def record_conversation(
         self, 
@@ -159,12 +201,17 @@ class Memori:
     
     def _process_memory_ingestion(self, chat_id: str, user_input: str, ai_output: str):
         """Process conversation for memory categorization"""
+        if not self.memory_agent:
+            logger.warning("Memory agent not available, skipping memory ingestion")
+            return
+            
         try:
             # Use memory agent to categorize and process
             memory_items = self.memory_agent.process_conversation(
                 chat_id=chat_id,
                 user_input=user_input,
                 ai_output=ai_output,
+                mem_prompt=self.mem_prompt,
                 filters=self.memory_filters
             )
             
@@ -188,19 +235,21 @@ class Memori:
             List of relevant memory items
         """
         try:
-            # Use memory agent for intelligent retrieval
-            relevant_memories = self.memory_agent.retrieve_relevant_context(
-                query=query,
-                namespace=self.namespace,
-                limit=limit
-            )
-            
-            # Get detailed memory items from database
-            context_items = []
-            for memory_id in relevant_memories:
-                item = self.db_manager.get_memory_item(memory_id, self.namespace)
-                if item:
-                    context_items.append(item)
+            # Use retrieval agent for intelligent retrieval if available
+            if self.retrieval_agent:
+                context_items = self.retrieval_agent.execute_retrieval(
+                    query=query,
+                    db_manager=self.db_manager,
+                    namespace=self.namespace,
+                    limit=limit
+                )
+            else:
+                # Fallback to simple database search
+                context_items = self.db_manager.search_memories(
+                    query=query,
+                    namespace=self.namespace,
+                    limit=limit
+                )
             
             logger.debug(f"Retrieved {len(context_items)} context items for query")
             return context_items
@@ -251,3 +300,11 @@ class Memori:
     def session_id(self) -> str:
         """Get current session ID"""
         return self._session_id
+    
+    def get_integration_stats(self) -> List[Dict[str, Any]]:
+        """Get statistics from all integrations"""
+        try:
+            return get_integration_stats()
+        except Exception as e:
+            logger.error(f"Failed to get integration stats: {e}")
+            return []
