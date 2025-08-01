@@ -1,10 +1,10 @@
-# Memori
+# Memoriai
 
 <div align="center">
 
-**The Open-Source Memory Layer for AI Agents & Multi-Agent Systems**
+**The Open-Source Memory Layer for AI Agents & Multi-Agent Systems v1.0**
 
-*Give your AI agents human-like memory that never forgets*
+*Give your AI agents structured, persistent memory with Pydantic-based intelligence*
 
 [![PyPI version](https://badge.fury.io/py/memoriai.svg)](https://badge.fury.io/py/memoriai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -18,12 +18,12 @@
 
 ---
 
-## Why Memori?
+## Why Memoriai?
 
-Stop repeating context to your AI agents. **Memori** provides persistent, categorized memory that works across conversations, sessions, and even different agents.
+Stop repeating context to your AI agents. **Memoriai v1.0** provides intelligent, structured memory using Pydantic models and OpenAI Structured Outputs for reliable, persistent memory across conversations, sessions, and agents.
 
 ```python
-# Before Memori
+# Before Memoriai
 response = completion(
     model="gpt-4",
     messages=[
@@ -34,35 +34,45 @@ response = completion(
     ]
 )
 
-# After Memori
-office_work = Memori(template="basic", conscious_ingest=True)
+# After Memoriai v1.0
+from memoriai import Memori
+
+office_work = Memori(
+    database_connect="sqlite:///office_memory.db",
+    template="basic",
+    conscious_ingest=True,
+    openai_api_key="your-api-key"
+)
 office_work.enable()
 
 response = completion(
     model="gpt-4", 
     messages=[{"role": "user", "content": "Help me with authentication"}]
 )
-# AI automatically knows your preferences, project context, and history
+# AI automatically knows your preferences, project context, and history through structured memory
 ```
 
 ---
 
 ## Philosophy
 
-**Flexible & Universal**
+**Structured & Reliable**
+- Pydantic-based memory processing with OpenAI Structured Outputs
 - Connect to any database (SQLite, PostgreSQL, MySQL)
-- Works with any LLM (OpenAI, Anthropic, open-source models)
+- Works with OpenAI, Anthropic, LiteLLM (100+ models)
 - Plug-and-play with existing AI workflows
 
-**Second Brain for AI**
-- Long-term memory support across sessions
-- No more context repetition
-- Persistent learning and adaptation
+**Intelligent Memory Layer**
+- Persistent memory across sessions and conversations
+- Automatic entity extraction (people, technologies, topics, skills, projects)
+- Multi-dimensional importance scoring (novelty, relevance, actionability)
+- Context-aware retrieval with SQL-based search
 
-**Intelligent Memory Management**
-- Enum-driven categorization (lightning-fast, cost-effective)
-- Conscious ingestion of relevant context
-- Automatic memory organization and retrieval
+**Production-Ready Architecture**
+- Pydantic model validation for data integrity
+- Full-text search (FTS5) for advanced memory retrieval
+- Entity indexing for fast searches
+- Comprehensive memory analytics and insights
 
 ---
 
@@ -77,19 +87,20 @@ pip install memoriai
 ### Basic Usage
 
 ```python
-from memoriai import Memori
-from litellm import completion
+from memoriai import Memori, create_memory_search_tool
 import os
 
-# Initialize your AI memory
+# Initialize Memoriai v1.0 with structured processing
 office_work = Memori(
     database_connect="sqlite:///my_workspace.db",
     template="basic",
-    mem_prompt="Only record {python} related conversations",
-    conscious_ingest=True
+    mem_prompt="Focus on programming concepts and technical discussions",
+    conscious_ingest=True,
+    namespace="development_workspace",
+    openai_api_key=os.getenv("OPENAI_API_KEY")
 )
 
-# Enable memory recording (works like loguru)
+# Enable Pydantic-based memory processing
 office_work.enable()
 
 # Your conversations are now automatically remembered
@@ -110,16 +121,29 @@ personal_space = Memori(
     database_connect="sqlite:///personal_assistant.db",
     template="basic",
     mem_prompt="Remember my preferences, habits, and important information",
-    conscious_ingest=True
+    conscious_ingest=True,
+    namespace="personal_assistant",
+    openai_api_key=os.getenv("OPENAI_API_KEY")
 )
 
 personal_space.enable()
 
-# Now your AI remembers:
-# - Your coding preferences
-# - Project contexts
-# - Personal information you've shared
-# - Previous conversations and decisions
+# Record personal preferences
+personal_space.record_conversation(
+    user_input="I prefer coffee over tea in the mornings",
+    ai_output="I'll remember that you prefer coffee in the mornings!",
+    model="gpt-4o"
+)
+
+# Your AI now intelligently remembers and categorizes:
+# - Personal preferences (automatically detected as 'preference' category)
+# - Important facts (categorized as 'fact')
+# - Skills and learning (categorized as 'skill') 
+# - Rules and constraints (categorized as 'rule')
+# - Project contexts (categorized as 'context')
+
+# Search by category
+preferences = personal_space.search_memories_by_category("preference", limit=5)
 ```
 
 ---
@@ -129,162 +153,240 @@ personal_space.enable()
 ```mermaid
 graph LR
     A[User Input] --> B[LLM Response]
-    B --> C[Memory Agent]
-    C --> D[Enum Categorization]
-    D --> E[Database Storage]
+    B --> C[Memory Agent v1.0]
+    C --> D[Pydantic Processing]
+    D --> E[Entity Extraction]
+    E --> F[Structured Storage]
     
-    F[Future Query] --> G[Retrieval Agent]
-    G --> H[Context Injection]
-    H --> I[Enhanced Response]
+    G[Future Query] --> H[Search Engine]
+    H --> I[SQL + FTS Search]
+    I --> J[Context Injection]
+    J --> K[Enhanced Response]
     
     style C fill:#e1f5fe
     style D fill:#f3e5f5
-    style G fill:#e8f5e8
+    style H fill:#e8f5e8
+    style I fill:#fff3e0
 ```
 
-### The Memory Workflow
+### The Memoriai v1.0 Workflow
 
-1. **Automatic Recording**: Every interaction gets logged
-2. **Smart Categorization**: Memory agent uses enum-driven classification
-3. **Intelligent Storage**: Information stored in appropriate memory tables
-4. **Context-Aware Retrieval**: Future queries automatically get relevant context
-5. **Enhanced Responses**: AI responds with full historical awareness
+1. **Structured Recording**: Conversations processed through Pydantic models
+2. **OpenAI Structured Outputs**: Memory agent uses `gpt-4o` with `response_format=ProcessedMemory`
+3. **Entity Extraction**: Automatic extraction of people, technologies, topics, skills, projects
+4. **Multi-dimensional Scoring**: Importance, novelty, relevance, and actionability scores
+5. **Intelligent Storage**: ProcessedMemory objects stored with entity indexing
+6. **Advanced Retrieval**: SQL + FTS5 search with multi-strategy ranking
+7. **Context-Aware Responses**: AI responds with structured memory context
 
 ---
 
-## Memory Architecture
+## Memory Architecture v1.0
 
-### Database Schema Templates
-
-#### Basic Template
-```yaml
-chat_history:
-  - chat_id: UUID
-  - user_input: TEXT
-  - ai_output: TEXT
-  - model: STRING
-  - timestamp: DATETIME
-  - tokens_used: INTEGER
-
-short_term_memory:
-  - memory_id: UUID
-  - chat_id: UUID
-  - content: TEXT
-  - category: ENUM
-  - importance_score: FLOAT
-  - expires_at: DATETIME
-
-long_term_memory:
-  - memory_id: UUID
-  - content: TEXT
-  - category: ENUM
-  - access_count: INTEGER
-  - last_accessed: DATETIME
-  - created_at: DATETIME
-
-rules_memory:
-  - rule_id: UUID
-  - rule_type: ENUM
-  - condition: TEXT
-  - action: TEXT
-  - priority: INTEGER
-  - active: BOOLEAN
-```
-
-### Enum-Driven Intelligence
+### Pydantic-Based Processing
 
 ```python
-from enum import Enum
+from memoriai.utils.pydantic_models import ProcessedMemory, MemoryCategory, ExtractedEntities
 
-class MemoryCategory(Enum):
-    STORE_AS_FACT = "fact"           # Factual information to remember
-    UPDATE_PREFERENCE = "preference"  # User preferences and settings
-    DISCARD_TRIVIAL = "discard"      # Unimportant, temporary information
-    STORE_AS_RULE = "rule"           # Behavioral rules and constraints
-    STORE_AS_CONTEXT = "context"     # Project or domain context
+# Example of structured memory processing
+processed_memory = ProcessedMemory(
+    category=MemoryCategory(
+        primary_category=MemoryCategoryType.fact,
+        confidence_score=0.9,
+        reasoning="This contains factual information about Python"
+    ),
+    entities=ExtractedEntities(
+        technologies=["Python", "Flask"],
+        topics=["web development", "authentication"],
+        skills=["API development"],
+        keywords=["JWT", "security", "endpoints"]
+    ),
+    importance=MemoryImportance(
+        importance_score=0.8,
+        retention_type=RetentionType.long_term,
+        reasoning="Important technical knowledge for development work"
+    ),
+    summary="Flask API authentication using JWT tokens",
+    searchable_content="Flask API JWT authentication security endpoints development",
+    should_store=True
+)
+```
+
+### Database Schema v1.0
+
+```sql
+-- Chat History with full metadata
+CREATE TABLE chat_history (
+    chat_id TEXT PRIMARY KEY,
+    user_input TEXT NOT NULL,
+    ai_output TEXT NOT NULL,
+    model TEXT NOT NULL,
+    timestamp TIMESTAMP NOT NULL,
+    session_id TEXT NOT NULL,
+    namespace TEXT NOT NULL DEFAULT 'default',
+    tokens_used INTEGER DEFAULT 0,
+    metadata TEXT DEFAULT '{}'
+);
+
+-- Structured Memory Storage
+CREATE TABLE long_term_memory (
+    memory_id TEXT PRIMARY KEY,
+    original_chat_id TEXT,
+    processed_data TEXT NOT NULL,  -- Full ProcessedMemory JSON
+    importance_score REAL NOT NULL DEFAULT 0.5,
+    category_primary TEXT NOT NULL,
+    retention_type TEXT NOT NULL DEFAULT 'long_term',
+    namespace TEXT NOT NULL DEFAULT 'default',
+    created_at TIMESTAMP NOT NULL,
+    searchable_content TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    novelty_score REAL DEFAULT 0.5,
+    relevance_score REAL DEFAULT 0.5,
+    actionability_score REAL DEFAULT 0.5
+);
+
+-- Entity Index for Fast Search
+CREATE TABLE memory_entities (
+    entity_id TEXT PRIMARY KEY,
+    memory_id TEXT NOT NULL,
+    memory_type TEXT NOT NULL,
+    entity_type TEXT NOT NULL,  -- person, technology, topic, skill, project, keyword
+    entity_value TEXT NOT NULL,
+    relevance_score REAL NOT NULL DEFAULT 0.5,
+    namespace TEXT NOT NULL DEFAULT 'default'
+);
+
+-- Full-Text Search Support
+CREATE VIRTUAL TABLE memory_search_fts USING fts5(
+    memory_id, memory_type, namespace, searchable_content, summary, category_primary
+);
+```
+
+### Memory Categories v1.0
+
+```python
+from memoriai import MemoryCategoryType, RetentionType
+
+class MemoryCategoryType(str, Enum):
+    fact = "fact"           # Factual information, definitions, technical details
+    preference = "preference"  # User preferences, settings, personal choices
+    skill = "skill"         # Skills, abilities, competencies, learning progress
+    context = "context"     # Project context, work environment, situations
+    rule = "rule"          # Rules, policies, procedures, guidelines
+
+class RetentionType(str, Enum):
+    short_term = "short_term"    # 7 days retention
+    long_term = "long_term"      # Persistent storage
+    permanent = "permanent"      # Never expires
 ```
 
 ---
 
-## Integrations
+## Integrations v1.0
 
-### Supported LLM Providers
-- **OpenAI** (GPT-3.5, GPT-4, GPT-4 Turbo)
-- **LiteLLM** (100+ models support)
-- **Anthropic** (Claude models)
-- **Local Models** (Ollama, LM Studio) - Coming Soon
-- **Azure OpenAI** - Coming Soon
+### Supported LLM Providers ✅
+- **OpenAI** (GPT-3.5, GPT-4, GPT-4o) - Full support with Structured Outputs
+- **LiteLLM** (100+ models support) - Auto-recording integration
+- **Anthropic** (Claude models) - Auto-recording integration
 
-### Supported Databases
-- **SQLite** (Perfect for development and personal use)
-- **PostgreSQL** (Production-ready, scalable)
-- **MySQL** (Wide compatibility)
-- **MongoDB** - Coming Soon
-- **Redis** - Coming Soon
+### Supported Databases ✅  
+- **SQLite** (Perfect for development, includes FTS5 support)
+- **PostgreSQL** (Production-ready with psycopg2 connector)
+- **MySQL** (Wide compatibility with mysql-connector-python)
 
-### Framework Integrations
-- **LangChain** - Coming Soon
-- **AutoGen** - Coming Soon  
-- **CrewAI** - Coming Soon
-- **Semantic Kernel** - Coming Soon
+### Memory Search Features ✅
+- **SQL-based Search**: Advanced SQL queries with entity matching
+- **FTS5 Full-Text Search**: Fast text search across memory content
+- **Entity-based Retrieval**: Search by people, technologies, topics, skills
+- **Category Filtering**: Filter by memory categories
+- **Importance Ranking**: Prioritize high-importance memories
+- **Multi-strategy Search**: Combine keyword, entity, and semantic search
+
+### Framework Integration Examples ✅
+- **LiteLLM Example**: `examples/integrations/litellm_example.py`
+- **LangChain Example**: `examples/integrations/langchain_example.py`
+- **AGNO Framework**: `examples/integrations/agno_example.py`
+- **Multi-Agent Systems**: `examples/advanced/multi_agent_memory.py`
 
 ---
 
-## Advanced Examples
+## Advanced Examples v1.0
 
-### Multi-Agent Memory Sharing
+### Multi-Agent Memory Systems
 
 ```python
-# Shared memory for team of agents
-team_memory = Memori(
-    database_connect="postgresql://localhost/team_memory",
-    template="advanced",
-    shared_memory=True,
-    namespace="development_team"
+from memoriai import Memori, create_memory_search_tool
+
+# Research Agent
+research_agent = Memori(
+    database_connect="sqlite:///research_agent.db",
+    mem_prompt="Focus on research findings and technical information",
+    namespace="research_agent",
+    openai_api_key=os.getenv("OPENAI_API_KEY")
 )
 
-# Agent 1: Code Reviewer
-code_reviewer = Agent(memory=team_memory, role="reviewer")
+# Planning Agent  
+planning_agent = Memori(
+    database_connect="sqlite:///planning_agent.db", 
+    mem_prompt="Focus on strategies, schedules, and task organization",
+    namespace="planning_agent",
+    openai_api_key=os.getenv("OPENAI_API_KEY")
+)
 
-# Agent 2: Documentation Writer  
-doc_writer = Agent(memory=team_memory, role="documentation")
+# Cross-agent information sharing
+research_tool = create_memory_search_tool(research_agent)
+planning_tool = create_memory_search_tool(planning_agent)
 
-# They share collective memory of the project
+# Agents can search each other's specialized knowledge
+research_context = research_tool("quantum computing developments", max_results=3)
+planning_context = planning_tool("project timeline strategies", max_results=3)
 ```
 
-### Custom Memory Templates
+### Entity-Based Memory Search
 
 ```python
-# Create custom memory schema for specialized use cases
-custom_memory = Memori(
-    database_connect="sqlite:///research.db",
-    template="research",  # Custom template
-    mem_prompt="Focus on research papers, methodologies, and findings",
+from memoriai import Memori
+
+memory_system = Memori(
+    database_connect="sqlite:///entity_memory.db",
     conscious_ingest=True,
-    custom_categories=[
-        "RESEARCH_PAPER",
-        "METHODOLOGY", 
-        "FINDING",
-        "HYPOTHESIS"
-    ]
+    openai_api_key=os.getenv("OPENAI_API_KEY")
 )
+
+memory_system.enable()
+
+# Automatic entity extraction and search
+memory_system.record_conversation(
+    user_input="I'm working with Python, Flask, and PostgreSQL on my e-commerce project",
+    ai_output="Great tech stack! Flask is excellent for rapid development...",
+    model="gpt-4o"
+)
+
+# Search by specific entities
+python_memories = memory_system.get_entity_memories("Python", limit=5)
+flask_memories = memory_system.get_entity_memories("Flask", limit=3)
+
+# Search by category
+tech_preferences = memory_system.search_memories_by_category("preference", limit=5)
+learned_skills = memory_system.search_memories_by_category("skill", limit=5)
 ```
 
-### Conscious Ingestion Control
+### Memory Analytics and Insights
 
 ```python
-# Fine-tune what gets remembered
-selective_memory = Memori(
-    database_connect="sqlite:///selective.db",
-    template="basic",
-    mem_prompt="Only remember coding solutions and bug fixes",
-    conscious_ingest=True,
-    memory_filters={
-        "include_keywords": ["error", "bug", "solution", "fix"],
-        "exclude_keywords": ["weather", "joke", "random"],
-        "min_importance": 0.7
-    }
-)
+# Get comprehensive memory statistics
+stats = memory_system.get_memory_stats()
+
+print(f"Memory Analytics:")
+print(f"  Total Conversations: {stats.get('chat_history_count', 0)}")
+print(f"  Long-term Memories: {stats.get('long_term_count', 0)}")
+print(f"  Extracted Entities: {stats.get('total_entities', 0)}")
+print(f"  Average Importance: {stats.get('average_importance', 0):.2f}")
+
+# Category breakdown
+categories = stats.get('memories_by_category', {})
+for category, count in categories.items():
+    print(f"  {category}: {count} memories")
 ```
 
 ---
@@ -326,29 +428,43 @@ docker run -v $(pwd)/data:/app/data memoriai:latest
 
 ## Roadmap
 
-### v0.1.0 - Core Foundation
-- [x] Basic memory storage and retrieval
-- [x] SQLite support
-- [x] OpenAI integration
-- [x] Enum-driven categorization
+### v1.0.0 - Pydantic Foundation ✅ RELEASED
+- [x] Pydantic-based memory processing with OpenAI Structured Outputs
+- [x] Advanced entity extraction (people, technologies, topics, skills, projects)
+- [x] Multi-dimensional importance scoring (novelty, relevance, actionability)
+- [x] SQLite, PostgreSQL, and MySQL support with optimized connectors
+- [x] Full-text search (FTS5) and entity indexing
+- [x] LiteLLM and Anthropic auto-recording integrations
+- [x] Comprehensive memory analytics and search tools
+- [x] Multi-agent memory examples and framework integration examples
 
-### v0.2.0 - Enhanced Features
-- [ ] PostgreSQL and MySQL support
-- [ ] LiteLLM integration
-- [ ] Custom memory templates
-- [ ] Memory search and filtering
+### v1.1.0 - Enhanced Search & Performance
+- [ ] Vector search integration (ChromaDB, Pinecone, Weaviate)
+- [ ] Semantic similarity search
+- [ ] Memory relationship graph analysis
+- [ ] Performance optimizations and caching
+- [ ] Memory compression and archiving
 
-### v0.3.0 - Advanced Capabilities
-- [ ] Multi-agent memory sharing
-- [ ] Memory conflict resolution
-- [ ] Advanced retrieval algorithms
+### v1.2.0 - Advanced Integrations
+- [ ] LangChain native integration
+- [ ] AutoGen memory connector
+- [ ] CrewAI memory support
+- [ ] Semantic Kernel integration
+- [ ] Memory import/export tools
+
+### v1.3.0 - Enterprise Features
+- [ ] Memory encryption and privacy controls
+- [ ] Horizontal scaling with Redis clustering
+- [ ] Memory conflict resolution algorithms
+- [ ] Advanced memory lifecycle management
 - [ ] Memory analytics dashboard
 
-### v1.0.0 - Production Ready
-- [ ] Enterprise security features
-- [ ] Horizontal scaling support
-- [ ] Framework integrations
-- [ ] Comprehensive documentation
+### v2.0.0 - Next Generation
+- [ ] Graph-based memory relationships
+- [ ] Advanced reasoning and memory synthesis
+- [ ] Multi-modal memory (text, images, audio)
+- [ ] Federated memory across agents
+- [ ] AI-powered memory optimization
 
 ---
 
