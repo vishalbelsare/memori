@@ -174,6 +174,8 @@ gets recorded in form of logs or other method we will se which is better.
 
 chat_history -> passed to memory_agent
 
+Memori Agent will be powered by openai-gpt4o
+
 memory_agent tools
 - structured the chat format rephrase it properly for memory
 - use ENUM driven approach to categorize it
