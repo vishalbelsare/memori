@@ -1,5 +1,5 @@
 """
-Basic functionality tests for Memori
+Basic functionality tests for Memoriai v1.0
 """
 
 import pytest
@@ -7,9 +7,8 @@ import tempfile
 import os
 from pathlib import Path
 
-from memoriai import Memori, MemoryCategory
-from memoriai.core.database import MemoryItem
-from memoriai.utils.enums import MemoryType
+from memoriai import Memori, MemoryCategoryType, RetentionType
+from memoriai.utils.pydantic_models import ProcessedMemory, MemoryCategory, ExtractedEntities, MemoryImportance
 
 
 class TestMemori:
@@ -86,24 +85,75 @@ class TestMemori:
         assert stats['chat_history_count'] >= 1
 
 
-class TestMemoryItem:
-    """Test MemoryItem class"""
+class TestProcessedMemory:
+    """Test ProcessedMemory Pydantic model"""
     
-    def test_memory_item_creation(self):
-        """Test memory item creation"""
-        item = MemoryItem(
-            content="Test memory content",
-            category=MemoryCategory.STORE_AS_FACT,
-            memory_type=MemoryType.SHORT_TERM,
-            importance_score=0.8
+    def test_processed_memory_creation(self):
+        """Test ProcessedMemory creation with proper v1.0 structure"""
+        processed_memory = ProcessedMemory(
+            category=MemoryCategory(
+                primary_category=MemoryCategoryType.fact,
+                confidence_score=0.9,
+                reasoning="This is factual information about Python"
+            ),
+            entities=ExtractedEntities(
+                technologies=["Python"],
+                topics=["programming language"],
+                keywords=["Python", "programming", "language"]
+            ),
+            importance=MemoryImportance(
+                importance_score=0.8,
+                retention_type=RetentionType.long_term,
+                reasoning="Important technical information"
+            ),
+            summary="Python is a programming language",
+            searchable_content="Python programming language",
+            should_store=True,
+            storage_reasoning="Contains important technical information"
         )
         
-        assert item.content == "Test memory content"
-        assert item.category == MemoryCategory.STORE_AS_FACT
-        assert item.memory_type == MemoryType.SHORT_TERM
-        assert item.importance_score == 0.8
-        assert item.memory_id is not None
-        assert item.created_at is not None
+        assert processed_memory.category.primary_category == MemoryCategoryType.fact
+        assert processed_memory.category.confidence_score == 0.9
+        assert processed_memory.importance.importance_score == 0.8
+        assert processed_memory.importance.retention_type == RetentionType.long_term
+        assert processed_memory.should_store is True
+        assert "Python" in processed_memory.entities.technologies
+        assert processed_memory.summary == "Python is a programming language"
+
+    def test_memory_categories(self):
+        """Test that all memory categories are available"""
+        # Test all v1.0 categories
+        categories = [
+            MemoryCategoryType.fact,
+            MemoryCategoryType.preference, 
+            MemoryCategoryType.skill,
+            MemoryCategoryType.context,
+            MemoryCategoryType.rule
+        ]
+        
+        for category in categories:
+            memory_category = MemoryCategory(
+                primary_category=category,
+                confidence_score=0.8,
+                reasoning=f"Testing {category} category"
+            )
+            assert memory_category.primary_category == category
+
+    def test_retention_types(self):
+        """Test that all retention types are available"""
+        retention_types = [
+            RetentionType.short_term,
+            RetentionType.long_term,
+            RetentionType.permanent
+        ]
+        
+        for retention_type in retention_types:
+            importance = MemoryImportance(
+                importance_score=0.5,
+                retention_type=retention_type,
+                reasoning=f"Testing {retention_type} retention"
+            )
+            assert importance.retention_type == retention_type
 
 
 if __name__ == "__main__":

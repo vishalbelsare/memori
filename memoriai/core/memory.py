@@ -1,5 +1,5 @@
 """
-Main Memori class - The primary interface for memory functionality
+Main Memori class - Pydantic-based memory interface v1.0
 """
 
 from loguru import logger
@@ -9,11 +9,16 @@ from pathlib import Path
 import uuid
 from datetime import datetime
 
-from ..utils.enums import MemoryCategory, MemoryType
+from ..utils.pydantic_models import (
+    ProcessedMemory, 
+    ConversationContext, 
+    MemoryCategoryType,
+    RetentionType
+)
 from ..utils.exceptions import MemoriError, DatabaseError
 from .database import DatabaseManager
 from ..agents.memory_agent import MemoryAgent
-from ..agents.retrieval_agent import RetrievalAgent
+from ..agents.retrieval_agent import MemorySearchEngine
 from ..integrations import (
     install_all_hooks, 
     uninstall_all_hooks, 
@@ -38,23 +43,23 @@ class Memori:
         conscious_ingest: bool = True,
         namespace: Optional[str] = None,
         shared_memory: bool = False,
-        custom_categories: Optional[List[str]] = None,
         memory_filters: Optional[Dict[str, Any]] = None,
-        openai_api_key: Optional[str] = None
+        openai_api_key: Optional[str] = None,
+        user_id: Optional[str] = None
     ):
         """
-        Initialize Memori memory system.
+        Initialize Memori memory system v1.0.
         
         Args:
             database_connect: Database connection string
-            template: Memory template to use ('basic', 'advanced', 'research')
+            template: Memory template to use ('basic')
             mem_prompt: Optional prompt to guide memory recording
             conscious_ingest: Enable intelligent memory filtering
             namespace: Optional namespace for memory isolation
             shared_memory: Enable shared memory across agents
-            custom_categories: Custom memory categories
             memory_filters: Filters for memory ingestion
             openai_api_key: OpenAI API key for memory agent
+            user_id: Optional user identifier
         """
         self.database_connect = database_connect
         self.template = template
@@ -62,40 +67,42 @@ class Memori:
         self.conscious_ingest = conscious_ingest
         self.namespace = namespace or "default"
         self.shared_memory = shared_memory
-        self.custom_categories = custom_categories or []
         self.memory_filters = memory_filters or {}
         self.openai_api_key = openai_api_key
+        self.user_id = user_id
         
-        # Initialize components
+        # Initialize database manager
         self.db_manager = DatabaseManager(database_connect, template)
         
-        # Initialize agents (only if conscious_ingest is enabled and we have an API key)
+        # Initialize Pydantic-based agents
         self.memory_agent = None
-        self.retrieval_agent = None
+        self.search_engine = None
         
         if conscious_ingest:
             try:
-                self.memory_agent = MemoryAgent(api_key=openai_api_key)
-                self.retrieval_agent = RetrievalAgent(api_key=openai_api_key)
-                logger.info("OpenAI-powered memory and retrieval agents initialized")
+                # Initialize Pydantic-based agents
+                self.memory_agent = MemoryAgent(api_key=openai_api_key, model="gpt-4o")
+                self.search_engine = MemorySearchEngine(api_key=openai_api_key, model="gpt-4o")
+                logger.info("Pydantic-based memory and search agents initialized")
             except Exception as e:
-                logger.warning(f"Failed to initialize OpenAI agents: {e}. Falling back to keyword-based processing.")
-                # Fallback to the original simple memory agent
-                from .agent import MemoryAgent as SimpleMemoryAgent
-                self.memory_agent = SimpleMemoryAgent(
-                    conscious_ingest=conscious_ingest,
-                    mem_prompt=mem_prompt,
-                    custom_categories=custom_categories
-                )
+                logger.warning(f"Failed to initialize OpenAI agents: {e}. Conscious ingestion disabled.")
+                self.conscious_ingest = False
         
         # State tracking
         self._enabled = False
         self._session_id = str(uuid.uuid4())
         
+        # User context for memory processing
+        self._user_context = {
+            "current_projects": [],
+            "relevant_skills": [],
+            "user_preferences": []
+        }
+        
         # Initialize database
         self._setup_database()
         
-        logger.info(f"Memori initialized with template: {template}, namespace: {namespace}")
+        logger.info(f"Memori v1.0 initialized with template: {template}, namespace: {namespace}")
     
     def _setup_database(self):
         """Setup database tables based on template"""
@@ -191,7 +198,7 @@ class Memori:
             
             # Process for memory categorization
             if self.conscious_ingest:
-                self._process_memory_ingestion(chat_id, user_input, ai_output)
+                self._process_memory_ingestion(chat_id, user_input, ai_output, model)
             
             logger.debug(f"Conversation recorded: {chat_id}")
             return chat_id
@@ -199,59 +206,81 @@ class Memori:
         except Exception as e:
             raise MemoriError(f"Failed to record conversation: {e}")
     
-    def _process_memory_ingestion(self, chat_id: str, user_input: str, ai_output: str):
-        """Process conversation for memory categorization"""
+    def _process_memory_ingestion(self, chat_id: str, user_input: str, ai_output: str, model: str = "unknown"):
+        """Process conversation for Pydantic-based memory categorization"""
         if not self.memory_agent:
             logger.warning("Memory agent not available, skipping memory ingestion")
             return
             
         try:
-            # Use memory agent to categorize and process
-            memory_items = self.memory_agent.process_conversation(
+            # Create conversation context
+            context = ConversationContext(
+                user_id=self.user_id,
+                session_id=self._session_id,
+                conversation_id=chat_id,
+                model_used=model,
+                user_preferences=self._user_context.get("user_preferences", []),
+                current_projects=self._user_context.get("current_projects", []),
+                relevant_skills=self._user_context.get("relevant_skills", [])
+            )
+            
+            # Process conversation using Pydantic-based memory agent
+            processed_memory = self.memory_agent.process_conversation_sync(
                 chat_id=chat_id,
                 user_input=user_input,
                 ai_output=ai_output,
+                context=context,
                 mem_prompt=self.mem_prompt,
                 filters=self.memory_filters
             )
             
-            # Store categorized memories
-            for item in memory_items:
-                if item.category != MemoryCategory.DISCARD_TRIVIAL:
-                    self.db_manager.store_memory_item(item, self.namespace)
+            # Store processed memory with entity indexing
+            if processed_memory.should_store:
+                memory_id = self.db_manager.store_processed_memory(
+                    memory=processed_memory,
+                    chat_id=chat_id,
+                    namespace=self.namespace
+                )
+                
+                if memory_id:
+                    logger.debug(f"Stored processed memory {memory_id} for chat {chat_id}")
+                else:
+                    logger.debug(f"Memory not stored for chat {chat_id}: {processed_memory.storage_reasoning}")
+            else:
+                logger.debug(f"Memory not stored for chat {chat_id}: {processed_memory.storage_reasoning}")
                     
         except Exception as e:
             logger.error(f"Memory ingestion failed for {chat_id}: {e}")
     
     def retrieve_context(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
         """
-        Retrieve relevant context for a query
+        Retrieve relevant context for a query using Pydantic-based search
         
         Args:
             query: The query to find context for
             limit: Maximum number of context items to return
             
         Returns:
-            List of relevant memory items
+            List of relevant memory items with search metadata
         """
         try:
-            # Use retrieval agent for intelligent retrieval if available
-            if self.retrieval_agent:
-                context_items = self.retrieval_agent.execute_retrieval(
+            # Use Pydantic-based search engine for intelligent retrieval
+            if self.search_engine:
+                context_items = self.search_engine.execute_search(
                     query=query,
                     db_manager=self.db_manager,
                     namespace=self.namespace,
                     limit=limit
                 )
             else:
-                # Fallback to simple database search
+                # Fallback to database search
                 context_items = self.db_manager.search_memories(
                     query=query,
                     namespace=self.namespace,
                     limit=limit
                 )
             
-            logger.debug(f"Retrieved {len(context_items)} context items for query")
+            logger.debug(f"Retrieved {len(context_items)} context items for query: {query}")
             return context_items
             
         except Exception as e:
@@ -307,4 +336,56 @@ class Memori:
             return get_integration_stats()
         except Exception as e:
             logger.error(f"Failed to get integration stats: {e}")
+            return []
+    
+    def update_user_context(
+        self,
+        current_projects: Optional[List[str]] = None,
+        relevant_skills: Optional[List[str]] = None,
+        user_preferences: Optional[List[str]] = None
+    ):
+        """Update user context for better memory processing"""
+        if current_projects is not None:
+            self._user_context["current_projects"] = current_projects
+        if relevant_skills is not None:
+            self._user_context["relevant_skills"] = relevant_skills
+        if user_preferences is not None:
+            self._user_context["user_preferences"] = user_preferences
+        
+        logger.debug(f"Updated user context: {self._user_context}")
+    
+    def search_memories_by_category(
+        self, 
+        category: str, 
+        limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Search memories by specific category"""
+        try:
+            return self.db_manager.search_memories(
+                query="",
+                namespace=self.namespace,
+                category_filter=[category],
+                limit=limit
+            )
+        except Exception as e:
+            logger.error(f"Category search failed: {e}")
+            return []
+    
+    def get_entity_memories(
+        self, 
+        entity_value: str, 
+        entity_type: Optional[str] = None, 
+        limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Get memories that contain a specific entity"""
+        try:
+            # This would use the entity index in the database
+            # For now, use keyword search as fallback
+            return self.db_manager.search_memories(
+                query=entity_value,
+                namespace=self.namespace,
+                limit=limit
+            )
+        except Exception as e:
+            logger.error(f"Entity search failed: {e}")
             return []

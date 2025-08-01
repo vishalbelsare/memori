@@ -285,3 +285,90 @@ def record_conversation(memori_instance: Memori):
             return result
         return wrapper
     return decorator
+
+
+def create_memory_search_tool(memori_instance: Memori):
+    """
+    Create memory search tool for LLM function calling (v1.0 architecture)
+    
+    This creates a search function compatible with OpenAI function calling
+    that uses SQL-based memory retrieval.
+    
+    Args:
+        memori_instance: The Memori instance to search
+        
+    Returns:
+        Memory search function for LLM tool use
+    """
+    
+    def memory_search(query: str, max_results: int = 5) -> str:
+        """
+        Search through stored memories for relevant information
+        
+        Args:
+            query: Search query for memories
+            max_results: Maximum number of results to return
+            
+        Returns:
+            JSON string with search results
+        """
+        try:
+            # Use the SQL-based search from the database manager
+            results = memori_instance.db_manager.search_memories(
+                query=query,
+                namespace=memori_instance.namespace,
+                limit=max_results
+            )
+            
+            if not results:
+                return json.dumps({
+                    "found": 0,
+                    "message": "No relevant memories found for the query.",
+                    "query": query
+                })
+            
+            # Format results according to v1.0 structure
+            formatted_results = []
+            for result in results:
+                try:
+                    # Parse the ProcessedMemory JSON
+                    memory_data = json.loads(result['processed_data'])
+                    
+                    formatted_result = {
+                        "summary": memory_data.get('summary', ''),
+                        "category": memory_data.get('category', {}).get('primary_category', ''),
+                        "importance_score": result.get('importance_score', 0.0),
+                        "created_at": result.get('created_at', ''),
+                        "entities": memory_data.get('entities', {}),
+                        "confidence": memory_data.get('category', {}).get('confidence_score', 0.0),
+                        "searchable_content": result.get('searchable_content', ''),
+                        "retention_type": memory_data.get('importance', {}).get('retention_type', 'short_term')
+                    }
+                    formatted_results.append(formatted_result)
+                    
+                except (json.JSONDecodeError, KeyError) as e:
+                    logger.error(f"Error parsing memory data: {e}")
+                    # Fallback to basic result structure
+                    formatted_results.append({
+                        "summary": result.get('summary', 'Memory content available'),
+                        "category": result.get('category_primary', 'unknown'),
+                        "importance_score": result.get('importance_score', 0.0),
+                        "created_at": result.get('created_at', '')
+                    })
+            
+            return json.dumps({
+                "found": len(formatted_results),
+                "query": query,
+                "memories": formatted_results,
+                "message": f"Found {len(formatted_results)} relevant memories"
+            }, indent=2)
+            
+        except Exception as e:
+            logger.error(f"Memory search error: {e}")
+            return json.dumps({
+                "error": f"Memory search failed: {str(e)}",
+                "query": query,
+                "found": 0
+            })
+    
+    return memory_search

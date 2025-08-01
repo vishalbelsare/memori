@@ -1,7 +1,5 @@
-"""
-Tools for manual integration with any LLM library
-"""
+"""Memory tools for LLM integration"""
 
-from .memory_tool import MemoryTool
+from .memory_tool import MemoryTool, create_memory_tool, create_memory_search_tool
 
-__all__ = ["MemoryTool"]
+__all__ = ["MemoryTool", "create_memory_tool", "create_memory_search_tool"]
