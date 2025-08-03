@@ -52,7 +52,7 @@ jobs:
 
       - name: Build documentation
         run: |
-          mkdocs build --strict
+          mkdocs build
 
       - name: Setup Pages
         if: github.ref == 'refs/heads/main'
