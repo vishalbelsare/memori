@@ -7,10 +7,12 @@ load_dotenv()
 
 client = OpenAI()
 
+
 class CalendarEvent(BaseModel):
     name: str
     date: str
     participants: list[str]
+
 
 response = client.responses.parse(
     model="gpt-4o-2024-08-06",

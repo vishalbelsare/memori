@@ -1,6 +1,6 @@
 from openai import OpenAI
 from dotenv import load_dotenv
-from memoriai import Memori, create_memory_search_tool
+from memoriai import Memori
 import os
 
 # Load environment variables from .env file
@@ -13,7 +13,7 @@ personal = Memori(
     template="basic",
     mem_prompt="Focus on personal life and events",
     conscious_ingest=True,
-    openai_api_key=os.getenv("OPENAI_API_KEY")
+    openai_api_key=os.getenv("OPENAI_API_KEY"),
 )
 
 personal.enable()

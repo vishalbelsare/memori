@@ -2,26 +2,26 @@
 
 from .pydantic_models import (
     ProcessedMemory,
-    MemoryCategory, 
+    MemoryCategory,
     ExtractedEntities,
     MemoryImportance,
     ConversationContext,
     MemoryCategoryType,
     RetentionType,
-    EntityType
+    EntityType,
 )
 from .exceptions import MemoriError, DatabaseError, AgentError
 
 __all__ = [
     "ProcessedMemory",
     "MemoryCategory",
-    "ExtractedEntities", 
+    "ExtractedEntities",
     "MemoryImportance",
     "ConversationContext",
     "MemoryCategoryType",
-    "RetentionType", 
+    "RetentionType",
     "EntityType",
     "MemoriError",
     "DatabaseError",
-    "AgentError"
+    "AgentError",
 ]
