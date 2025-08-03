@@ -254,6 +254,26 @@ class ConfigManager:
         self._config_sources = ["defaults"]
         logger.info("Configuration reset to defaults")
 
+    def setup_logging(self) -> None:
+        """Setup logging based on current configuration"""
+        if self._settings is None:
+            raise ConfigurationError("Configuration not loaded")
+        
+        try:
+            # Import here to avoid circular import
+            from ..utils.logging import LoggingManager
+            
+            LoggingManager.setup_logging(
+                self._settings.logging, 
+                verbose=self._settings.verbose
+            )
+            
+            if self._settings.verbose:
+                logger.info("Verbose logging enabled through ConfigManager")
+        except Exception as e:
+            logger.error(f"Failed to setup logging: {e}")
+            raise ConfigurationError(f"Logging setup error: {e}")
+
     @classmethod
     def get_instance(cls) -> "ConfigManager":
         """Get singleton instance"""

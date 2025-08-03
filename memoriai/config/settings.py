@@ -196,6 +196,7 @@ class MemoriSettings(BaseModel):
 
     version: str = Field(default="1.0.0", description="Configuration version")
     debug: bool = Field(default=False, description="Enable debug mode")
+    verbose: bool = Field(default=False, description="Enable verbose logging (loguru only)")
 
     # Component settings
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)

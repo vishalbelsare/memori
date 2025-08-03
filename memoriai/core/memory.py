@@ -18,7 +18,9 @@ except ImportError:
 
 from ..agents.memory_agent import MemoryAgent
 from ..agents.retrieval_agent import MemorySearchEngine
+from ..config.settings import LoggingSettings, LogLevel
 from ..utils.exceptions import DatabaseError, MemoriError
+from ..utils.logging import LoggingManager
 from ..utils.pydantic_models import ConversationContext
 from .database import DatabaseManager
 
@@ -42,6 +44,7 @@ class Memori:
         memory_filters: Optional[Dict[str, Any]] = None,
         openai_api_key: Optional[str] = None,
         user_id: Optional[str] = None,
+        verbose: bool = False,
     ):
         """
         Initialize Memori memory system v1.0.
@@ -56,6 +59,7 @@ class Memori:
             memory_filters: Filters for memory ingestion
             openai_api_key: OpenAI API key for memory agent
             user_id: Optional user identifier
+            verbose: Enable verbose logging (loguru only)
         """
         self.database_connect = database_connect
         self.template = template
@@ -66,6 +70,10 @@ class Memori:
         self.memory_filters = memory_filters or {}
         self.openai_api_key = openai_api_key
         self.user_id = user_id
+        self.verbose = verbose
+
+        # Setup logging based on verbose mode
+        self._setup_logging()
 
         # Initialize database manager
         self.db_manager = DatabaseManager(database_connect, template)
@@ -105,6 +113,22 @@ class Memori:
         logger.info(
             f"Memori v1.0 initialized with template: {template}, namespace: {namespace}"
         )
+
+    def _setup_logging(self):
+        """Setup logging configuration based on verbose mode"""
+        if not LoggingManager.is_initialized():
+            # Create default logging settings
+            logging_settings = LoggingSettings()
+            
+            # If verbose mode is enabled, set logging level to DEBUG
+            if self.verbose:
+                logging_settings.level = LogLevel.DEBUG
+            
+            # Setup logging with verbose mode
+            LoggingManager.setup_logging(logging_settings, verbose=self.verbose)
+            
+            if self.verbose:
+                logger.info("Verbose logging enabled - only loguru logs will be displayed")
 
     def _setup_database(self):
         """Setup database tables based on template"""

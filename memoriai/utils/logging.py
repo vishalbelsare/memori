@@ -19,22 +19,36 @@ class LoggingManager:
     _current_config: Optional[LoggingSettings] = None
 
     @classmethod
-    def setup_logging(cls, settings: LoggingSettings) -> None:
+    def setup_logging(cls, settings: LoggingSettings, verbose: bool = False) -> None:
         """Setup logging configuration"""
         try:
             # Remove default handler if it exists
             if not cls._initialized:
                 logger.remove()
 
-            # Configure console logging
-            logger.add(
-                sys.stderr,
-                level=settings.level.value,
-                format=settings.format,
-                colorize=True,
-                backtrace=True,
-                diagnose=True,
-            )
+            if verbose:
+                # When verbose mode is enabled, disable all other loggers and show only loguru
+                cls._disable_other_loggers()
+                
+                # Configure console logging with DEBUG level and full formatting
+                logger.add(
+                    sys.stderr,
+                    level="DEBUG",
+                    format=settings.format,
+                    colorize=True,
+                    backtrace=True,
+                    diagnose=True,
+                )
+            else:
+                # When verbose is False, minimize loguru output to essential logs only
+                logger.add(
+                    sys.stderr,
+                    level="WARNING",  # Only show warnings and errors
+                    format="<level>{level}</level>: {message}",  # Simplified format
+                    colorize=False,
+                    backtrace=False,
+                    diagnose=False,
+                )
 
             # Configure file logging if enabled
             if settings.log_to_file:
@@ -110,6 +124,65 @@ class LoggingManager:
     def get_current_config(cls) -> Optional[LoggingSettings]:
         """Get current logging configuration"""
         return cls._current_config
+
+    @classmethod
+    def _disable_other_loggers(cls) -> None:
+        """Disable all other loggers when verbose mode is enabled"""
+        import logging
+        
+        # Set the root logger to CRITICAL and disable it
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.CRITICAL)
+        root_logger.disabled = True
+        
+        # Remove all handlers from the root logger
+        for handler in root_logger.handlers[:]:
+            root_logger.removeHandler(handler)
+        
+        # Disable common third-party library loggers
+        third_party_loggers = [
+            'urllib3', 'requests', 'httpx', 'httpcore', 'openai', 'anthropic',
+            'litellm', 'sqlalchemy', 'alembic', 'asyncio', 'concurrent.futures',
+            'charset_normalizer', 'certifi', 'idna'
+        ]
+        
+        for logger_name in third_party_loggers:
+            lib_logger = logging.getLogger(logger_name)
+            lib_logger.disabled = True
+            lib_logger.setLevel(logging.CRITICAL)
+            # Remove all handlers
+            for handler in lib_logger.handlers[:]:
+                lib_logger.removeHandler(handler)
+        
+        # Set all existing loggers to CRITICAL level and disable them
+        for name in list(logging.Logger.manager.loggerDict.keys()):
+            existing_logger = logging.getLogger(name)
+            existing_logger.setLevel(logging.CRITICAL)
+            existing_logger.disabled = True
+            # Remove all handlers
+            for handler in existing_logger.handlers[:]:
+                existing_logger.removeHandler(handler)
+        
+        # Also disable warnings from the warnings module
+        import warnings
+        warnings.filterwarnings("ignore")
+        
+        # Override the logging module's basicConfig to prevent new loggers
+        original_basicConfig = logging.basicConfig
+        def disabled_basicConfig(*args, **kwargs):
+            pass
+        logging.basicConfig = disabled_basicConfig
+        
+        # Override the getLogger function to disable new loggers immediately
+        original_getLogger = logging.getLogger
+        def disabled_getLogger(name=None):
+            logger_instance = original_getLogger(name)
+            logger_instance.disabled = True
+            logger_instance.setLevel(logging.CRITICAL)
+            for handler in logger_instance.handlers[:]:
+                logger_instance.removeHandler(handler)
+            return logger_instance
+        logging.getLogger = disabled_getLogger
 
 
 def get_logger(name: str = "memori") -> "logger":
