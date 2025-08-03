@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+.ruff-cache/
 # C extensions
 *.so
 
@@ -68,8 +69,9 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# Sphinx documentation
+# Documentation builds
 docs/_build/
+site/  # MkDocs build output
 
 # PyBuilder
 .pybuilder/
@@ -236,6 +238,6 @@ profile_results/
 test_data/
 sample_data/
 benchmark_results/
-memoriai/scripts/llm_text.py
-ingested_data.txt
-memori_architecture-v2.md
+
+# Archive folder for old files
+archive/

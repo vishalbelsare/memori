@@ -38,81 +38,12 @@ from loguru import logger
 from . import anthropic_integration, litellm_integration, openai_integration
 
 __all__ = [
-    # Legacy functions (deprecated - use memori.enable() instead)
-    "install_all_hooks",
-    "uninstall_all_hooks", 
-    "register_memori_instance",
-    "unregister_memori_instance",
-    "get_integration_stats",
+    # Wrapper classes for direct SDK usage
+    "MemoriOpenAI",
+    "MemoriAnthropic",
 ]
 
 
-# ALL FUNCTIONS BELOW ARE DEPRECATED
-# Use memori.enable() for universal auto-recording instead
-
-def install_all_hooks():
-    """DEPRECATED: Use memori.enable() for universal auto-recording"""
-    logger.warning(
-        "🚨 install_all_hooks() is deprecated!\n"
-        "✅ NEW SIMPLE WAY: Just call memori.enable()\n"
-        "   This automatically handles ALL providers (LiteLLM, OpenAI, Anthropic, etc.)"
-    )
-
-
-def uninstall_all_hooks():
-    """DEPRECATED: Use memori.disable() instead"""
-    logger.warning(
-        "🚨 uninstall_all_hooks() is deprecated!\n"
-        "✅ NEW SIMPLE WAY: Just call memori.disable()"
-    )
-
-
-def register_memori_instance(memori_instance):
-    """DEPRECATED: Use memori.enable() instead"""
-    logger.warning(
-        "🚨 register_memori_instance() is deprecated!\n"
-        "✅ NEW SIMPLE WAY: memori.enable() automatically handles registration"
-    )
-
-
-def unregister_memori_instance(memori_instance):
-    """DEPRECATED: Use memori.disable() instead"""
-    logger.warning(
-        "🚨 unregister_memori_instance() is deprecated!\n"
-        "✅ NEW SIMPLE WAY: memori.disable() automatically handles cleanup"
-    )
-
-
-def get_integration_stats() -> List[Dict[str, Any]]:
-    """DEPRECATED: Use memori.get_integration_stats() instead"""
-    logger.warning(
-        "🚨 get_integration_stats() is deprecated!\n"
-        "✅ NEW WAY: Use memori.get_integration_stats() for universal stats"
-    )
-    return []
-
-
-# Migration guide for existing users
-def show_migration_guide():
-    """Show migration guide for users upgrading to universal system"""
-    print("""
-🚀 MEMORI UNIVERSAL INTEGRATION - MIGRATION GUIDE
-
-OLD WAY (deprecated):
-    from memoriai.integrations import install_all_hooks, register_memori_instance
-    install_all_hooks()
-    register_memori_instance(memori)
-
-NEW WAY (simple):
-    memori.enable()  # That's it! Works with ALL providers automatically
-    
-🎯 BENEFITS:
-✅ No complex setup - one line enables everything
-✅ Auto-detects all LLM providers (LiteLLM, OpenAI, Anthropic, etc.)
-✅ No wrapper classes needed - use libraries normally
-✅ Safer - no monkey-patching, uses official extension APIs
-✅ Future-proof - automatically supports new providers
-    """)
 
 
 # For backward compatibility, provide simple passthrough

@@ -253,33 +253,3 @@ class MemoriOpenAI:
         return CompletionsWrapper(self._openai, self._memori)
 
 
-# Legacy functions for backward compatibility (deprecated)
-def install_openai_hooks():
-    """DEPRECATED: Use MemoriOpenAI wrapper instead"""
-    logger.warning(
-        "install_openai_hooks() is deprecated and uses unsafe monkey-patching. "
-        "Use MemoriOpenAI wrapper instead: client = MemoriOpenAI(memori_instance)"
-    )
-
-def uninstall_openai_hooks():
-    """DEPRECATED: Use MemoriOpenAI wrapper instead"""
-    logger.warning("uninstall_openai_hooks() is deprecated.")
-
-def register_memori_instance(memori_instance):
-    """DEPRECATED: Use MemoriOpenAI wrapper instead"""
-    logger.warning("register_memori_instance() is deprecated. Use MemoriOpenAI wrapper.")
-
-def unregister_memori_instance(memori_instance):
-    """DEPRECATED: Use MemoriOpenAI wrapper instead"""
-    logger.warning("unregister_memori_instance() is deprecated. Use MemoriOpenAI wrapper.")
-
-def get_stats() -> Dict[str, Any]:
-    """Get integration statistics - DEPRECATED"""
-    logger.warning("openai_integration.get_stats() is deprecated.")
-    return {
-        "integration": "openai_wrapper",
-        "status": "clean_wrapper_available",
-        "message": "Use MemoriOpenAI wrapper class instead of hooks",
-        "hooks_installed": False,
-        "active_instances": 0,
-    }

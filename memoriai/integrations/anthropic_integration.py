@@ -181,33 +181,3 @@ class MemoriAnthropic:
         return MessagesWrapper(self._anthropic, self._memori)
 
 
-# Legacy functions for backward compatibility (deprecated)
-def install_anthropic_hooks():
-    """DEPRECATED: Use MemoriAnthropic wrapper instead"""
-    logger.warning(
-        "install_anthropic_hooks() is deprecated and uses unsafe monkey-patching. "
-        "Use MemoriAnthropic wrapper instead: client = MemoriAnthropic(memori_instance)"
-    )
-
-def uninstall_anthropic_hooks():
-    """DEPRECATED: Use MemoriAnthropic wrapper instead"""
-    logger.warning("uninstall_anthropic_hooks() is deprecated.")
-
-def register_memori_instance(memori_instance):
-    """DEPRECATED: Use MemoriAnthropic wrapper instead"""
-    logger.warning("register_memori_instance() is deprecated. Use MemoriAnthropic wrapper.")
-
-def unregister_memori_instance(memori_instance):
-    """DEPRECATED: Use MemoriAnthropic wrapper instead"""
-    logger.warning("unregister_memori_instance() is deprecated. Use MemoriAnthropic wrapper.")
-
-def get_stats() -> Dict[str, Any]:
-    """Get integration statistics - DEPRECATED"""
-    logger.warning("anthropic_integration.get_stats() is deprecated.")
-    return {
-        "integration": "anthropic_wrapper",
-        "status": "clean_wrapper_available",
-        "message": "Use MemoriAnthropic wrapper class instead of hooks",
-        "hooks_installed": False,
-        "active_instances": 0,
-    }
