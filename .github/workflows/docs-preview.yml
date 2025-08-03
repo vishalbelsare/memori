@@ -191,7 +191,7 @@ jobs:
             }
 
       - name: Upload preview artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: docs-preview-pr-${{ github.event.pull_request.number }}
           path: site-preview/
