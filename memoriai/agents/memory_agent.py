@@ -9,8 +9,12 @@ from typing import Any, Dict, Optional
 import openai
 from loguru import logger
 
-from ..utils.pydantic_models import (ConversationContext, MemoryCategoryType,
-                                     ProcessedMemory, RetentionType)
+from ..utils.pydantic_models import (
+    ConversationContext,
+    MemoryCategoryType,
+    ProcessedMemory,
+    RetentionType,
+)
 
 
 class MemoryAgent:
@@ -277,9 +281,13 @@ CONVERSATION CONTEXT:
 
     def _create_empty_memory(self, chat_id: str, reason: str) -> ProcessedMemory:
         """Create an empty memory object for error cases"""
-        from ..utils.pydantic_models import (ExtractedEntities, MemoryCategory,
-                                             MemoryCategoryType,
-                                             MemoryImportance, RetentionType)
+        from ..utils.pydantic_models import (
+            ExtractedEntities,
+            MemoryCategory,
+            MemoryCategoryType,
+            MemoryImportance,
+            RetentionType,
+        )
 
         return ProcessedMemory(
             category=MemoryCategory(

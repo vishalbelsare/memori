@@ -2,12 +2,12 @@
 Configuration management for Memoriai
 """
 
-from .settings import MemoriSettings, DatabaseSettings, AgentSettings, LoggingSettings
 from .manager import ConfigManager
+from .settings import AgentSettings, DatabaseSettings, LoggingSettings, MemoriSettings
 
 __all__ = [
     "MemoriSettings",
-    "DatabaseSettings", 
+    "DatabaseSettings",
     "AgentSettings",
     "LoggingSettings",
     "ConfigManager",

@@ -6,9 +6,9 @@ This script provides convenient ways to run different types of tests
 with appropriate configurations.
 """
 
-import sys
-import subprocess
 import argparse
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -18,7 +18,7 @@ def run_command(cmd: list, description: str) -> int:
     print(f"Running: {description}")
     print(f"Command: {' '.join(cmd)}")
     print(f"{'='*60}")
-    
+
     result = subprocess.run(cmd, cwd=Path(__file__).parent.parent)
     return result.returncode
 
@@ -63,12 +63,12 @@ def main():
         "--file",
         help="Specific test file to run",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Base pytest command
     cmd = ["python", "-m", "pytest"]
-    
+
     # Add test type filter
     if args.type == "unit":
         cmd.extend(["-m", "unit"])
@@ -76,16 +76,18 @@ def main():
         cmd.extend(["-m", "integration"])
     elif args.type == "performance":
         cmd.extend(["-m", "performance"])
-    
+
     # Add coverage if requested
     if args.coverage and args.type != "performance":
-        cmd.extend([
-            "--cov=memoriai",
-            "--cov-report=html:htmlcov",
-            "--cov-report=term-missing",
-            "--cov-report=xml",
-        ])
-    
+        cmd.extend(
+            [
+                "--cov=memoriai",
+                "--cov-report=html:htmlcov",
+                "--cov-report=term-missing",
+                "--cov-report=xml",
+            ]
+        )
+
     # Add fast filter
     if args.fast:
         marker = "not slow"
@@ -93,93 +95,95 @@ def main():
             args.markers = f"{args.markers} and {marker}"
         else:
             args.markers = marker
-    
+
     # Add custom markers
     if args.markers:
         cmd.extend(["-m", args.markers])
-    
+
     # Add verbosity
     if args.verbose:
         cmd.append("-v")
     else:
         cmd.extend(["--tb=short"])
-    
+
     # Add parallel execution
     if args.parallel:
         cmd.extend(["-n", str(args.parallel)])
-    
+
     # Add specific file
     if args.file:
         cmd.append(args.file)
     else:
         cmd.append("tests/")
-    
+
     # Run the tests
     exit_code = run_command(cmd, f"Running {args.type} tests")
-    
+
     if exit_code == 0:
         print(f"\n✅ {args.type.title()} tests passed!")
-        
+
         if args.coverage and args.type != "performance":
             print("\n📊 Coverage report generated:")
             print("  - HTML: htmlcov/index.html")
             print("  - XML: coverage.xml")
     else:
         print(f"\n❌ {args.type.title()} tests failed!")
-    
+
     return exit_code
 
 
 def run_quality_checks():
     """Run code quality checks."""
     checks = [
-        (["python", "-m", "black", "--check", "memoriai/", "tests/"], "Black formatting"),
+        (
+            ["python", "-m", "black", "--check", "memoriai/", "tests/"],
+            "Black formatting",
+        ),
         (["python", "-m", "ruff", "check", "memoriai/", "tests/"], "Ruff linting"),
         (["python", "-m", "mypy", "memoriai/"], "MyPy type checking"),
         (["python", "-m", "bandit", "-r", "memoriai/"], "Bandit security check"),
         (["python", "-m", "safety", "check"], "Safety dependency check"),
     ]
-    
+
     failed_checks = []
-    
+
     for cmd, description in checks:
         exit_code = run_command(cmd, description)
         if exit_code != 0:
             failed_checks.append(description)
-    
+
     if failed_checks:
         print(f"\n❌ Failed quality checks: {', '.join(failed_checks)}")
         return 1
     else:
-        print(f"\n✅ All quality checks passed!")
+        print("\n✅ All quality checks passed!")
         return 0
 
 
 def run_full_ci():
     """Run the full CI pipeline locally."""
     print("🚀 Running full CI pipeline...")
-    
+
     # Run quality checks
     quality_exit = run_quality_checks()
     if quality_exit != 0:
         return quality_exit
-    
+
     # Run unit tests
     unit_exit = run_command(
         ["python", "-m", "pytest", "-m", "unit", "--cov=memoriai"],
-        "Unit tests with coverage"
+        "Unit tests with coverage",
     )
     if unit_exit != 0:
         return unit_exit
-    
+
     # Run integration tests
     integration_exit = run_command(
-        ["python", "-m", "pytest", "-m", "integration"],
-        "Integration tests"
+        ["python", "-m", "pytest", "-m", "integration"], "Integration tests"
     )
     if integration_exit != 0:
         return integration_exit
-    
+
     print("\n🎉 Full CI pipeline completed successfully!")
     return 0
 
@@ -191,5 +195,5 @@ if __name__ == "__main__":
         exit_code = run_full_ci()
     else:
         exit_code = main()
-    
+
     sys.exit(exit_code)

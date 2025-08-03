@@ -9,7 +9,8 @@ from typing import Any, Dict, List, Optional
 from loguru import logger
 
 try:
-    from litellm import success_callback, failure_callback
+    from litellm import failure_callback, success_callback
+
     LITELLM_AVAILABLE = True
 except ImportError:
     LITELLM_AVAILABLE = False
@@ -116,7 +117,7 @@ class Memori:
     def enable(self):
         """
         Enable universal memory recording for ALL LLM providers.
-        
+
         This automatically sets up recording for:
         - LiteLLM: Native callback system (recommended)
         - OpenAI: Automatic client wrapping when instantiated
@@ -129,22 +130,22 @@ class Memori:
 
         self._enabled = True
         self._session_id = str(uuid.uuid4())
-        
+
         # 1. Set up LiteLLM native callbacks (if available)
         litellm_enabled = self._setup_litellm_callbacks()
-        
+
         # 2. Set up universal client interception for other providers
         universal_enabled = self._setup_universal_interception()
-        
+
         # 3. Register this instance globally for any provider to use
         self._register_global_instance()
-        
+
         providers = []
         if litellm_enabled:
             providers.append("LiteLLM (native callbacks)")
         if universal_enabled:
             providers.append("OpenAI/Anthropic (auto-wrapping)")
-            
+
         logger.info(
             f"Memori enabled for session: {self.session_id}\n"
             f"Active providers: {', '.join(providers) if providers else 'None detected'}\n"
@@ -167,10 +168,10 @@ class Memori:
 
         # 2. Disable universal interception
         self._disable_universal_interception()
-        
+
         # 3. Unregister global instance
         self._unregister_global_instance()
-        
+
         self._enabled = False
         logger.info("Memori disabled for all providers.")
 
@@ -179,7 +180,7 @@ class Memori:
         if not LITELLM_AVAILABLE:
             logger.debug("LiteLLM not available, skipping native callbacks")
             return False
-            
+
         try:
             success_callback.append(self._litellm_success_callback)
             logger.debug("LiteLLM native callbacks registered")
@@ -202,122 +203,126 @@ class Memori:
     def _get_builtin_import(self):
         """Safely get __import__ from __builtins__ (handles both dict and module cases)"""
         if isinstance(__builtins__, dict):
-            return __builtins__['__import__']
+            return __builtins__["__import__"]
         else:
             return __builtins__.__import__
-    
+
     def _set_builtin_import(self, import_func):
         """Safely set __import__ in __builtins__ (handles both dict and module cases)"""
         if isinstance(__builtins__, dict):
-            __builtins__['__import__'] = import_func
+            __builtins__["__import__"] = import_func
         else:
             __builtins__.__import__ = import_func
 
     def _install_import_hooks(self):
         """Install import hooks to automatically wrap LLM clients"""
-        import sys
-        from types import ModuleType
-        
+
         # Store original __import__ if not already done
-        if not hasattr(self, '_original_import'):
+        if not hasattr(self, "_original_import"):
             self._original_import = self._get_builtin_import()
-            
+
         def memori_import_hook(name, globals=None, locals=None, fromlist=(), level=0):
             """Custom import hook that wraps LLM clients automatically"""
             module = self._original_import(name, globals, locals, fromlist, level)
-            
+
             # Only process if memori is enabled and this is an LLM module
             if not self._enabled:
                 return module
-                
+
             # Auto-wrap OpenAI clients
-            if name == 'openai' or (fromlist and 'openai' in name):
+            if name == "openai" or (fromlist and "openai" in name):
                 self._wrap_openai_module(module)
-            
-            # Auto-wrap Anthropic clients  
-            elif name == 'anthropic' or (fromlist and 'anthropic' in name):
+
+            # Auto-wrap Anthropic clients
+            elif name == "anthropic" or (fromlist and "anthropic" in name):
                 self._wrap_anthropic_module(module)
-                
+
             return module
-            
+
         # Install the hook
         self._set_builtin_import(memori_import_hook)
 
     def _wrap_openai_module(self, module):
         """Automatically wrap OpenAI client when imported"""
         try:
-            if hasattr(module, 'OpenAI') and not hasattr(module.OpenAI, '_memori_wrapped'):
+            if hasattr(module, "OpenAI") and not hasattr(
+                module.OpenAI, "_memori_wrapped"
+            ):
                 original_init = module.OpenAI.__init__
-                
+
                 def wrapped_init(self_client, *args, **kwargs):
                     # Call original init
                     result = original_init(self_client, *args, **kwargs)
-                    
+
                     # Wrap the client methods for automatic recording
-                    if hasattr(self_client, 'chat') and hasattr(self_client.chat, 'completions'):
+                    if hasattr(self_client, "chat") and hasattr(
+                        self_client.chat, "completions"
+                    ):
                         original_create = self_client.chat.completions.create
-                        
+
                         def wrapped_create(*args, **kwargs):
                             # Inject context if conscious ingestion is enabled
                             if self.is_enabled and self.conscious_ingest:
                                 kwargs = self._inject_openai_context(kwargs)
-                            
+
                             # Make the call
                             response = original_create(*args, **kwargs)
-                            
+
                             # Record if enabled
                             if self.is_enabled:
                                 self._record_openai_conversation(kwargs, response)
-                                
+
                             return response
-                            
+
                         self_client.chat.completions.create = wrapped_create
-                    
+
                     return result
-                
+
                 module.OpenAI.__init__ = wrapped_init
                 module.OpenAI._memori_wrapped = True
                 logger.debug("OpenAI client auto-wrapping enabled")
-                
+
         except Exception as e:
             logger.debug(f"Could not wrap OpenAI module: {e}")
 
     def _wrap_anthropic_module(self, module):
         """Automatically wrap Anthropic client when imported"""
         try:
-            if hasattr(module, 'Anthropic') and not hasattr(module.Anthropic, '_memori_wrapped'):
+            if hasattr(module, "Anthropic") and not hasattr(
+                module.Anthropic, "_memori_wrapped"
+            ):
                 original_init = module.Anthropic.__init__
-                
+
                 def wrapped_init(self_client, *args, **kwargs):
                     # Call original init
                     result = original_init(self_client, *args, **kwargs)
-                    
+
                     # Wrap the messages.create method
-                    if hasattr(self_client, 'messages'):
+                    if hasattr(self_client, "messages"):
                         original_create = self_client.messages.create
-                        
+
                         def wrapped_create(*args, **kwargs):
                             # Inject context if conscious ingestion is enabled
                             if self.is_enabled and self.conscious_ingest:
                                 kwargs = self._inject_anthropic_context(kwargs)
-                            
+
                             # Make the call
                             response = original_create(*args, **kwargs)
-                            
+
                             # Record if enabled
                             if self.is_enabled:
                                 self._record_anthropic_conversation(kwargs, response)
-                                
+
                             return response
-                            
+
                         self_client.messages.create = wrapped_create
-                    
+
                     return result
-                
+
                 module.Anthropic.__init__ = wrapped_init
                 module.Anthropic._memori_wrapped = True
                 logger.debug("Anthropic client auto-wrapping enabled")
-                
+
         except Exception as e:
             logger.debug(f"Could not wrap Anthropic module: {e}")
 
@@ -325,9 +330,9 @@ class Memori:
         """Disable universal client interception"""
         try:
             # Restore original import if we modified it
-            if hasattr(self, '_original_import'):
+            if hasattr(self, "_original_import"):
                 self._set_builtin_import(self._original_import)
-                delattr(self, '_original_import')
+                delattr(self, "_original_import")
                 logger.debug("Universal interception disabled")
         except Exception as e:
             logger.debug(f"Error disabling universal interception: {e}")
@@ -335,13 +340,13 @@ class Memori:
     def _register_global_instance(self):
         """Register this memori instance globally"""
         # Store in a global registry that wrapped clients can access
-        if not hasattr(Memori, '_global_instances'):
+        if not hasattr(Memori, "_global_instances"):
             Memori._global_instances = []
         Memori._global_instances.append(self)
 
     def _unregister_global_instance(self):
         """Unregister this memori instance globally"""
-        if hasattr(Memori, '_global_instances') and self in Memori._global_instances:
+        if hasattr(Memori, "_global_instances") and self in Memori._global_instances:
             Memori._global_instances.remove(self)
 
     def _inject_openai_context(self, kwargs):
@@ -353,19 +358,19 @@ class Memori:
                 if msg.get("role") == "user":
                     user_input = msg.get("content", "")
                     break
-            
+
             if user_input:
                 context = self.retrieve_context(user_input, limit=3)
                 if context:
                     context_prompt = "--- Relevant Memories ---\n"
                     for mem in context:
                         if isinstance(mem, dict):
-                            summary = mem.get('summary', '') or mem.get('content', '')
+                            summary = mem.get("summary", "") or mem.get("content", "")
                             context_prompt += f"- {summary}\n"
                         else:
                             context_prompt += f"- {str(mem)}\n"
                     context_prompt += "-------------------------\n"
-                    
+
                     # Inject into system message
                     messages = kwargs.get("messages", [])
                     for msg in messages:
@@ -373,8 +378,10 @@ class Memori:
                             msg["content"] = context_prompt + msg.get("content", "")
                             break
                     else:
-                        messages.insert(0, {"role": "system", "content": context_prompt})
-                    
+                        messages.insert(
+                            0, {"role": "system", "content": context_prompt}
+                        )
+
                     logger.debug(f"Injected context: {len(context)} memories")
         except Exception as e:
             logger.error(f"Context injection failed: {e}")
@@ -389,32 +396,36 @@ class Memori:
                 if msg.get("role") == "user":
                     content = msg.get("content", "")
                     if isinstance(content, list):
-                        user_input = " ".join([
-                            block.get("text", "") for block in content
-                            if isinstance(block, dict) and block.get("type") == "text"
-                        ])
+                        user_input = " ".join(
+                            [
+                                block.get("text", "")
+                                for block in content
+                                if isinstance(block, dict)
+                                and block.get("type") == "text"
+                            ]
+                        )
                     else:
                         user_input = content
                     break
-            
+
             if user_input:
                 context = self.retrieve_context(user_input, limit=3)
                 if context:
                     context_prompt = "--- Relevant Memories ---\n"
                     for mem in context:
                         if isinstance(mem, dict):
-                            summary = mem.get('summary', '') or mem.get('content', '')
+                            summary = mem.get("summary", "") or mem.get("content", "")
                             context_prompt += f"- {summary}\n"
                         else:
                             context_prompt += f"- {str(mem)}\n"
                     context_prompt += "-------------------------\n"
-                    
+
                     # Inject into system parameter
                     if kwargs.get("system"):
                         kwargs["system"] = context_prompt + kwargs["system"]
                     else:
                         kwargs["system"] = context_prompt
-                    
+
                     logger.debug(f"Injected context: {len(context)} memories")
         except Exception as e:
             logger.error(f"Context injection failed: {e}")
@@ -472,10 +483,14 @@ class Memori:
                 if message.get("role") == "user":
                     content = message.get("content", "")
                     if isinstance(content, list):
-                        user_input = " ".join([
-                            block.get("text", "") for block in content
-                            if isinstance(block, dict) and block.get("type") == "text"
-                        ])
+                        user_input = " ".join(
+                            [
+                                block.get("text", "")
+                                for block in content
+                                if isinstance(block, dict)
+                                and block.get("type") == "text"
+                            ]
+                        )
                     else:
                         user_input = content
                     break
@@ -484,9 +499,13 @@ class Memori:
             ai_output = ""
             if hasattr(response, "content") and response.content:
                 if isinstance(response.content, list):
-                    ai_output = " ".join([
-                        block.text for block in response.content if hasattr(block, "text")
-                    ])
+                    ai_output = " ".join(
+                        [
+                            block.text
+                            for block in response.content
+                            if hasattr(block, "text")
+                        ]
+                    )
                 else:
                     ai_output = str(response.content)
 
@@ -523,37 +542,39 @@ class Memori:
                 if msg.get("role") == "user":
                     user_input = msg.get("content", "")
                     break
-            
+
             ai_output = response.choices[0].message.content
             model = kwargs.get("model", "unknown")
-            
+
             # Calculate tokens used
             tokens_used = 0
             if hasattr(response, "usage") and response.usage:
                 tokens_used = getattr(response.usage, "total_tokens", 0)
-            
+
             # Handle timing data safely - convert any time objects to float/string
             duration_ms = 0
             start_time_str = None
             end_time_str = None
-            
+
             try:
                 if start_time is not None and end_time is not None:
                     # Handle different types of time objects
-                    if hasattr(start_time, 'total_seconds'):  # timedelta
+                    if hasattr(start_time, "total_seconds"):  # timedelta
                         duration_ms = start_time.total_seconds() * 1000
-                    elif isinstance(start_time, (int, float)) and isinstance(end_time, (int, float)):
+                    elif isinstance(start_time, (int, float)) and isinstance(
+                        end_time, (int, float)
+                    ):
                         duration_ms = (end_time - start_time) * 1000
-                    
+
                     start_time_str = str(start_time)
                     end_time_str = str(end_time)
             except Exception:
                 # If timing calculation fails, just skip it
                 pass
-            
+
             self.record_conversation(
-                user_input, 
-                ai_output, 
+                user_input,
+                ai_output,
                 model,
                 metadata={
                     "integration": "litellm",
@@ -563,7 +584,7 @@ class Memori:
                     "start_time_str": start_time_str,
                     "end_time_str": end_time_str,
                     "duration_ms": duration_ms,
-                }
+                },
             )
         except Exception as e:
             logger.error(f"Memori callback failed: {e}")
@@ -758,7 +779,7 @@ class Memori:
                 "namespace": self.namespace,
                 "providers": {},
             }
-            
+
             # LiteLLM stats
             if LITELLM_AVAILABLE:
                 stats["providers"]["litellm"] = {
@@ -773,14 +794,19 @@ class Memori:
                     "method": "native_callbacks",
                     "callback_registered": False,
                 }
-            
+
             # OpenAI stats
             try:
                 import openai
+
                 stats["providers"]["openai"] = {
                     "available": True,
                     "method": "auto_wrapping",
-                    "wrapped": hasattr(openai.OpenAI, '_memori_wrapped') if hasattr(openai, 'OpenAI') else False,
+                    "wrapped": (
+                        hasattr(openai.OpenAI, "_memori_wrapped")
+                        if hasattr(openai, "OpenAI")
+                        else False
+                    ),
                 }
             except ImportError:
                 stats["providers"]["openai"] = {
@@ -788,14 +814,19 @@ class Memori:
                     "method": "auto_wrapping",
                     "wrapped": False,
                 }
-            
+
             # Anthropic stats
             try:
                 import anthropic
+
                 stats["providers"]["anthropic"] = {
                     "available": True,
-                    "method": "auto_wrapping", 
-                    "wrapped": hasattr(anthropic.Anthropic, '_memori_wrapped') if hasattr(anthropic, 'Anthropic') else False,
+                    "method": "auto_wrapping",
+                    "wrapped": (
+                        hasattr(anthropic.Anthropic, "_memori_wrapped")
+                        if hasattr(anthropic, "Anthropic")
+                        else False
+                    ),
                 }
             except ImportError:
                 stats["providers"]["anthropic"] = {
@@ -803,7 +834,7 @@ class Memori:
                     "method": "auto_wrapping",
                     "wrapped": False,
                 }
-                
+
             return [stats]
         except Exception as e:
             logger.error(f"Failed to get integration stats: {e}")

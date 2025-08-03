@@ -12,8 +12,7 @@ from typing import Any, Dict, List, Optional
 from loguru import logger
 
 from ..utils.exceptions import DatabaseError
-from ..utils.pydantic_models import (MemoryCategoryType, ProcessedMemory,
-                                     RetentionType)
+from ..utils.pydantic_models import MemoryCategoryType, ProcessedMemory, RetentionType
 
 
 class DatabaseManager:
@@ -60,7 +59,9 @@ class DatabaseManager:
         try:
             # Check if FTS5 is available
             if not self._check_fts5_support():
-                logger.warning("FTS5 not available, search functionality will be limited")
+                logger.warning(
+                    "FTS5 not available, search functionality will be limited"
+                )
 
             # Read and execute schema from file
             schema_path = (
@@ -72,7 +73,7 @@ class DatabaseManager:
             )
 
             if schema_path.exists():
-                with open(schema_path, "r") as f:
+                with open(schema_path) as f:
                     schema_sql = f.read()
 
                 with self._get_connection() as conn:
@@ -81,10 +82,12 @@ class DatabaseManager:
                         conn.executescript(schema_sql)
                         logger.info("Database schema initialized successfully")
                     except sqlite3.Error as e:
-                        logger.warning(f"Schema execution issue: {e}, falling back to statement-by-statement")
+                        logger.warning(
+                            f"Schema execution issue: {e}, falling back to statement-by-statement"
+                        )
                         # Fallback to statement-by-statement execution
                         self._execute_schema_statements(conn, schema_sql)
-                        
+
             else:
                 # Fallback to basic schema
                 self._create_basic_schema()
@@ -111,27 +114,27 @@ class DatabaseManager:
         statements = []
         current_statement = []
         in_trigger = False
-        
-        for line in schema_sql.split('\n'):
+
+        for line in schema_sql.split("\n"):
             line = line.strip()
-            if not line or line.startswith('--'):
+            if not line or line.startswith("--"):
                 continue
-                
-            if line.upper().startswith('CREATE TRIGGER'):
+
+            if line.upper().startswith("CREATE TRIGGER"):
                 in_trigger = True
-            elif line.upper().startswith('END;') and in_trigger:
+            elif line.upper().startswith("END;") and in_trigger:
                 current_statement.append(line)
-                statements.append('\n'.join(current_statement))
+                statements.append("\n".join(current_statement))
                 current_statement = []
                 in_trigger = False
                 continue
-                
+
             current_statement.append(line)
-            
-            if line.endswith(';') and not in_trigger:
-                statements.append('\n'.join(current_statement))
+
+            if line.endswith(";") and not in_trigger:
+                statements.append("\n".join(current_statement))
                 current_statement = []
-        
+
         # Execute each statement
         for statement in statements:
             if statement.strip():
@@ -139,7 +142,7 @@ class DatabaseManager:
                     conn.execute(statement)
                 except sqlite3.Error as e:
                     logger.debug(f"Schema statement warning: {e}")
-        
+
         conn.commit()
 
     def _create_basic_schema(self):
@@ -269,7 +272,7 @@ class DatabaseManager:
         """Get chat history with optional session filtering"""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            
+
             if session_id:
                 cursor.execute(
                     """
@@ -294,19 +297,19 @@ class DatabaseManager:
                     """,
                     (namespace, limit),
                 )
-            
+
             rows = cursor.fetchall()
-            
+
             # Convert to list of dictionaries and parse metadata JSON
             result = []
             for row in rows:
                 row_dict = dict(row)
                 try:
-                    row_dict['metadata'] = json.loads(row_dict['metadata'] or '{}')
+                    row_dict["metadata"] = json.loads(row_dict["metadata"] or "{}")
                 except (json.JSONDecodeError, TypeError):
-                    row_dict['metadata'] = {}
+                    row_dict["metadata"] = {}
                 result.append(row_dict)
-            
+
             return result
 
     def store_processed_memory(
@@ -363,10 +366,10 @@ class DatabaseManager:
         created_at = memory.timestamp
         if created_at is None:
             created_at = datetime.now()
-        elif hasattr(created_at, 'replace'):
+        elif hasattr(created_at, "replace"):
             # Make timezone-naive if timezone-aware
             created_at = created_at.replace(tzinfo=None)
-            
+
         expires_at = datetime.now() + timedelta(days=7)  # 7-day expiration
 
         cursor.execute(
@@ -406,10 +409,10 @@ class DatabaseManager:
         created_at = memory.timestamp
         if created_at is None:
             created_at = datetime.now()
-        elif hasattr(created_at, 'replace'):
+        elif hasattr(created_at, "replace"):
             # Make timezone-naive if timezone-aware
             created_at = created_at.replace(tzinfo=None)
-        
+
         cursor.execute(
             """
             INSERT INTO long_term_memory
@@ -448,10 +451,10 @@ class DatabaseManager:
         created_at = memory.timestamp
         if created_at is None:
             created_at = datetime.now()
-        elif hasattr(created_at, 'replace'):
+        elif hasattr(created_at, "replace"):
             # Make timezone-naive if timezone-aware
             created_at = created_at.replace(tzinfo=None)
-            
+
         cursor.execute(
             """
             INSERT INTO rules_memory
@@ -552,7 +555,9 @@ class DatabaseManager:
             cursor = conn.cursor()
 
             # 1. Try FTS search first (most relevant)
-            fts_results = self._execute_fts_search(cursor, query, namespace, category_filter, limit)
+            fts_results = self._execute_fts_search(
+                cursor, query, namespace, category_filter, limit
+            )
             if fts_results:
                 for result in fts_results:
                     result["search_strategy"] = "fts_search"
@@ -560,7 +565,9 @@ class DatabaseManager:
                     all_results.append(result)
 
             # 2. Entity-based search for better context matching
-            entity_results = self._execute_entity_search(cursor, query, namespace, category_filter, limit)
+            entity_results = self._execute_entity_search(
+                cursor, query, namespace, category_filter, limit
+            )
             for result in entity_results:
                 result["search_strategy"] = "entity_search"
                 result["search_score"] = 0.8
@@ -568,7 +575,9 @@ class DatabaseManager:
 
             # 3. Category-based search if specified
             if category_filter:
-                category_results = self._execute_category_search(cursor, query, namespace, category_filter, limit)
+                category_results = self._execute_category_search(
+                    cursor, query, namespace, category_filter, limit
+                )
                 for result in category_results:
                     result["search_strategy"] = "category_search"
                     result["search_score"] = 0.6
@@ -576,7 +585,9 @@ class DatabaseManager:
 
             # 4. Fallback to LIKE search if no other results
             if not all_results:
-                like_results = self._execute_like_search(cursor, query, namespace, category_filter, limit)
+                like_results = self._execute_like_search(
+                    cursor, query, namespace, category_filter, limit
+                )
                 for result in like_results:
                     result["search_strategy"] = "like_search"
                     result["search_score"] = 0.4
@@ -586,7 +597,11 @@ class DatabaseManager:
             unique_results = {}
             for result in all_results:
                 memory_id = result.get("memory_id")
-                if memory_id not in unique_results or result["search_score"] > unique_results[memory_id]["search_score"]:
+                if (
+                    memory_id not in unique_results
+                    or result["search_score"]
+                    > unique_results[memory_id]["search_score"]
+                ):
                     unique_results[memory_id] = result
 
             # Sort by composite score (search_score + importance + recency)
@@ -602,19 +617,28 @@ class DatabaseManager:
 
             return final_results[:limit]
 
-    def _execute_fts_search(self, cursor, query: str, namespace: str, category_filter: Optional[List[str]], limit: int):
+    def _execute_fts_search(
+        self,
+        cursor,
+        query: str,
+        namespace: str,
+        category_filter: Optional[List[str]],
+        limit: int,
+    ):
         """Execute FTS5 search"""
         try:
             # Build FTS query with category filter
             fts_query = f'"{query}"' if query else "*"
             category_clause = ""
             params = [fts_query, namespace]
-            
+
             if category_filter:
                 category_placeholders = ",".join("?" * len(category_filter))
-                category_clause = f"AND fts.category_primary IN ({category_placeholders})"
+                category_clause = (
+                    f"AND fts.category_primary IN ({category_placeholders})"
+                )
                 params.extend(category_filter)
-            
+
             params.append(limit)
 
             cursor.execute(
@@ -655,16 +679,23 @@ class DatabaseManager:
             logger.debug(f"FTS not available: {e}")
             return []
 
-    def _execute_entity_search(self, cursor, query: str, namespace: str, category_filter: Optional[List[str]], limit: int):
+    def _execute_entity_search(
+        self,
+        cursor,
+        query: str,
+        namespace: str,
+        category_filter: Optional[List[str]],
+        limit: int,
+    ):
         """Execute entity-based search"""
         category_clause = ""
         params = [f"%{query}%", namespace]
-        
+
         if category_filter:
             category_placeholders = ",".join("?" * len(category_filter))
             category_clause = f"AND m.category_primary IN ({category_placeholders})"
             params.extend(category_filter)
-        
+
         params.append(limit)
 
         cursor.execute(
@@ -680,10 +711,12 @@ class DatabaseManager:
             """,
             params,
         )
-        
+
         return [dict(row) for row in cursor.fetchall()]
 
-    def _execute_category_search(self, cursor, query: str, namespace: str, category_filter: List[str], limit: int):
+    def _execute_category_search(
+        self, cursor, query: str, namespace: str, category_filter: List[str], limit: int
+    ):
         """Execute category-based search"""
         category_placeholders = ",".join("?" * len(category_filter))
         params = [namespace] + category_filter + [f"%{query}%", f"%{query}%", limit]
@@ -700,22 +733,29 @@ class DatabaseManager:
             """,
             params,
         )
-        
+
         return [dict(row) for row in cursor.fetchall()]
 
-    def _execute_like_search(self, cursor, query: str, namespace: str, category_filter: Optional[List[str]], limit: int):
+    def _execute_like_search(
+        self,
+        cursor,
+        query: str,
+        namespace: str,
+        category_filter: Optional[List[str]],
+        limit: int,
+    ):
         """Execute fallback LIKE search"""
         results = []
-        
+
         # Search short-term memory
         category_clause = ""
         params = [namespace, f"%{query}%", f"%{query}%", datetime.now()]
-        
+
         if category_filter:
             category_placeholders = ",".join("?" * len(category_filter))
             category_clause = f"AND category_primary IN ({category_placeholders})"
             params.extend(category_filter)
-        
+
         params.append(limit)
 
         cursor.execute(

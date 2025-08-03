@@ -9,89 +9,66 @@ __version__ = "1.0.0"
 __author__ = "Harshal More"
 __email__ = "harshalmore2468@gmail.com"
 
-# Core components
-from .core.memory import Memori
-from .core.database import DatabaseManager
-
-# Configuration system
-from .config import (
-    MemoriSettings,
-    DatabaseSettings,
-    AgentSettings,
-    LoggingSettings,
-    ConfigManager
-)
-
 # Memory agents
 from .agents.memory_agent import MemoryAgent
 from .agents.retrieval_agent import MemorySearchEngine
 
-# Database system
-from .database.connectors import (
-    MySQLConnector, 
-    PostgreSQLConnector,
-    SQLiteConnector
+# Configuration system
+from .config import (
+    AgentSettings,
+    ConfigManager,
+    DatabaseSettings,
+    LoggingSettings,
+    MemoriSettings,
 )
-from .database.queries import (
-    BaseQueries,
-    MemoryQueries,
-    ChatQueries,
-    EntityQueries
-)
+from .core.database import DatabaseManager
 
-# Tools and integrations
-from .tools.memory_tool import (
-    MemoryTool, 
-    create_memory_search_tool,
-    create_memory_tool
-)
+# Core components
+from .core.memory import Memori
+
+# Database system
+from .database.connectors import MySQLConnector, PostgreSQLConnector, SQLiteConnector
+from .database.queries import BaseQueries, ChatQueries, EntityQueries, MemoryQueries
 
 # Wrapper integrations
-from .integrations import (
-    MemoriOpenAI,
-    MemoriAnthropic
-)
+from .integrations import MemoriAnthropic, MemoriOpenAI
+
+# Tools and integrations
+from .tools.memory_tool import MemoryTool, create_memory_search_tool, create_memory_tool
 
 # Utils and models
-from .utils import (
-    # Pydantic models
-    ProcessedMemory,
-    MemoryCategory,
-    ExtractedEntities,
-    MemoryImportance,
-    ConversationContext,
-    MemoryCategoryType,
-    RetentionType,
-    EntityType,
-    
-    # Enhanced exceptions
-    MemoriError,
-    DatabaseError,
+from .utils import (  # Pydantic models; Enhanced exceptions; Validators and helpers; Logging
     AgentError,
-    ConfigurationError,
-    ValidationError,
-    IntegrationError,
-    AuthenticationError,
-    RateLimitError,
-    MemoryNotFoundError,
-    ProcessingError,
-    TimeoutError,
-    ResourceExhaustedError,
-    ExceptionHandler,
-    
-    # Validators and helpers
-    DataValidator,
-    MemoryValidator,
-    StringUtils,
-    DateTimeUtils,
-    JsonUtils,
-    FileUtils,
-    RetryUtils,
-    PerformanceUtils,
     AsyncUtils,
-    
-    # Logging
+    AuthenticationError,
+    ConfigurationError,
+    ConversationContext,
+    DatabaseError,
+    DataValidator,
+    DateTimeUtils,
+    EntityType,
+    ExceptionHandler,
+    ExtractedEntities,
+    FileUtils,
+    IntegrationError,
+    JsonUtils,
     LoggingManager,
+    MemoriError,
+    MemoryCategory,
+    MemoryCategoryType,
+    MemoryImportance,
+    MemoryNotFoundError,
+    MemoryValidator,
+    PerformanceUtils,
+    ProcessedMemory,
+    ProcessingError,
+    RateLimitError,
+    ResourceExhaustedError,
+    RetentionType,
+    RetryUtils,
+    StringUtils,
+    TimeoutError,
+    ValidationError,
     get_logger,
 )
 
@@ -99,36 +76,30 @@ __all__ = [
     # Core
     "Memori",
     "DatabaseManager",
-    
     # Configuration
     "MemoriSettings",
     "DatabaseSettings",
-    "AgentSettings", 
+    "AgentSettings",
     "LoggingSettings",
     "ConfigManager",
-    
     # Agents
     "MemoryAgent",
     "MemorySearchEngine",
-    
     # Database
     "SQLiteConnector",
-    "PostgreSQLConnector", 
+    "PostgreSQLConnector",
     "MySQLConnector",
     "BaseQueries",
     "MemoryQueries",
-    "ChatQueries", 
+    "ChatQueries",
     "EntityQueries",
-    
     # Tools
     "MemoryTool",
     "create_memory_tool",
     "create_memory_search_tool",
-    
     # Integrations
     "MemoriOpenAI",
     "MemoriAnthropic",
-    
     # Pydantic Models
     "ProcessedMemory",
     "MemoryCategory",
@@ -138,7 +109,6 @@ __all__ = [
     "MemoryCategoryType",
     "RetentionType",
     "EntityType",
-    
     # Enhanced Exceptions
     "MemoriError",
     "DatabaseError",
@@ -146,18 +116,16 @@ __all__ = [
     "ConfigurationError",
     "ValidationError",
     "IntegrationError",
-    "AuthenticationError", 
+    "AuthenticationError",
     "RateLimitError",
     "MemoryNotFoundError",
     "ProcessingError",
     "TimeoutError",
     "ResourceExhaustedError",
     "ExceptionHandler",
-    
     # Validators
     "DataValidator",
     "MemoryValidator",
-    
     # Helpers
     "StringUtils",
     "DateTimeUtils",
@@ -166,7 +134,6 @@ __all__ = [
     "RetryUtils",
     "PerformanceUtils",
     "AsyncUtils",
-    
     # Logging
     "LoggingManager",
     "get_logger",

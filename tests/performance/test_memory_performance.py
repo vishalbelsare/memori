@@ -2,14 +2,15 @@
 Performance tests for memory operations.
 """
 
-import pytest
 import time
 from typing import List
+
+import pytest
 
 from memoriai.core.memory import MemoryManager
 from memoriai.utils.pydantic_models import ProcessedMemory
 from tests.fixtures.sample_data import SampleData
-from tests.fixtures.test_helpers import TestHelpers, AssertionHelpers
+from tests.fixtures.test_helpers import AssertionHelpers, TestHelpers
 
 
 class TestMemoryPerformance:
@@ -32,14 +33,16 @@ class TestMemoryPerformance:
     @pytest.mark.performance
     @pytest.mark.slow
     def test_bulk_memory_storage_performance(
-        self, performance_memory_manager: MemoryManager, large_dataset: List[ProcessedMemory]
+        self,
+        performance_memory_manager: MemoryManager,
+        large_dataset: List[ProcessedMemory],
     ):
         """Test performance of storing many memories."""
         batch_size = 100
         memories_to_store = large_dataset[:batch_size]
-        
+
         start_time = time.time()
-        
+
         memory_ids = []
         for i, memory in enumerate(memories_to_store):
             memory_id = performance_memory_manager.store_memory(
@@ -48,24 +51,26 @@ class TestMemoryPerformance:
                 namespace="performance_test",
             )
             memory_ids.append(memory_id)
-        
+
         end_time = time.time()
         execution_time = end_time - start_time
-        
+
         # Performance assertions
         assert len(memory_ids) == batch_size
         AssertionHelpers.assert_performance_acceptable(
-            execution_time, 
+            execution_time,
             max_time=10.0,  # Should complete within 10 seconds
-            operation_name=f"Storing {batch_size} memories"
+            operation_name=f"Storing {batch_size} memories",
         )
-        
+
         # Calculate throughput
         throughput = batch_size / execution_time
         print(f"Memory storage throughput: {throughput:.2f} memories/second")
-        
+
         # Verify all memories were stored
-        stats = performance_memory_manager.get_memory_statistics(namespace="performance_test")
+        stats = performance_memory_manager.get_memory_statistics(
+            namespace="performance_test"
+        )
         assert stats["total_memories"] >= batch_size
 
     @pytest.mark.performance
@@ -78,9 +83,9 @@ class TestMemoryPerformance:
         TestHelpers.populate_test_database(
             performance_memory_manager,
             sample_memories * 20,  # 100 memories
-            namespace="retrieval_test"
+            namespace="retrieval_test",
         )
-        
+
         # Test different query scenarios
         test_queries = [
             "Django model",
@@ -89,32 +94,32 @@ class TestMemoryPerformance:
             "optimization",
             "preference dark mode",
         ]
-        
+
         total_start_time = time.time()
-        
+
         for query in test_queries:
             start_time = time.time()
-            
+
             memories = performance_memory_manager.retrieve_memories(
                 query=query,
                 namespace="retrieval_test",
                 limit=10,
             )
-            
+
             end_time = time.time()
             query_time = end_time - start_time
-            
+
             # Each query should complete quickly
             AssertionHelpers.assert_performance_acceptable(
                 query_time,
                 max_time=1.0,  # 1 second per query
-                operation_name=f"Query '{query}'"
+                operation_name=f"Query '{query}'",
             )
-            
+
             # Should return some results
             assert isinstance(memories, list)
             print(f"Query '{query}': {len(memories)} results in {query_time:.3f}s")
-        
+
         total_time = time.time() - total_start_time
         print(f"Total query time: {total_time:.3f}s for {len(test_queries)} queries")
 
@@ -123,18 +128,17 @@ class TestMemoryPerformance:
         self, performance_memory_manager: MemoryManager
     ):
         """Test performance under concurrent access."""
-        import threading
         import concurrent.futures
-        
+
         sample_memories = SampleData.get_sample_processed_memories()
         num_threads = 5
         operations_per_thread = 10
-        
+
         def worker_function(worker_id: int):
             """Worker function for concurrent testing."""
             results = []
             errors = []
-            
+
             for i in range(operations_per_thread):
                 try:
                     # Store a memory
@@ -144,88 +148,96 @@ class TestMemoryPerformance:
                         session_id=f"concurrent_session_{worker_id}_{i}",
                         namespace=f"concurrent_test_{worker_id}",
                     )
-                    
+
                     # Retrieve memories
                     memories = performance_memory_manager.retrieve_memories(
                         query="test",
                         namespace=f"concurrent_test_{worker_id}",
                         limit=5,
                     )
-                    
-                    results.append({
-                        "worker_id": worker_id,
-                        "operation": i,
-                        "memory_id": memory_id,
-                        "retrieved_count": len(memories),
-                    })
-                    
+
+                    results.append(
+                        {
+                            "worker_id": worker_id,
+                            "operation": i,
+                            "memory_id": memory_id,
+                            "retrieved_count": len(memories),
+                        }
+                    )
+
                 except Exception as e:
-                    errors.append({
-                        "worker_id": worker_id,
-                        "operation": i,
-                        "error": str(e),
-                    })
-            
+                    errors.append(
+                        {
+                            "worker_id": worker_id,
+                            "operation": i,
+                            "error": str(e),
+                        }
+                    )
+
             return results, errors
-        
+
         # Execute concurrent operations
         start_time = time.time()
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
             futures = [
                 executor.submit(worker_function, worker_id)
                 for worker_id in range(num_threads)
             ]
-            
+
             all_results = []
             all_errors = []
-            
+
             for future in concurrent.futures.as_completed(futures):
                 results, errors = future.result()
                 all_results.extend(results)
                 all_errors.extend(errors)
-        
+
         end_time = time.time()
         execution_time = end_time - start_time
-        
+
         # Performance assertions
         total_operations = num_threads * operations_per_thread * 2  # store + retrieve
         AssertionHelpers.assert_performance_acceptable(
             execution_time,
             max_time=30.0,  # Should complete within 30 seconds
-            operation_name=f"{total_operations} concurrent operations"
+            operation_name=f"{total_operations} concurrent operations",
         )
-        
+
         # Verify no errors occurred
-        assert len(all_errors) == 0, f"Errors occurred during concurrent operations: {all_errors}"
-        
+        assert (
+            len(all_errors) == 0
+        ), f"Errors occurred during concurrent operations: {all_errors}"
+
         # Verify all operations completed
         assert len(all_results) == num_threads * operations_per_thread
-        
+
         print(f"Concurrent operations: {total_operations} ops in {execution_time:.3f}s")
         print(f"Throughput: {total_operations / execution_time:.2f} ops/second")
 
     @pytest.mark.performance
     def test_large_dataset_search_performance(
-        self, performance_memory_manager: MemoryManager, large_dataset: List[ProcessedMemory]
+        self,
+        performance_memory_manager: MemoryManager,
+        large_dataset: List[ProcessedMemory],
     ):
         """Test search performance with large dataset."""
         # Populate with large dataset
         dataset_size = 500
         memories_to_store = large_dataset[:dataset_size]
-        
+
         print(f"Populating database with {dataset_size} memories...")
         populate_start = time.time()
-        
+
         TestHelpers.populate_test_database(
             performance_memory_manager,
             memories_to_store,
-            namespace="large_dataset_test"
+            namespace="large_dataset_test",
         )
-        
+
         populate_time = time.time() - populate_start
         print(f"Population completed in {populate_time:.3f}s")
-        
+
         # Test various search scenarios
         search_scenarios = [
             {"query": "Python", "limit": 10, "expected_min": 1},
@@ -233,30 +245,33 @@ class TestMemoryPerformance:
             {"query": "programming", "limit": 100, "expected_min": 5},
             {"query": "optimization performance", "limit": 20, "expected_min": 0},
         ]
-        
+
         for scenario in search_scenarios:
             start_time = time.time()
-            
+
             memories = performance_memory_manager.retrieve_memories(
                 query=scenario["query"],
                 namespace="large_dataset_test",
                 limit=scenario["limit"],
             )
-            
+
             search_time = time.time() - start_time
-            
+
             # Performance assertion
             AssertionHelpers.assert_performance_acceptable(
                 search_time,
                 max_time=2.0,  # Each search should complete within 2 seconds
-                operation_name=f"Search '{scenario['query']}' in {dataset_size} memories"
+                operation_name=f"Search '{scenario['query']}' in {dataset_size} memories",
             )
-            
+
             # Verify search quality
-            assert len(memories) >= scenario["expected_min"], \
-                f"Expected at least {scenario['expected_min']} results for '{scenario['query']}'"
-            
-            print(f"Search '{scenario['query']}': {len(memories)} results in {search_time:.3f}s")
+            assert (
+                len(memories) >= scenario["expected_min"]
+            ), f"Expected at least {scenario['expected_min']} results for '{scenario['query']}'"
+
+            print(
+                f"Search '{scenario['query']}': {len(memories)} results in {search_time:.3f}s"
+            )
 
     @pytest.mark.performance
     def test_memory_statistics_performance(
@@ -268,29 +283,31 @@ class TestMemoryPerformance:
         TestHelpers.populate_test_database(
             performance_memory_manager,
             sample_memories * 50,  # 250 memories
-            namespace="stats_test"
+            namespace="stats_test",
         )
-        
+
         # Test statistics calculation performance
         start_time = time.time()
-        
+
         stats = performance_memory_manager.get_memory_statistics(namespace="stats_test")
-        
+
         end_time = time.time()
         execution_time = end_time - start_time
-        
+
         # Performance assertion
         AssertionHelpers.assert_performance_acceptable(
             execution_time,
             max_time=1.0,  # Should complete within 1 second
-            operation_name="Memory statistics calculation"
+            operation_name="Memory statistics calculation",
         )
-        
+
         # Verify statistics are valid
         TestHelpers.assert_valid_statistics(stats)
         assert stats["total_memories"] >= 250
-        
-        print(f"Statistics calculation: {execution_time:.3f}s for {stats['total_memories']} memories")
+
+        print(
+            f"Statistics calculation: {execution_time:.3f}s for {stats['total_memories']} memories"
+        )
 
     @pytest.mark.performance
     def test_database_cleanup_performance(
@@ -299,43 +316,43 @@ class TestMemoryPerformance:
         """Test performance of database cleanup operations."""
         # Populate with test data
         sample_memories = SampleData.get_sample_processed_memories()
-        
+
         # Create memories with short-term retention for cleanup testing
         short_term_memories = []
         for memory in sample_memories:
             # Modify to short-term retention
             memory.importance.retention_type = "short_term"
             short_term_memories.append(memory)
-        
+
         TestHelpers.populate_test_database(
             performance_memory_manager,
             short_term_memories * 20,  # 100 memories
-            namespace="cleanup_test"
+            namespace="cleanup_test",
         )
-        
+
         # Test cleanup performance
         start_time = time.time()
-        
+
         cleaned_count = performance_memory_manager.cleanup_old_memories(
             namespace="cleanup_test",
             days_threshold=0,  # Clean everything
             retention_type="short_term",
         )
-        
+
         end_time = time.time()
         execution_time = end_time - start_time
-        
+
         # Performance assertion
         AssertionHelpers.assert_performance_acceptable(
             execution_time,
             max_time=5.0,  # Should complete within 5 seconds
-            operation_name=f"Cleanup of {cleaned_count} memories"
+            operation_name=f"Cleanup of {cleaned_count} memories",
         )
-        
+
         # Verify cleanup worked
         assert isinstance(cleaned_count, int)
         assert cleaned_count >= 0
-        
+
         print(f"Cleanup: {cleaned_count} memories cleaned in {execution_time:.3f}s")
 
     @pytest.mark.performance
@@ -345,7 +362,7 @@ class TestMemoryPerformance:
     ):
         """Benchmark memory operations using pytest-benchmark."""
         sample_memory = SampleData.get_sample_processed_memories()[0]
-        
+
         # Benchmark memory storage
         def store_memory():
             return performance_memory_manager.store_memory(
@@ -353,25 +370,23 @@ class TestMemoryPerformance:
                 session_id="benchmark_session",
                 namespace="benchmark_test",
             )
-        
+
         # Run benchmark
         result = benchmark(store_memory)
         assert result is not None
-        
-        print(f"Memory storage benchmark completed")
+
+        print("Memory storage benchmark completed")
 
     @pytest.mark.performance
-    def test_memory_throughput_stress(
-        self, performance_memory_manager: MemoryManager
-    ):
+    def test_memory_throughput_stress(self, performance_memory_manager: MemoryManager):
         """Stress test memory throughput with sustained load."""
         sample_memories = SampleData.get_sample_processed_memories()
         stress_duration = 10  # seconds
         operations_count = 0
         errors = []
-        
+
         start_time = time.time()
-        
+
         while time.time() - start_time < stress_duration:
             try:
                 # Store memory
@@ -381,7 +396,7 @@ class TestMemoryPerformance:
                     session_id=f"stress_session_{operations_count}",
                     namespace="stress_test",
                 )
-                
+
                 # Occasionally retrieve memories
                 if operations_count % 10 == 0:
                     memories = performance_memory_manager.retrieve_memories(
@@ -389,32 +404,36 @@ class TestMemoryPerformance:
                         namespace="stress_test",
                         limit=5,
                     )
-                
+
                 operations_count += 1
-                
+
             except Exception as e:
-                errors.append({
-                    "operation": operations_count,
-                    "error": str(e),
-                    "timestamp": time.time(),
-                })
-        
+                errors.append(
+                    {
+                        "operation": operations_count,
+                        "error": str(e),
+                        "timestamp": time.time(),
+                    }
+                )
+
         end_time = time.time()
         actual_duration = end_time - start_time
-        
+
         # Calculate throughput
         throughput = operations_count / actual_duration
-        
+
         # Verify no critical errors
         error_rate = len(errors) / operations_count if operations_count > 0 else 0
-        assert error_rate < 0.05, f"Error rate too high: {error_rate:.2%} ({len(errors)} errors)"
-        
+        assert (
+            error_rate < 0.05
+        ), f"Error rate too high: {error_rate:.2%} ({len(errors)} errors)"
+
         # Verify minimum throughput
         assert throughput >= 10, f"Throughput too low: {throughput:.2f} ops/second"
-        
+
         print(f"Stress test: {operations_count} operations in {actual_duration:.3f}s")
         print(f"Throughput: {throughput:.2f} ops/second")
         print(f"Error rate: {error_rate:.2%}")
-        
+
         if errors:
             print(f"Errors encountered: {errors[:5]}...")  # Show first 5 errors

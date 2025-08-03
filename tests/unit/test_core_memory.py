@@ -2,22 +2,21 @@
 Unit tests for memoriai.core.memory module.
 """
 
-import pytest
-from unittest.mock import Mock, patch
-from datetime import datetime
-from typing import List, Dict, Any
+from unittest.mock import patch
 
-from memoriai.core.memory import MemoryManager
+import pytest
+
 from memoriai.core.database import DatabaseManager
+from memoriai.core.memory import MemoryManager
+from memoriai.utils.exceptions import MemoryRetrievalError, MemoryStorageError
 from memoriai.utils.pydantic_models import (
-    ProcessedMemory,
-    MemoryCategory,
-    MemoryImportance,
     ExtractedEntities,
+    MemoryCategory,
     MemoryCategoryType,
+    MemoryImportance,
+    ProcessedMemory,
     RetentionType,
 )
-from memoriai.utils.exceptions import MemoryStorageError, MemoryRetrievalError
 
 
 class TestMemoryManager:
@@ -38,7 +37,7 @@ class TestMemoryManager:
             session_id="test_session",
             namespace="test_namespace",
         )
-        
+
         assert memory_id is not None
         assert isinstance(memory_id, str)
         assert len(memory_id) > 0
@@ -62,14 +61,14 @@ class TestMemoryManager:
             session_id="test_session",
             namespace="test_namespace",
         )
-        
+
         # Retrieve memories
         memories = memory_manager.retrieve_memories(
             query="Python Django",
             namespace="test_namespace",
             limit=10,
         )
-        
+
         assert isinstance(memories, list)
         # Should find at least one memory
         assert len(memories) >= 0
@@ -84,14 +83,14 @@ class TestMemoryManager:
             session_id="test_session",
             namespace="test_namespace",
         )
-        
+
         # Retrieve memories by category
         memories = memory_manager.retrieve_memories_by_category(
             category=MemoryCategoryType.fact,
             namespace="test_namespace",
             limit=10,
         )
-        
+
         assert isinstance(memories, list)
 
     def test_get_memory_statistics(
@@ -104,9 +103,9 @@ class TestMemoryManager:
             session_id="test_session",
             namespace="test_namespace",
         )
-        
+
         stats = memory_manager.get_memory_statistics(namespace="test_namespace")
-        
+
         assert isinstance(stats, dict)
         assert "total_memories" in stats
         assert "memory_categories" in stats
@@ -123,7 +122,7 @@ class TestMemoryManager:
             session_id="test_session",
             namespace="test_namespace",
         )
-        
+
         # Delete the memory
         result = memory_manager.delete_memory(memory_id, namespace="test_namespace")
         assert result is True
@@ -138,14 +137,14 @@ class TestMemoryManager:
             session_id="test_session",
             namespace="test_namespace",
         )
-        
+
         # Update importance
         new_importance = MemoryImportance(
             importance_score=0.95,
             retention_type=RetentionType.permanent,
             reasoning="Updated to permanent retention",
         )
-        
+
         result = memory_manager.update_memory_importance(
             memory_id=memory_id,
             new_importance=new_importance,
@@ -163,7 +162,7 @@ class TestMemoryManager:
             session_id="test_session",
             namespace="test_namespace",
         )
-        
+
         # Search with filters
         memories = memory_manager.search_memories(
             query="Django",
@@ -172,7 +171,7 @@ class TestMemoryManager:
             importance_threshold=0.5,
             limit=10,
         )
-        
+
         assert isinstance(memories, list)
 
     def test_get_related_memories(
@@ -185,14 +184,14 @@ class TestMemoryManager:
             session_id="test_session",
             namespace="test_namespace",
         )
-        
+
         # Find related memories
         related = memory_manager.get_related_memories(
             memory_id=memory_id,
             namespace="test_namespace",
             limit=5,
         )
-        
+
         assert isinstance(related, list)
 
     def test_cleanup_old_memories(self, memory_manager: MemoryManager):
@@ -206,13 +205,16 @@ class TestMemoryManager:
         assert isinstance(result, int)
         assert result >= 0
 
-    @patch('memoriai.core.memory.MemoryManager.store_memory')
+    @patch("memoriai.core.memory.MemoryManager.store_memory")
     def test_store_memory_database_error(
-        self, mock_store, memory_manager: MemoryManager, sample_processed_memory: ProcessedMemory
+        self,
+        mock_store,
+        memory_manager: MemoryManager,
+        sample_processed_memory: ProcessedMemory,
     ):
         """Test handling of database errors during storage."""
         mock_store.side_effect = Exception("Database connection failed")
-        
+
         with pytest.raises(MemoryStorageError):
             memory_manager.store_memory(
                 processed_memory=sample_processed_memory,
@@ -220,13 +222,13 @@ class TestMemoryManager:
                 namespace="test_namespace",
             )
 
-    @patch('memoriai.core.memory.MemoryManager.retrieve_memories')
+    @patch("memoriai.core.memory.MemoryManager.retrieve_memories")
     def test_retrieve_memories_database_error(
         self, mock_retrieve, memory_manager: MemoryManager
     ):
         """Test handling of database errors during retrieval."""
         mock_retrieve.side_effect = Exception("Database query failed")
-        
+
         with pytest.raises(MemoryRetrievalError):
             memory_manager.retrieve_memories(
                 query="test query",
@@ -253,7 +255,7 @@ class TestMemoryManager:
             should_store=True,
             storage_reasoning="Test storage reasoning",
         )
-        
+
         with pytest.raises(ValueError):
             memory_manager.store_memory(
                 processed_memory=invalid_memory,
@@ -271,16 +273,16 @@ class TestMemoryManager:
             session_id="test_session",
             namespace="namespace1",
         )
-        
+
         # Try to retrieve from namespace2
         memories_ns2 = memory_manager.retrieve_memories(
             query="Django",
             namespace="namespace2",
         )
-        
+
         # Should not find memories from namespace1
         assert len(memories_ns2) == 0
-        
+
         # Should find memories in namespace1
         memories_ns1 = memory_manager.retrieve_memories(
             query="Django",
@@ -288,9 +290,7 @@ class TestMemoryManager:
         )
         assert len(memories_ns1) >= 0
 
-    def test_memory_ranking(
-        self, memory_manager: MemoryManager
-    ):
+    def test_memory_ranking(self, memory_manager: MemoryManager):
         """Test memory ranking and sorting."""
         # Create memories with different importance scores
         high_importance_memory = ProcessedMemory(
@@ -313,7 +313,7 @@ class TestMemoryManager:
             should_store=True,
             storage_reasoning="High importance",
         )
-        
+
         low_importance_memory = ProcessedMemory(
             category=MemoryCategory(
                 primary_category=MemoryCategoryType.context,
@@ -334,26 +334,26 @@ class TestMemoryManager:
             should_store=True,
             storage_reasoning="Low importance",
         )
-        
+
         # Store both memories
         memory_manager.store_memory(
             processed_memory=high_importance_memory,
             session_id="test_session",
             namespace="test_namespace",
         )
-        
+
         memory_manager.store_memory(
             processed_memory=low_importance_memory,
             session_id="test_session",
             namespace="test_namespace",
         )
-        
+
         # Retrieve memories and check ranking
         memories = memory_manager.retrieve_memories(
             query="importance",
             namespace="test_namespace",
             limit=10,
         )
-        
+
         # Should return results (exact ordering depends on implementation)
         assert isinstance(memories, list)

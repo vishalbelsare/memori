@@ -2,16 +2,16 @@
 Sample data fixtures for testing.
 """
 
-from typing import Dict, List, Any
 from datetime import datetime, timedelta
+from typing import Any, Dict, List
 
 from memoriai.utils.pydantic_models import (
-    ProcessedMemory,
-    MemoryCategory,
-    MemoryImportance,
-    ExtractedEntities,
     ConversationRecord,
+    ExtractedEntities,
+    MemoryCategory,
     MemoryCategoryType,
+    MemoryImportance,
+    ProcessedMemory,
     RetentionType,
 )
 
@@ -93,7 +93,13 @@ class SampleData:
                 entities=ExtractedEntities(
                     technologies=["Django", "Python"],
                     topics=["web development", "database modeling", "ORM"],
-                    keywords=["Django", "model", "models.Model", "CharField", "EmailField"],
+                    keywords=[
+                        "Django",
+                        "model",
+                        "models.Model",
+                        "CharField",
+                        "EmailField",
+                    ],
                     organizations=["Django Software Foundation"],
                 ),
                 importance=MemoryImportance(
@@ -157,7 +163,13 @@ class SampleData:
                 entities=ExtractedEntities(
                     technologies=["Django", "Python", "PostgreSQL"],
                     topics=["database optimization", "performance", "web development"],
-                    keywords=["select_related", "prefetch_related", "N+1", "queries", "optimization"],
+                    keywords=[
+                        "select_related",
+                        "prefetch_related",
+                        "N+1",
+                        "queries",
+                        "optimization",
+                    ],
                 ),
                 importance=MemoryImportance(
                     importance_score=0.9,
@@ -197,7 +209,7 @@ class SampleData:
         """Get sample conversation record objects."""
         conversations = SampleData.get_sample_conversations()
         records = []
-        
+
         for i, conv in enumerate(conversations):
             record = ConversationRecord(
                 chat_id=f"chat_{i+1:03d}",
@@ -209,7 +221,7 @@ class SampleData:
                 metadata=conv["metadata"],
             )
             records.append(record)
-        
+
         return records
 
     @staticmethod
@@ -219,8 +231,18 @@ class SampleData:
             ExtractedEntities(
                 people=["John Doe", "Jane Smith", "Alice Johnson"],
                 technologies=["Python", "Django", "PostgreSQL", "Redis", "Docker"],
-                topics=["web development", "machine learning", "data science", "DevOps"],
-                keywords=["optimization", "performance", "scalability", "best practices"],
+                topics=[
+                    "web development",
+                    "machine learning",
+                    "data science",
+                    "DevOps",
+                ],
+                keywords=[
+                    "optimization",
+                    "performance",
+                    "scalability",
+                    "best practices",
+                ],
                 locations=["San Francisco", "New York", "London", "Remote"],
                 organizations=["Google", "Microsoft", "OpenAI", "Anthropic"],
             ),
@@ -287,7 +309,10 @@ class SampleData:
                 "query": "machine learning TensorFlow",
                 "namespace": "ml_project",
                 "limit": 15,
-                "category_filter": [MemoryCategoryType.fact, MemoryCategoryType.context],
+                "category_filter": [
+                    MemoryCategoryType.fact,
+                    MemoryCategoryType.context,
+                ],
                 "importance_threshold": 0.6,
             },
             {
@@ -304,16 +329,30 @@ class SampleData:
         """Generate a large dataset of processed memories for testing."""
         base_memories = SampleData.get_sample_processed_memories()
         large_dataset = []
-        
+
         categories = list(MemoryCategoryType)
         retention_types = list(RetentionType)
-        technologies = ["Python", "JavaScript", "Java", "C++", "Go", "Rust", "TypeScript"]
-        topics = ["web development", "machine learning", "data science", "DevOps", "mobile development"]
-        
+        technologies = [
+            "Python",
+            "JavaScript",
+            "Java",
+            "C++",
+            "Go",
+            "Rust",
+            "TypeScript",
+        ]
+        topics = [
+            "web development",
+            "machine learning",
+            "data science",
+            "DevOps",
+            "mobile development",
+        ]
+
         for i in range(size):
             # Use base memories as templates and modify them
             base_memory = base_memories[i % len(base_memories)]
-            
+
             # Create variations
             memory = ProcessedMemory(
                 category=MemoryCategory(
@@ -336,7 +375,7 @@ class SampleData:
                 should_store=i % 4 != 0,  # 75% should be stored
                 storage_reasoning=f"Generated storage reasoning {i}",
             )
-            
+
             large_dataset.append(memory)
-        
+
         return large_dataset

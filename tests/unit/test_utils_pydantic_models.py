@@ -2,22 +2,21 @@
 Unit tests for memoriai.utils.pydantic_models module.
 """
 
-import pytest
 from datetime import datetime
-from typing import List, Optional
 
+import pytest
 from pydantic import ValidationError
 
 from memoriai.utils.pydantic_models import (
-    MemoryCategory,
-    MemoryImportance,
-    ExtractedEntities,
-    ProcessedMemory,
-    MemoryCategoryType,
-    RetentionType,
     ConversationRecord,
-    SearchQuery,
+    ExtractedEntities,
+    MemoryCategory,
+    MemoryCategoryType,
+    MemoryImportance,
     MemoryRecord,
+    ProcessedMemory,
+    RetentionType,
+    SearchQuery,
 )
 
 
@@ -31,10 +30,12 @@ class TestMemoryCategory:
             confidence_score=0.85,
             reasoning="This contains factual information about programming",
         )
-        
+
         assert category.primary_category == MemoryCategoryType.fact
         assert category.confidence_score == 0.85
-        assert category.reasoning == "This contains factual information about programming"
+        assert (
+            category.reasoning == "This contains factual information about programming"
+        )
 
     def test_memory_category_confidence_score_validation(self):
         """Test confidence score validation."""
@@ -47,7 +48,7 @@ class TestMemoryCategory:
                 reasoning="Test reasoning",
             )
             assert category.confidence_score == score
-        
+
         # Invalid scores
         invalid_scores = [-0.1, 1.1, 2.0, -1.0]
         for score in invalid_scores:
@@ -67,7 +68,7 @@ class TestMemoryCategory:
             MemoryCategoryType.context,
             MemoryCategoryType.rule,
         ]
-        
+
         for cat_type in categories:
             category = MemoryCategory(
                 primary_category=cat_type,
@@ -87,7 +88,7 @@ class TestMemoryImportance:
             retention_type=RetentionType.long_term,
             reasoning="Important for future reference",
         )
-        
+
         assert importance.importance_score == 0.7
         assert importance.retention_type == RetentionType.long_term
         assert importance.reasoning == "Important for future reference"
@@ -103,7 +104,7 @@ class TestMemoryImportance:
                 reasoning="Test reasoning",
             )
             assert importance.importance_score == score
-        
+
         # Invalid scores
         invalid_scores = [-0.1, 1.1, 2.0]
         for score in invalid_scores:
@@ -121,7 +122,7 @@ class TestMemoryImportance:
             RetentionType.long_term,
             RetentionType.permanent,
         ]
-        
+
         for ret_type in retention_types:
             importance = MemoryImportance(
                 importance_score=0.5,
@@ -137,7 +138,7 @@ class TestExtractedEntities:
     def test_extracted_entities_empty(self):
         """Test creating empty ExtractedEntities."""
         entities = ExtractedEntities()
-        
+
         assert entities.people == []
         assert entities.technologies == []
         assert entities.topics == []
@@ -155,7 +156,7 @@ class TestExtractedEntities:
             locations=["San Francisco", "New York"],
             organizations=["Google", "Microsoft"],
         )
-        
+
         assert entities.people == ["John Doe", "Jane Smith"]
         assert entities.technologies == ["Python", "Django", "PostgreSQL"]
         assert entities.topics == ["web development", "database design"]
@@ -169,7 +170,7 @@ class TestExtractedEntities:
             people=["John Doe", "John Doe", "Jane Smith"],
             technologies=["Python", "Python", "Django"],
         )
-        
+
         # Note: Deduplication logic would be in the business logic, not the model
         # But we can test that duplicates are preserved in the model if needed
         assert len(entities.people) == 3
@@ -202,7 +203,7 @@ class TestProcessedMemory:
             should_store=True,
             storage_reasoning="Contains valuable technical information",
         )
-        
+
         assert memory.category.primary_category == MemoryCategoryType.fact
         assert memory.entities.technologies == ["Python", "FastAPI"]
         assert memory.importance.importance_score == 0.8
@@ -228,7 +229,7 @@ class TestProcessedMemory:
             should_store=False,
             storage_reasoning="Not important enough to store",
         )
-        
+
         assert memory.should_store is False
         assert memory.importance.retention_type == RetentionType.short_term
 
@@ -268,7 +269,7 @@ class TestConversationRecord:
             session_id="session_456",
             namespace="default",
         )
-        
+
         assert record.chat_id == "chat_123"
         assert record.user_input == "What is Python?"
         assert record.ai_output == "Python is a programming language."
@@ -284,7 +285,7 @@ class TestConversationRecord:
             "response_time": 1.5,
             "temperature": 0.7,
         }
-        
+
         record = ConversationRecord(
             chat_id="chat_123",
             user_input="Test input",
@@ -294,7 +295,7 @@ class TestConversationRecord:
             namespace="test",
             metadata=metadata,
         )
-        
+
         assert record.metadata == metadata
         assert record.metadata["tokens_used"] == 50
 
@@ -308,7 +309,7 @@ class TestConversationRecord:
             session_id="session_456",
             namespace="default",
         )
-        
+
         assert isinstance(record.timestamp, datetime)
         # Should be recent (within last few seconds)
         time_diff = datetime.utcnow() - record.timestamp
@@ -324,7 +325,7 @@ class TestSearchQuery:
             query_text="Python programming",
             namespace="default",
         )
-        
+
         assert query.query_text == "Python programming"
         assert query.namespace == "default"
         assert query.limit == 10  # Default
@@ -340,9 +341,12 @@ class TestSearchQuery:
             category_filter=[MemoryCategoryType.fact, MemoryCategoryType.skill],
             importance_threshold=0.7,
         )
-        
+
         assert query.limit == 20
-        assert query.category_filter == [MemoryCategoryType.fact, MemoryCategoryType.skill]
+        assert query.category_filter == [
+            MemoryCategoryType.fact,
+            MemoryCategoryType.skill,
+        ]
         assert query.importance_threshold == 0.7
 
     def test_search_query_validation(self):
@@ -354,7 +358,7 @@ class TestSearchQuery:
                 namespace="default",
                 limit=0,  # Invalid
             )
-        
+
         # Test invalid importance threshold
         with pytest.raises(ValidationError):
             SearchQuery(
@@ -378,7 +382,7 @@ class TestMemoryRecord:
             session_id="session_456",
             namespace="default",
         )
-        
+
         assert record.memory_id == "mem_123"
         assert record.summary == "Test memory summary"
         assert record.category == MemoryCategoryType.fact
@@ -392,7 +396,7 @@ class TestMemoryRecord:
             technologies=["Python"],
             topics=["programming"],
         )
-        
+
         record = MemoryRecord(
             memory_id="mem_123",
             summary="Python programming discussion",
@@ -403,7 +407,7 @@ class TestMemoryRecord:
             namespace="default",
             entities=entities,
         )
-        
+
         assert record.entities == entities
         assert record.entities.technologies == ["Python"]
 
@@ -447,17 +451,17 @@ class TestModelSerialization:
             should_store=True,
             storage_reasoning="Test storage",
         )
-        
+
         # Serialize to JSON
         json_str = memory.model_dump_json()
         assert isinstance(json_str, str)
         assert "fact" in json_str
         assert "Python" in json_str
-        
+
         # Deserialize from JSON
         memory_dict = memory.model_dump()
         restored_memory = ProcessedMemory(**memory_dict)
-        
+
         assert restored_memory.category.primary_category == MemoryCategoryType.fact
         assert restored_memory.entities.technologies == ["Python"]
         assert restored_memory.importance.importance_score == 0.8
@@ -472,12 +476,12 @@ class TestModelSerialization:
             session_id="session_456",
             namespace="default",
         )
-        
+
         # Serialize to dict
         record_dict = record.model_dump()
         assert isinstance(record_dict, dict)
         assert record_dict["chat_id"] == "chat_123"
-        
+
         # Deserialize from dict
         restored_record = ConversationRecord(**record_dict)
         assert restored_record.chat_id == "chat_123"

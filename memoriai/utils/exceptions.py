@@ -3,8 +3,8 @@ Custom exceptions for Memoriai with comprehensive error handling
 """
 
 import traceback
-from typing import Any, Dict, Optional, Union
 from datetime import datetime
+from typing import Any, Dict, Optional, Union
 
 
 class MemoriError(Exception):
@@ -76,8 +76,9 @@ class DatabaseError(MemoriError):
     def _sanitize_connection_string(conn_str: str) -> str:
         """Remove credentials from connection string for safe logging"""
         import re
+
         # Remove password from connection strings
-        sanitized = re.sub(r'://[^:]+:[^@]+@', '://***:***@', conn_str)
+        sanitized = re.sub(r"://[^:]+:[^@]+@", "://***:***@", conn_str)
         return sanitized
 
 
@@ -287,8 +288,10 @@ class ProcessingError(MemoriError):
             context["processing_stage"] = processing_stage
         if input_data:
             # Sanitize potentially sensitive data
-            sanitized_data = {k: (v if k not in ["api_key", "password", "secret"] else "***") 
-                            for k, v in input_data.items()}
+            sanitized_data = {
+                k: (v if k not in ["api_key", "password", "secret"] else "***")
+                for k, v in input_data.items()
+            }
             context["input_data"] = sanitized_data
 
         super().__init__(
@@ -357,11 +360,13 @@ class ExceptionHandler:
     """Centralized exception handling utilities"""
 
     @staticmethod
-    def handle_database_exception(e: Exception, query: Optional[str] = None) -> DatabaseError:
+    def handle_database_exception(
+        e: Exception, query: Optional[str] = None
+    ) -> DatabaseError:
         """Convert generic exception to DatabaseError with context"""
         if isinstance(e, DatabaseError):
             return e
-        
+
         return DatabaseError(
             message=f"Database operation failed: {str(e)}",
             query=query,
@@ -369,11 +374,13 @@ class ExceptionHandler:
         )
 
     @staticmethod
-    def handle_agent_exception(e: Exception, agent_type: Optional[str] = None) -> AgentError:
+    def handle_agent_exception(
+        e: Exception, agent_type: Optional[str] = None
+    ) -> AgentError:
         """Convert generic exception to AgentError with context"""
         if isinstance(e, AgentError):
             return e
-        
+
         return AgentError(
             message=f"Agent operation failed: {str(e)}",
             agent_type=agent_type,
@@ -381,11 +388,13 @@ class ExceptionHandler:
         )
 
     @staticmethod
-    def handle_validation_exception(e: Exception, field_name: Optional[str] = None) -> ValidationError:
+    def handle_validation_exception(
+        e: Exception, field_name: Optional[str] = None
+    ) -> ValidationError:
         """Convert generic exception to ValidationError with context"""
         if isinstance(e, ValidationError):
             return e
-        
+
         return ValidationError(
             message=f"Validation failed: {str(e)}",
             field_name=field_name,
@@ -397,12 +406,13 @@ class ExceptionHandler:
         """Log exception with full context"""
         if logger is None:
             from .logging import get_logger
+
             logger = get_logger("exceptions")
-        
+
         logger.error(
             f"Exception occurred: {exception.error_code}",
             extra={
                 "exception_data": exception.to_dict(),
                 "error_type": exception.__class__.__name__,
-            }
+            },
         )

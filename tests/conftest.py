@@ -6,20 +6,20 @@ import os
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Dict, Generator, Any
+from typing import Any, Dict, Generator
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from memoriai.config.settings import MemoriSettings, DatabaseSettings
+from memoriai.config.settings import DatabaseSettings, MemoriSettings
 from memoriai.core.database import DatabaseManager
 from memoriai.core.memory import MemoryManager
 from memoriai.utils.pydantic_models import (
-    ProcessedMemory,
-    MemoryCategory,
-    MemoryImportance,
     ExtractedEntities,
+    MemoryCategory,
     MemoryCategoryType,
+    MemoryImportance,
+    ProcessedMemory,
     RetentionType,
 )
 
@@ -208,13 +208,9 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
     config.addinivalue_line("markers", "unit: marks tests as unit tests")
-    config.addinivalue_line(
-        "markers", "performance: marks tests as performance tests"
-    )
+    config.addinivalue_line("markers", "performance: marks tests as performance tests")
 
 
 def pytest_collection_modifyitems(config, items):

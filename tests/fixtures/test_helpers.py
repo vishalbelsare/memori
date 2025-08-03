@@ -3,14 +3,13 @@ Test helper functions and utilities.
 """
 
 import json
-import tempfile
 import os
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Generator
-from unittest.mock import Mock, patch
+import tempfile
 from contextlib import contextmanager
+from typing import Any, Dict, Generator, List, Optional
+from unittest.mock import Mock, patch
 
-from memoriai.config.settings import MemoriSettings, DatabaseSettings
+from memoriai.config.settings import DatabaseSettings, MemoriSettings
 from memoriai.core.database import DatabaseManager
 from memoriai.core.memory import MemoryManager
 from memoriai.utils.pydantic_models import ProcessedMemory
@@ -21,31 +20,28 @@ class TestHelpers:
 
     @staticmethod
     def create_test_database_manager(
-        connection_string: Optional[str] = None,
-        **kwargs
+        connection_string: Optional[str] = None, **kwargs
     ) -> DatabaseManager:
         """Create a test database manager with appropriate settings."""
         if connection_string is None:
             connection_string = "sqlite:///:memory:"
-        
+
         settings = DatabaseSettings(
-            connection_string=connection_string,
-            echo=False,
-            **kwargs
+            connection_string=connection_string, echo=False, **kwargs
         )
-        
+
         manager = DatabaseManager(settings)
         manager.initialize_database()
         return manager
 
     @staticmethod
     def create_test_memory_manager(
-        db_manager: Optional[DatabaseManager] = None
+        db_manager: Optional[DatabaseManager] = None,
     ) -> MemoryManager:
         """Create a test memory manager."""
         if db_manager is None:
             db_manager = TestHelpers.create_test_database_manager()
-        
+
         return MemoryManager(db_manager)
 
     @staticmethod
@@ -54,7 +50,7 @@ class TestHelpers:
         """Create a temporary database file for testing."""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
             temp_path = f.name
-        
+
         try:
             yield temp_path
         finally:
@@ -66,11 +62,11 @@ class TestHelpers:
         memory_manager: MemoryManager,
         memories: List[ProcessedMemory],
         namespace: str = "test",
-        session_id: str = "test_session"
+        session_id: str = "test_session",
     ) -> List[str]:
         """Populate test database with sample memories."""
         memory_ids = []
-        
+
         for memory in memories:
             memory_id = memory_manager.store_memory(
                 processed_memory=memory,
@@ -78,37 +74,35 @@ class TestHelpers:
                 namespace=namespace,
             )
             memory_ids.append(memory_id)
-        
+
         return memory_ids
 
     @staticmethod
     def assert_memory_equals(
-        actual: Dict[str, Any],
-        expected: ProcessedMemory,
-        check_id: bool = False
+        actual: Dict[str, Any], expected: ProcessedMemory, check_id: bool = False
     ) -> None:
         """Assert that a retrieved memory matches the expected ProcessedMemory."""
         if not check_id:
             # Remove ID from comparison if not checking it
             actual = {k: v for k, v in actual.items() if k != "memory_id"}
-        
+
         assert actual["summary"] == expected.summary
         assert actual["searchable_content"] == expected.searchable_content
         assert actual["should_store"] == expected.should_store
-        
+
         # Check category
         assert actual["category"] == expected.category.primary_category.value
-        
+
         # Check importance
-        assert abs(actual["importance_score"] - expected.importance.importance_score) < 0.01
+        assert (
+            abs(actual["importance_score"] - expected.importance.importance_score)
+            < 0.01
+        )
         assert actual["retention_type"] == expected.importance.retention_type.value
 
     @staticmethod
     def create_mock_llm_response(
-        content: str,
-        model: str = "test-model",
-        tokens_used: int = 100,
-        **kwargs
+        content: str, model: str = "test-model", tokens_used: int = 100, **kwargs
     ) -> Dict[str, Any]:
         """Create a mock LLM response for testing."""
         return {
@@ -119,47 +113,47 @@ class TestHelpers:
             "choices": [
                 {
                     "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": content
-                    },
-                    "finish_reason": "stop"
+                    "message": {"role": "assistant", "content": content},
+                    "finish_reason": "stop",
                 }
             ],
             "usage": {
                 "prompt_tokens": tokens_used // 2,
                 "completion_tokens": tokens_used // 2,
-                "total_tokens": tokens_used
+                "total_tokens": tokens_used,
             },
-            **kwargs
+            **kwargs,
         }
 
     @staticmethod
     def create_mock_memory_manager() -> Mock:
         """Create a mock memory manager for testing."""
         mock_manager = Mock()
-        
+
         # Setup common method returns
         mock_manager.store_memory.return_value = "test_memory_id_123"
         mock_manager.retrieve_memories.return_value = []
         mock_manager.get_memory_statistics.return_value = {
             "total_memories": 0,
             "memory_categories": {},
-            "retention_types": {}
+            "retention_types": {},
         }
         mock_manager.process_conversation.return_value = "test_memory_id_456"
-        
+
         return mock_manager
 
     @staticmethod
     def create_test_config(
-        temp_db_path: Optional[str] = None,
-        **overrides
+        temp_db_path: Optional[str] = None, **overrides
     ) -> MemoriSettings:
         """Create test configuration."""
         config = {
             "database": {
-                "connection_string": f"sqlite:///{temp_db_path}" if temp_db_path else "sqlite:///:memory:",
+                "connection_string": (
+                    f"sqlite:///{temp_db_path}"
+                    if temp_db_path
+                    else "sqlite:///:memory:"
+                ),
                 "echo": False,
             },
             "agents": {
@@ -175,10 +169,10 @@ class TestHelpers:
                 "level": "WARNING",  # Reduce noise in tests
             },
         }
-        
+
         # Apply overrides
         config.update(overrides)
-        
+
         return MemoriSettings(**config)
 
     @staticmethod
@@ -195,7 +189,7 @@ class TestHelpers:
         assert "total_memories" in stats
         assert "memory_categories" in stats
         assert "retention_types" in stats
-        
+
         assert isinstance(stats["total_memories"], int)
         assert stats["total_memories"] >= 0
         assert isinstance(stats["memory_categories"], dict)
@@ -205,45 +199,45 @@ class TestHelpers:
     def create_test_session_context(
         session_id: str = "test_session",
         namespace: str = "test_namespace",
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None,
     ) -> Dict[str, str]:
         """Create test session context."""
         context = {
             "session_id": session_id,
             "namespace": namespace,
         }
-        
+
         if user_id:
             context["user_id"] = user_id
-        
+
         return context
 
     @staticmethod
     def wait_for_condition(
-        condition_func,
-        timeout: float = 5.0,
-        interval: float = 0.1
+        condition_func, timeout: float = 5.0, interval: float = 0.1
     ) -> bool:
         """Wait for a condition to become true."""
         import time
-        
+
         start_time = time.time()
         while time.time() - start_time < timeout:
             if condition_func():
                 return True
             time.sleep(interval)
-        
+
         return False
 
     @staticmethod
     def compare_memories_list(
         actual: List[Dict[str, Any]],
         expected: List[ProcessedMemory],
-        ordered: bool = False
+        ordered: bool = False,
     ) -> None:
         """Compare a list of retrieved memories with expected ProcessedMemory objects."""
-        assert len(actual) == len(expected), f"Expected {len(expected)} memories, got {len(actual)}"
-        
+        assert len(actual) == len(
+            expected
+        ), f"Expected {len(expected)} memories, got {len(actual)}"
+
         if ordered:
             # Compare in order
             for i, (actual_memory, expected_memory) in enumerate(zip(actual, expected)):
@@ -258,47 +252,44 @@ class TestHelpers:
     def create_performance_dataset(size: int) -> List[ProcessedMemory]:
         """Create a dataset for performance testing."""
         from .sample_data import SampleData
+
         return SampleData.get_large_dataset(size)
 
     @staticmethod
     def measure_execution_time(func, *args, **kwargs) -> tuple:
         """Measure execution time of a function."""
         import time
-        
+
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
-        
+
         execution_time = end_time - start_time
         return result, execution_time
 
     @staticmethod
-    def create_file_with_content(
-        directory: str,
-        filename: str,
-        content: str
-    ) -> str:
+    def create_file_with_content(directory: str, filename: str, content: str) -> str:
         """Create a file with specified content in a directory."""
         file_path = os.path.join(directory, filename)
         os.makedirs(directory, exist_ok=True)
-        
-        with open(file_path, 'w', encoding='utf-8') as f:
+
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
-        
+
         return file_path
 
     @staticmethod
     def load_json_file(file_path: str) -> Dict[str, Any]:
         """Load JSON content from a file."""
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             return json.load(f)
 
     @staticmethod
     def save_json_file(data: Dict[str, Any], file_path: str) -> None:
         """Save data to a JSON file."""
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        
-        with open(file_path, 'w', encoding='utf-8') as f:
+
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, default=str)
 
     @staticmethod
@@ -335,17 +326,17 @@ class MockHelpers:
     @staticmethod
     def patch_openai_integration():
         """Context manager to patch OpenAI integration."""
-        return patch('memoriai.integrations.openai_integration.openai')
+        return patch("memoriai.integrations.openai_integration.openai")
 
     @staticmethod
     def patch_anthropic_integration():
         """Context manager to patch Anthropic integration."""
-        return patch('memoriai.integrations.anthropic_integration.anthropic')
+        return patch("memoriai.integrations.anthropic_integration.anthropic")
 
     @staticmethod
     def patch_litellm_integration():
         """Context manager to patch LiteLLM integration."""
-        return patch('memoriai.integrations.litellm_integration.litellm')
+        return patch("memoriai.integrations.litellm_integration.litellm")
 
 
 class AssertionHelpers:
@@ -356,49 +347,47 @@ class AssertionHelpers:
         memory_manager: MemoryManager,
         memory_id: str,
         expected_memory: ProcessedMemory,
-        namespace: str = "test"
+        namespace: str = "test",
     ) -> None:
         """Assert that a memory was stored correctly."""
         # Retrieve the memory
         memories = memory_manager.retrieve_memories(
-            query=expected_memory.summary,
-            namespace=namespace,
-            limit=1
+            query=expected_memory.summary, namespace=namespace, limit=1
         )
-        
+
         assert len(memories) > 0, "Memory was not found in storage"
-        
+
         # Find the specific memory by ID
         stored_memory = next(
-            (m for m in memories if m.get("memory_id") == memory_id),
-            None
+            (m for m in memories if m.get("memory_id") == memory_id), None
         )
-        
+
         assert stored_memory is not None, f"Memory with ID {memory_id} not found"
-        
+
         # Compare key fields
         TestHelpers.assert_memory_equals(stored_memory, expected_memory)
 
     @staticmethod
     def assert_entities_extracted(
-        actual_entities: Dict[str, List[str]],
-        expected_entities: Dict[str, List[str]]
+        actual_entities: Dict[str, List[str]], expected_entities: Dict[str, List[str]]
     ) -> None:
         """Assert that entities were extracted correctly."""
         for entity_type, expected_values in expected_entities.items():
-            assert entity_type in actual_entities, f"Entity type {entity_type} not found"
-            
+            assert (
+                entity_type in actual_entities
+            ), f"Entity type {entity_type} not found"
+
             actual_values = actual_entities[entity_type]
             for expected_value in expected_values:
-                assert expected_value in actual_values, \
-                    f"Expected {expected_value} in {entity_type}, got {actual_values}"
+                assert (
+                    expected_value in actual_values
+                ), f"Expected {expected_value} in {entity_type}, got {actual_values}"
 
     @staticmethod
     def assert_performance_acceptable(
-        execution_time: float,
-        max_time: float,
-        operation_name: str = "operation"
+        execution_time: float, max_time: float, operation_name: str = "operation"
     ) -> None:
         """Assert that performance is within acceptable limits."""
-        assert execution_time <= max_time, \
-            f"{operation_name} took {execution_time:.3f}s, expected <= {max_time}s"
+        assert (
+            execution_time <= max_time
+        ), f"{operation_name} took {execution_time:.3f}s, expected <= {max_time}s"
