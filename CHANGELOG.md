@@ -28,6 +28,11 @@ This is a complete architectural overhaul moving from enum-driven function calli
 - **🛠️ Memory Search Tools**: LLM-compatible search tools with `create_memory_search_tool()` for function calling
 - **📊 Comprehensive Analytics**: Memory statistics, entity counts, category breakdowns, and usage metrics
 - **🎭 Multi-Agent Examples**: Complete examples for multi-agent memory systems and cross-agent information sharing
+- **🧠 Conscious Ingestion**: Automatic memory context injection into LLM API calls before execution
+  - Retrieves relevant memories based on user input
+  - Automatically injects context into system messages for OpenAI, Anthropic, and LiteLLM
+  - Configurable context limits and intelligent memory selection
+  - Works seamlessly with existing integration hooks
 
 ### Enhanced
 - **🗄️ Database Architecture**: Complete schema redesign with entity indexing, FTS support, and optimized queries
