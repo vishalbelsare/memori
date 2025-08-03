@@ -2,7 +2,8 @@
 PostgreSQL connector for Memori v1.0
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+
 from loguru import logger
 
 from ...utils.exceptions import DatabaseError

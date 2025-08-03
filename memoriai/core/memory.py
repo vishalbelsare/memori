@@ -2,24 +2,20 @@
 Main Memori class - Pydantic-based memory interface v1.0
 """
 
-from loguru import logger
-from typing import Optional, Dict, Any, List
 import uuid
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from ..utils.pydantic_models import (
-    ConversationContext,
-)
-from ..utils.exceptions import MemoriError, DatabaseError
-from .database import DatabaseManager
+from loguru import logger
+
 from ..agents.memory_agent import MemoryAgent
 from ..agents.retrieval_agent import MemorySearchEngine
-from ..integrations import (
-    install_all_hooks,
-    register_memori_instance,
-    unregister_memori_instance,
-    get_integration_stats,
-)
+from ..integrations import (get_integration_stats, install_all_hooks,
+                            register_memori_instance,
+                            unregister_memori_instance)
+from ..utils.exceptions import DatabaseError, MemoriError
+from ..utils.pydantic_models import ConversationContext
+from .database import DatabaseManager
 
 
 class Memori:

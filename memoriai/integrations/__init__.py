@@ -2,12 +2,10 @@
 Integration modules for auto-recording LLM conversations
 """
 
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 # Import all integrations
-from . import openai_integration
-from . import litellm_integration
-from . import anthropic_integration
+from . import anthropic_integration, litellm_integration, openai_integration
 
 # Available integrations
 AVAILABLE_INTEGRATIONS = {

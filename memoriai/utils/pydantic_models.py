@@ -2,10 +2,11 @@
 Pydantic Models for Structured Memory Processing
 """
 
-from pydantic import BaseModel, Field
-from typing import List, Dict, Optional, Literal
 from datetime import datetime
 from enum import Enum
+from typing import Dict, List, Literal, Optional
+
+from pydantic import BaseModel, Field
 
 
 class MemoryCategoryType(str, Enum):

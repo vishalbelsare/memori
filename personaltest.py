@@ -1,7 +1,9 @@
-from openai import OpenAI
-from dotenv import load_dotenv
-from memoriai import Memori
 import os
+
+from dotenv import load_dotenv
+from openai import OpenAI
+
+from memoriai import Memori
 
 # Load environment variables from .env file
 load_dotenv()

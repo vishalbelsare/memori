@@ -2,20 +2,18 @@
 Database Manager - Pydantic-based memory storage with entity indexing
 """
 
-import sqlite3
 import json
+import sqlite3
 import uuid
-from loguru import logger
-from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..utils.pydantic_models import (
-    ProcessedMemory,
-    MemoryCategoryType,
-    RetentionType,
-)
+from loguru import logger
+
 from ..utils.exceptions import DatabaseError
+from ..utils.pydantic_models import (MemoryCategoryType, ProcessedMemory,
+                                     RetentionType)
 
 
 class DatabaseManager:

@@ -2,7 +2,8 @@
 Anthropic Integration - Automatic conversation recording for Anthropic API calls
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
+
 from loguru import logger
 
 # Global registry for Memori instances

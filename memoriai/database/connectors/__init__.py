@@ -2,8 +2,8 @@
 Database connectors for different database backends
 """
 
-from .sqlite_connector import SQLiteConnector
-from .postgres_connector import PostgreSQLConnector
 from .mysql_connector import MySQLConnector
+from .postgres_connector import PostgreSQLConnector
+from .sqlite_connector import SQLiteConnector
 
 __all__ = ["SQLiteConnector", "PostgreSQLConnector", "MySQLConnector"]

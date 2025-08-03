@@ -2,9 +2,11 @@
 Test script for Memoriai v1.0 - Quick functionality check
 """
 
-from memoriai import Memori, create_memory_search_tool
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
+
+from memoriai import Memori, create_memory_search_tool
 
 load_dotenv()
 

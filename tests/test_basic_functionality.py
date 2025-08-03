@@ -2,17 +2,14 @@
 Basic functionality tests for Memoriai v1.0
 """
 
-import pytest
-import tempfile
 import os
+import tempfile
+
+import pytest
 
 from memoriai import Memori, MemoryCategoryType, RetentionType
-from memoriai.utils.pydantic_models import (
-    ProcessedMemory,
-    MemoryCategory,
-    ExtractedEntities,
-    MemoryImportance,
-)
+from memoriai.utils.pydantic_models import (ExtractedEntities, MemoryCategory,
+                                            MemoryImportance, ProcessedMemory)
 
 
 class TestMemori:

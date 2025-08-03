@@ -3,10 +3,11 @@ Memory Search Engine - Intelligent memory retrieval using Pydantic models
 """
 
 import json
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import openai
 from loguru import logger
-from typing import List, Dict, Any, Optional
-from datetime import datetime
 
 from ..utils.pydantic_models import MemorySearchQuery
 

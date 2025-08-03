@@ -1,16 +1,10 @@
 """Utility modules for Memoriai"""
 
-from .pydantic_models import (
-    ProcessedMemory,
-    MemoryCategory,
-    ExtractedEntities,
-    MemoryImportance,
-    ConversationContext,
-    MemoryCategoryType,
-    RetentionType,
-    EntityType,
-)
-from .exceptions import MemoriError, DatabaseError, AgentError
+from .exceptions import AgentError, DatabaseError, MemoriError
+from .pydantic_models import (ConversationContext, EntityType,
+                              ExtractedEntities, MemoryCategory,
+                              MemoryCategoryType, MemoryImportance,
+                              ProcessedMemory, RetentionType)
 
 __all__ = [
     "ProcessedMemory",

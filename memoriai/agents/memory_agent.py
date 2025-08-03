@@ -3,17 +3,14 @@ Memory Agent - The heart of Memori v1.0
 Pydantic-based memory processing using OpenAI Structured Outputs
 """
 
+from datetime import datetime
+from typing import Any, Dict, Optional
+
 import openai
 from loguru import logger
-from typing import Dict, Any, Optional
-from datetime import datetime
 
-from ..utils.pydantic_models import (
-    ProcessedMemory,
-    ConversationContext,
-    MemoryCategoryType,
-    RetentionType,
-)
+from ..utils.pydantic_models import (ConversationContext, MemoryCategoryType,
+                                     ProcessedMemory, RetentionType)
 
 
 class MemoryAgent:
@@ -280,13 +277,9 @@ CONVERSATION CONTEXT:
 
     def _create_empty_memory(self, chat_id: str, reason: str) -> ProcessedMemory:
         """Create an empty memory object for error cases"""
-        from ..utils.pydantic_models import (
-            MemoryCategory,
-            ExtractedEntities,
-            MemoryImportance,
-            MemoryCategoryType,
-            RetentionType,
-        )
+        from ..utils.pydantic_models import (ExtractedEntities, MemoryCategory,
+                                             MemoryCategoryType,
+                                             MemoryImportance, RetentionType)
 
         return ProcessedMemory(
             category=MemoryCategory(

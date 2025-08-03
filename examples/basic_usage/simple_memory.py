@@ -5,8 +5,10 @@ Basic demonstration of memory storage and retrieval
 """
 
 import os
-from memoriai import Memori
+
 from dotenv import load_dotenv
+
+from memoriai import Memori
 
 load_dotenv()
 

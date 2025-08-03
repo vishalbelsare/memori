@@ -5,9 +5,11 @@ Demonstrates multiple agents sharing and using memory systems
 """
 
 import os
-from memoriai import Memori, create_memory_search_tool
-from dotenv import load_dotenv
 import time
+
+from dotenv import load_dotenv
+
+from memoriai import Memori, create_memory_search_tool
 
 load_dotenv()
 

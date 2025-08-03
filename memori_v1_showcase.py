@@ -4,10 +4,10 @@ Demonstrates the complete Pydantic-based memory processing system
 """
 
 import os
-from memoriai.core.memory import (
-    Memori,
-)
+
 from dotenv import load_dotenv
+
+from memoriai.core.memory import Memori
 
 # Load environment variables
 load_dotenv()

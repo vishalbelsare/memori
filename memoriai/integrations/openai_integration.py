@@ -2,8 +2,9 @@
 OpenAI Integration - Automatic conversation recording for OpenAI API calls
 """
 
+from typing import Any, Dict
+
 import openai
-from typing import Dict, Any
 from loguru import logger
 
 # Global registry for Memori instances

@@ -1,5 +1,5 @@
 """Database components for Memoriai"""
 
-from .connectors import SQLiteConnector, PostgreSQLConnector, MySQLConnector
+from .connectors import MySQLConnector, PostgreSQLConnector, SQLiteConnector
 
 __all__ = ["SQLiteConnector", "PostgreSQLConnector", "MySQLConnector"]

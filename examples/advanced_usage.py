@@ -5,13 +5,12 @@ Demonstrates advanced features: multiple namespaces, entity search, category fil
 custom memory processing, and integration with LLM function calling
 """
 
-import os
 import json
-from memoriai import (
-    Memori,
-    create_memory_search_tool,
-)
+import os
+
 from dotenv import load_dotenv
+
+from memoriai import Memori, create_memory_search_tool
 
 load_dotenv()
 

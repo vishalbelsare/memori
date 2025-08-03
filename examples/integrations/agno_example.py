@@ -4,11 +4,13 @@ AGNO Framework Integration Example for Memoriai v1.0
 Demonstrates integration with AGNO (Adaptive Goal-oriented Navigational Optimization) framework
 """
 
-import os
-from memoriai import Memori, create_memory_search_tool
-from dotenv import load_dotenv
 import json
+import os
 import time
+
+from dotenv import load_dotenv
+
+from memoriai import Memori, create_memory_search_tool
 
 # Load environment variables
 load_dotenv()

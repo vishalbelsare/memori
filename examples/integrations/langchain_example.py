@@ -5,8 +5,10 @@ Demonstrates automatic conversation recording with LangChain and Memoriai
 """
 
 import os
-from memoriai import Memori, create_memory_search_tool
+
 from dotenv import load_dotenv
+
+from memoriai import Memori, create_memory_search_tool
 
 # Load environment variables
 load_dotenv()
@@ -18,8 +20,8 @@ def main():
 
     # Check if LangChain is available
     try:
-        from langchain_openai import ChatOpenAI
         from langchain.schema import HumanMessage, SystemMessage
+        from langchain_openai import ChatOpenAI
 
         print("✅ LangChain is available")
     except ImportError:
@@ -90,8 +92,8 @@ def main():
     print("\n⛓️  Example 2: LangChain Chain conversation...")
 
     try:
-        from langchain.prompts import PromptTemplate
         from langchain.chains import LLMChain
+        from langchain.prompts import PromptTemplate
 
         # Create a prompt template
         prompt = PromptTemplate(

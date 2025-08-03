@@ -3,7 +3,8 @@ Memory Tool - A tool/function for manual integration with any LLM library
 """
 
 import json
-from typing import Dict, Any, Callable
+from typing import Any, Callable, Dict
+
 from loguru import logger
 
 from ..core.memory import Memori

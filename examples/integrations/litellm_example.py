@@ -5,8 +5,10 @@ Demonstrates automatic conversation recording with LiteLLM and Memoriai
 """
 
 import os
-from memoriai import Memori, create_memory_search_tool
+
 from dotenv import load_dotenv
+
+from memoriai import Memori, create_memory_search_tool
 
 # Load environment variables
 load_dotenv()

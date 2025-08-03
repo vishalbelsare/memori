@@ -8,8 +8,10 @@ Advanced example demonstrating all Memori features including:
 """
 
 import os
-from memoriai import Memori, create_memory_tool, record_conversation
+
 from dotenv import load_dotenv
+
+from memoriai import Memori, create_memory_tool, record_conversation
 
 # Load environment variables
 load_dotenv()

@@ -4,8 +4,10 @@ Simple example demonstrating Memori v1.0 Pydantic-based memory processing
 """
 
 import os
-from memoriai import Memori
+
 from dotenv import load_dotenv
+
+from memoriai import Memori
 
 # Load environment variables
 load_dotenv()

@@ -5,8 +5,10 @@ Demonstrates core functionality with Pydantic-based memory processing
 """
 
 import os
-from memoriai import Memori, create_memory_search_tool
+
 from dotenv import load_dotenv
+
+from memoriai import Memori, create_memory_search_tool
 
 load_dotenv()
 
