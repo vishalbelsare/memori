@@ -63,12 +63,12 @@ Be strategic and comprehensive in your search planning."""
         """
         self.client = openai.OpenAI(api_key=api_key)
         self.model = model
-        
+
         # Performance improvements
         self._query_cache = {}  # Cache for search plans
         self._cache_ttl = 300  # 5 minutes cache TTL
         self._cache_lock = threading.Lock()
-        
+
         # Background processing
         self._background_executor = None
 
@@ -88,7 +88,7 @@ Be strategic and comprehensive in your search planning."""
         try:
             # Create cache key
             cache_key = f"{query}|{context or ''}"
-            
+
             # Check cache first
             with self._cache_lock:
                 if cache_key in self._query_cache:
@@ -344,7 +344,8 @@ Be strategic and comprehensive in your search planning."""
         """Clean up expired cache entries"""
         current_time = time.time()
         expired_keys = [
-            key for key, (_, timestamp) in self._query_cache.items()
+            key
+            for key, (_, timestamp) in self._query_cache.items()
             if current_time - timestamp >= self._cache_ttl
         ]
         for key in expired_keys:
@@ -365,7 +366,7 @@ Be strategic and comprehensive in your search planning."""
 
             # Execute searches concurrently
             search_tasks = []
-            
+
             # Keyword search task
             if (
                 search_plan.entity_filters
@@ -375,11 +376,14 @@ Be strategic and comprehensive in your search planning."""
                     loop.run_in_executor(
                         self._background_executor,
                         self._execute_keyword_search,
-                        search_plan, db_manager, namespace, limit
+                        search_plan,
+                        db_manager,
+                        namespace,
+                        limit,
                     )
                 )
 
-            # Category search task  
+            # Category search task
             if (
                 search_plan.category_filters
                 or "category_filter" in search_plan.search_strategy
@@ -388,50 +392,60 @@ Be strategic and comprehensive in your search planning."""
                     loop.run_in_executor(
                         self._background_executor,
                         self._execute_category_search,
-                        search_plan, db_manager, namespace, limit
+                        search_plan,
+                        db_manager,
+                        namespace,
+                        limit,
                     )
                 )
 
             # Execute all searches concurrently
             if search_tasks:
-                results_lists = await asyncio.gather(*search_tasks, return_exceptions=True)
-                
+                results_lists = await asyncio.gather(
+                    *search_tasks, return_exceptions=True
+                )
+
                 all_results = []
                 seen_memory_ids = set()
-                
+
                 for i, results in enumerate(results_lists):
                     if isinstance(results, Exception):
                         logger.warning(f"Search task {i} failed: {results}")
                         continue
-                        
+
                     for result in results:
                         if result.get("memory_id") not in seen_memory_ids:
                             seen_memory_ids.add(result["memory_id"])
                             all_results.append(result)
-                
+
                 return all_results[:limit]
-            
+
             # Fallback to sync execution
             return self.execute_search(query, db_manager, namespace, limit)
-            
+
         except Exception as e:
             logger.error(f"Async search execution failed: {e}")
             return []
 
     def execute_search_background(
-        self, query: str, db_manager, namespace: str = "default", limit: int = 10,
-        callback=None
+        self,
+        query: str,
+        db_manager,
+        namespace: str = "default",
+        limit: int = 10,
+        callback=None,
     ):
         """
         Execute search in background thread for non-blocking operation
-        
+
         Args:
             query: Search query
             db_manager: Database manager
-            namespace: Memory namespace  
+            namespace: Memory namespace
             limit: Max results
             callback: Optional callback function to handle results
         """
+
         def _background_search():
             try:
                 results = self.execute_search(query, db_manager, namespace, limit)
@@ -443,7 +457,7 @@ Be strategic and comprehensive in your search planning."""
                 if callback:
                     callback([])
                 return []
-        
+
         # Start background thread
         thread = threading.Thread(target=_background_search, daemon=True)
         thread.start()

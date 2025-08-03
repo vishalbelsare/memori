@@ -113,7 +113,9 @@ class Memori:
         # State tracking
         self._enabled = False
         self._session_id = str(uuid.uuid4())
-        self._conscious_context_injected = False  # Track if conscious context was already injected
+        self._conscious_context_injected = (
+            False  # Track if conscious context was already injected
+        )
 
         # User context for memory processing
         self._user_context = {
@@ -162,15 +164,17 @@ class Memori:
     def _initialize_conscious_memory(self):
         """Initialize conscious memory by running conscious agent analysis"""
         try:
-            logger.info("Conscious-ingest: Starting conscious agent analysis at startup")
-            
+            logger.info(
+                "Conscious-ingest: Starting conscious agent analysis at startup"
+            )
+
             # Run conscious agent analysis in background
             if self._background_task is None or self._background_task.done():
                 self._background_task = asyncio.create_task(
                     self._run_conscious_initialization()
                 )
                 logger.debug("Conscious-ingest: Background initialization task started")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize conscious memory: {e}")
 
@@ -179,13 +183,13 @@ class Memori:
         try:
             if not self.conscious_agent:
                 return
-                
+
             logger.debug("Conscious-ingest: Running background analysis")
             await self.conscious_agent.run_background_analysis(
                 self.db_manager, self.namespace
             )
             logger.info("Conscious-ingest: Background analysis completed")
-            
+
         except Exception as e:
             logger.error(f"Conscious agent initialization failed: {e}")
 
@@ -289,7 +293,9 @@ class Memori:
                             kwargs = self._inject_litellm_context(kwargs, mode="auto")
                         elif self.conscious_ingest:
                             # Conscious-inject: one-shot short-term memory context
-                            kwargs = self._inject_litellm_context(kwargs, mode="conscious")
+                            kwargs = self._inject_litellm_context(
+                                kwargs, mode="conscious"
+                            )
 
                     # Call original completion
                     return original_completion(*args, **kwargs)
@@ -551,7 +557,7 @@ class Memori:
     def _inject_litellm_context(self, params, mode="auto"):
         """
         Inject context for LiteLLM calls based on mode
-        
+
         Args:
             params: LiteLLM parameters
             mode: "conscious" (one-shot short-term) or "auto" (continuous retrieval)
@@ -652,9 +658,10 @@ class Memori:
         try:
             with self.db_manager._get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Get recent short-term memories ordered by importance and recency
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT memory_id, processed_data, importance_score, 
                            category_primary, summary, searchable_content,
                            created_at, access_count
@@ -662,25 +669,31 @@ class Memori:
                     WHERE namespace = ? AND (expires_at IS NULL OR expires_at > ?)
                     ORDER BY importance_score DESC, created_at DESC
                     LIMIT 10
-                """, (self.namespace, datetime.now()))
-                
+                """,
+                    (self.namespace, datetime.now()),
+                )
+
                 memories = []
                 for row in cursor.fetchall():
-                    memories.append({
-                        "memory_id": row[0],
-                        "processed_data": row[1],
-                        "importance_score": row[2],
-                        "category_primary": row[3],
-                        "summary": row[4],
-                        "searchable_content": row[5],
-                        "created_at": row[6],
-                        "access_count": row[7],
-                        "memory_type": "short_term"
-                    })
-                
-                logger.debug(f"Retrieved {len(memories)} conscious memories from short-term storage")
+                    memories.append(
+                        {
+                            "memory_id": row[0],
+                            "processed_data": row[1],
+                            "importance_score": row[2],
+                            "category_primary": row[3],
+                            "summary": row[4],
+                            "searchable_content": row[5],
+                            "created_at": row[6],
+                            "access_count": row[7],
+                            "memory_type": "short_term",
+                        }
+                    )
+
+                logger.debug(
+                    f"Retrieved {len(memories)} conscious memories from short-term storage"
+                )
                 return memories
-                
+
         except Exception as e:
             logger.error(f"Failed to get conscious context: {e}")
             return []
@@ -694,18 +707,18 @@ class Memori:
             if not self.search_engine:
                 logger.warning("Auto-ingest: No search engine available")
                 return []
-            
+
             # Use retrieval agent for intelligent search
             results = self.search_engine.execute_search(
                 query=user_input,
                 db_manager=self.db_manager,
                 namespace=self.namespace,
-                limit=5
+                limit=5,
             )
-            
+
             logger.debug(f"Auto-ingest: Retrieved {len(results)} relevant memories")
             return results
-            
+
         except Exception as e:
             logger.error(f"Failed to get auto-ingest context: {e}")
             return []
