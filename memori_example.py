@@ -15,11 +15,14 @@ office_work.enable()  # Start recording conversations
 # Use ANY LLM library - context automatically injected!
 from litellm import completion
 
-response = completion(
-    model="gpt-4o",
-    messages=[{"role": "user", "content": "Help me with Python testing"}]
-)
+while True:
+    user_input = input("You: ")
+    if user_input.lower() in ["exit", "quit"]:
+        print("Exiting conversation. Goodbye!")
+        break
 
-print(response["choices"][0]["message"]["content"])
-
-# ✨ Previous conversations about Python and testing automatically included
+    response = completion(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": user_input}]
+    )
+    print("AI:", response["choices"][0]["message"]["content"])
