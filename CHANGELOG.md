@@ -5,6 +5,71 @@ All notable changes to Memoriai will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-08-03
+
+### 🧠 **Enhanced Conscious Ingestion System**
+
+Major improvements to the intelligent memory processing and context injection system.
+
+#### ✨ New Features
+
+**Conscious Agent System**
+- **Background Analysis**: Automatic analysis of long-term memory patterns every 6 hours
+- **Essential Memory Promotion**: Promotes key personal facts to short-term memory for immediate access
+- **Intelligent Context Selection**: AI-powered identification of most relevant memories for context injection
+- **Personal Identity Extraction**: Automatically identifies and prioritizes user identity, preferences, and ongoing projects
+
+**Enhanced Context Injection**
+- **Essential Conversations**: Priority context from promoted memories for immediate relevance
+- **Smart Memory Retrieval**: Up to 5 most relevant memories automatically injected into conversations
+- **Category-Aware Context**: Different context strategies for facts, preferences, skills, and rules
+- **Reduced Token Usage**: More efficient context injection with summarized essential information
+
+**Improved Memory Processing**
+- **Pydantic-Based Agents**: Structured memory processing with OpenAI Structured Outputs
+- **Multi-Dimensional Scoring**: Frequency, recency, and importance scoring for memory selection
+- **Entity Relationship Mapping**: Enhanced entity extraction and relationship tracking
+- **Advanced Categorization**: Improved classification of facts, preferences, skills, context, and rules
+
+#### 🔧 API Enhancements
+
+**Conscious Ingestion Control**
+```python
+memori = Memori(
+    database_connect="sqlite:///memory.db",
+    conscious_ingest=True,  # Enable intelligent background analysis
+    openai_api_key="sk-..."
+)
+```
+
+**Memory Retrieval Methods**
+- `get_essential_conversations()` - Access promoted essential memories
+- `trigger_conscious_analysis()` - Manually trigger background analysis
+- `retrieve_context()` - Enhanced context retrieval with essential memory priority
+
+#### 📊 Background Processing
+
+**Conscious Agent Features**
+- **Automated Analysis**: Runs every 6 hours to analyze memory patterns
+- **Selection Criteria**: Personal identity, preferences, skills, current projects, relationships
+- **Memory Promotion**: Automatically promotes essential conversations to short-term memory
+- **Analysis Reasoning**: Detailed reasoning for memory selection decisions
+
+#### 🎯 Context Injection Improvements
+
+**Essential Memory Integration**
+- Essential conversations always included in context
+- Smart memory limit management (3 essential + 2 specific)
+- Category-based context prioritization
+- Improved relevance scoring for memory selection
+
+#### 🛠️ Developer Experience
+
+**Enhanced Examples**
+- Updated `memori_example.py` with conscious ingestion showcase
+- New `memory_retrieval_example.py` demonstrating function calling integration
+- Advanced configuration examples with conscious agent settings
+
 ## [1.0.0] - 2025-08-03
 
 ### 🎉 **Production-Ready Memory Layer for AI Agents**

@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 
 from memoriai.config.settings import DatabaseSettings, MemoriSettings
 from memoriai.core.database import DatabaseManager
-from memoriai.core.memory import MemoryManager
+from memoriai.core.memory import Memori
 from memoriai.utils.pydantic_models import ProcessedMemory
 
 
@@ -37,12 +37,12 @@ class TestHelpers:
     @staticmethod
     def create_test_memory_manager(
         db_manager: Optional[DatabaseManager] = None,
-    ) -> MemoryManager:
+    ) -> Memori:
         """Create a test memory manager."""
         if db_manager is None:
             db_manager = TestHelpers.create_test_database_manager()
 
-        return MemoryManager(db_manager)
+        return Memori(database_connect=db_manager.connection_string)
 
     @staticmethod
     @contextmanager
@@ -59,7 +59,7 @@ class TestHelpers:
 
     @staticmethod
     def populate_test_database(
-        memory_manager: MemoryManager,
+        memory_manager: Memori,
         memories: List[ProcessedMemory],
         namespace: str = "test",
         session_id: str = "test_session",
@@ -344,7 +344,7 @@ class AssertionHelpers:
 
     @staticmethod
     def assert_memory_stored_correctly(
-        memory_manager: MemoryManager,
+        memory_manager: Memori,
         memory_id: str,
         expected_memory: ProcessedMemory,
         namespace: str = "test",

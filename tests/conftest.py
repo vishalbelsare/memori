@@ -13,7 +13,7 @@ import pytest
 
 from memoriai.config.settings import DatabaseSettings, MemoriSettings
 from memoriai.core.database import DatabaseManager
-from memoriai.core.memory import MemoryManager
+from memoriai.core.memory import Memori
 from memoriai.utils.pydantic_models import (
     ExtractedEntities,
     MemoryCategory,
@@ -73,15 +73,15 @@ def memory_db_settings() -> MemoriSettings:
 @pytest.fixture
 def db_manager(memory_db_settings: MemoriSettings) -> DatabaseManager:
     """Create a database manager with in-memory database."""
-    manager = DatabaseManager(memory_db_settings.database)
-    manager.initialize_database()
+    manager = DatabaseManager(memory_db_settings.database.connection_string)
+    manager.initialize_schema()
     return manager
 
 
 @pytest.fixture
-def memory_manager(db_manager: DatabaseManager) -> MemoryManager:
+def memory_manager(db_manager: DatabaseManager) -> Memori:
     """Create a memory manager with initialized database."""
-    return MemoryManager(db_manager)
+    return Memori(database_connect=db_manager.connection_string)
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
 """
 Basic Memoriai Usage Example
-Simple demonstration of memory recording and context injection
+Simple demonstration of conscious ingestion and context injection
 """
 
 from dotenv import load_dotenv
@@ -12,14 +12,15 @@ load_dotenv()
 
 
 def main():
-    print("🧠 Memoriai - Your AI's Second Memory")
-    print("=" * 40)
+    print("🧠 Memoriai v1.1 - AI Memory with Conscious Ingestion")
+    print("=" * 55)
 
-    # Initialize your workspace memory
+    # Initialize your workspace memory with conscious ingestion
     office_work = Memori(
         database_connect="sqlite:///office_memory.db",
-        conscious_ingest=True,  # Auto-inject relevant context
-        openai_api_key="your-openai-key",  # Or set OPENAI_API_KEY in .env
+        conscious_ingest=True,  # 🔥 Enable AI-powered background analysis
+        verbose=True,  # Show what's happening behind the scenes
+        openai_api_key=None,  # Uses OPENAI_API_KEY from environment
     )
 
     # Enable memory recording
@@ -74,6 +75,10 @@ def main():
     print("  • Tech stack (FastAPI, PostgreSQL)")
     print("  • Coding preferences (clean code, type hints)")
     print("  • Project context (user models, database connections)")
+    print("\n🧠 With conscious_ingest=True:")
+    print("  • Background analysis will identify essential information")
+    print("  • Key facts automatically promoted for instant access")
+    print("  • Context injection gets smarter over time")
     print("\nNo more repeating context - just chat naturally!")
 
 

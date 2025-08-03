@@ -1,8 +1,8 @@
 # Memoriai
 
-**The Open-Source Memory Layer for AI Agents & Multi-Agent Systems v1.0**
+**The Open-Source Memory Layer for AI Agents & Multi-Agent Systems v1.1**
 
-*Give your AI agents structured, persistent memory - no more repeating context!*
+*Give your AI agents structured, persistent memory with intelligent context injection - no more repeating yourself!*
 
 [![PyPI version](https://badge.fury.io/py/memoriai.svg)](https://badge.fury.io/py/memoriai)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -13,10 +13,10 @@
 ## 🎯 Philosophy
 
 - **Second-memory for all your LLM work** - Never repeat context again
+- **Intelligent conscious ingestion** - AI-powered background analysis and context injection
 - **Flexible database connections** - SQLite, PostgreSQL, MySQL support  
 - **Pydantic-based intelligence** - Structured memory processing with validation
 - **Simple, reliable architecture** - Just works out of the box
-- **Conscious context injection** - Automatically fetches relevant memories
 
 ## ⚡ Quick Start
 
@@ -60,18 +60,50 @@ office_work.enable()  # Records ALL LLM conversations
 
 ### 3. **Conscious Context Injection**
 ```python
-conscious_ingest=True  # Automatically injects relevant memories
+conscious_ingest=True  # AI-powered background analysis + automatic context injection
 ```
+
+**What happens behind the scenes:**
+- 🧠 **Background Analysis**: Every 6 hours, analyzes your memory patterns
+- 🎯 **Essential Memory Promotion**: Promotes key personal facts to immediate access
+- 📝 **Smart Context Injection**: Automatically includes 3-5 most relevant memories
+- 🔄 **Continuous Learning**: Adapts to your preferences and conversation patterns
+
+## 🧠 Conscious Ingestion System
+
+### **How it learns about you:**
+
+```python
+memori = Memori(
+    database_connect="sqlite:///my_memory.db",
+    conscious_ingest=True,  # 🔥 The magic happens here
+    openai_api_key="sk-..."
+)
+```
+
+### **Intelligence Layers:**
+
+1. **Memory Agent** - Processes every conversation with Pydantic structured outputs
+2. **Conscious Agent** - Analyzes patterns every 6 hours, promotes essential memories  
+3. **Retrieval Agent** - Intelligently selects the most relevant context for injection
+
+### **What gets prioritized:**
+- 👤 **Personal Identity**: Your name, role, location, basic info
+- ❤️ **Preferences & Habits**: What you like, work patterns, routines
+- 🛠️ **Skills & Tools**: Technologies you use, expertise areas
+- 📊 **Current Projects**: Ongoing work, learning goals
+- 🤝 **Relationships**: Important people, colleagues, connections
+- 🔄 **Repeated References**: Information you mention frequently
 
 ## 🗄️ Memory Types
 
-| Type | Purpose | Example |
-|------|---------|---------|
-| **Facts** | Objective information | "I use PostgreSQL for databases" |
-| **Preferences** | User choices | "I prefer clean, readable code" |
-| **Skills** | Abilities & knowledge | "Experienced with FastAPI" |
-| **Rules** | Constraints & guidelines | "Always write tests first" |
-| **Context** | Session information | "Working on e-commerce project" |
+| Type | Purpose | Example | Auto-Promoted |
+|------|---------|---------|---------------|
+| **Facts** | Objective information | "I use PostgreSQL for databases" | ✅ High frequency |
+| **Preferences** | User choices | "I prefer clean, readable code" | ✅ Personal identity |
+| **Skills** | Abilities & knowledge | "Experienced with FastAPI" | ✅ Expertise areas |
+| **Rules** | Constraints & guidelines | "Always write tests first" | ✅ Work patterns |
+| **Context** | Session information | "Working on e-commerce project" | ✅ Current projects |
 
 ## 🔧 Configuration
 
@@ -140,8 +172,21 @@ client.messages.create(...)
 # All automatically recorded and contextualized!
 ```
 
-## 🛠️ Memory Retrieval
+## 🛠️ Memory Management
 
+### **Automatic Background Analysis**
+```python
+# Automatic analysis every 6 hours (when conscious_ingest=True)
+memori.enable()  # Starts background conscious agent
+
+# Manual analysis trigger
+memori.trigger_conscious_analysis()
+
+# Get essential conversations
+essential = memori.get_essential_conversations(limit=5)
+```
+
+### **Memory Retrieval Tools**
 ```python
 from memoriai.tools import create_memory_tool
 
@@ -151,6 +196,19 @@ memory_tool = create_memory_tool(memori)
 # Use in function calling
 tools = [memory_tool]
 completion(model="gpt-4", messages=[...], tools=tools)
+```
+
+### **Context Control**
+```python
+# Get relevant context for a query
+context = memori.retrieve_context("Python testing", limit=5)
+# Returns: 3 essential + 2 specific memories
+
+# Search by category
+skills = memori.search_memories_by_category("skill", limit=10)
+
+# Get memory statistics
+stats = memori.get_memory_stats()
 ```
 
 ## 📋 Database Schema
@@ -180,9 +238,11 @@ memoriai/
 
 ## 🚀 Examples
 
-- **[Basic Usage](./examples/basic_usage/)** - Simple memory setup
-- **[Personal Assistant](./examples/basic_usage/personal_assistant.py)** - AI assistant with memory
-- **[Advanced](./examples/advanced/)** - Production configuration
+- **[Basic Usage](./examples/basic_usage.py)** - Simple memory setup with conscious ingestion
+- **[Personal Assistant](./examples/personal_assistant.py)** - AI assistant with intelligent memory
+- **[Memory Retrieval](./memory_retrival_example.py)** - Function calling with memory tools
+- **[Advanced Config](./examples/advanced_config.py)** - Production configuration
+- **[Interactive Demo](./memori_example.py)** - Live conscious ingestion showcase
 
 ## 🤝 Contributing
 

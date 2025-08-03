@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Test runner script for Memoriai.
 
@@ -35,7 +34,7 @@ def main():
     parser.add_argument(
         "--coverage",
         action="store_true",
-        default=True,
+        default=False,
         help="Run with coverage reporting",
     )
     parser.add_argument(
@@ -77,16 +76,24 @@ def main():
     elif args.type == "performance":
         cmd.extend(["-m", "performance"])
 
-    # Add coverage if requested
+    # Add coverage if requested (and pytest-cov is available)
     if args.coverage and args.type != "performance":
-        cmd.extend(
-            [
-                "--cov=memoriai",
-                "--cov-report=html:htmlcov",
-                "--cov-report=term-missing",
-                "--cov-report=xml",
-            ]
-        )
+        try:
+            import subprocess
+            result = subprocess.run([sys.executable, "-c", "import pytest_cov"], capture_output=True)
+            if result.returncode == 0:
+                cmd.extend(
+                    [
+                        "--cov=memoriai",
+                        "--cov-report=html:htmlcov",
+                        "--cov-report=term-missing",
+                        "--cov-report=xml",
+                    ]
+                )
+            else:
+                print("Warning: pytest-cov not installed, running tests without coverage")
+        except Exception:
+            print("Warning: pytest-cov not available, running tests without coverage")
 
     # Add fast filter
     if args.fast:
