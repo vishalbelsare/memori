@@ -68,7 +68,7 @@ jobs:
         id: validation
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          if git tag -l | grep -q "^${VERSION}$" && [[ "${{ github.event_name }}" != "release" ]]; then
+          if git tag -l | grep -q "^${VERSION}$" && [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "❌ Version $VERSION already exists"
             echo "should_publish=false" >> $GITHUB_OUTPUT
             exit 1
