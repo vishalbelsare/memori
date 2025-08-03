@@ -3,8 +3,8 @@ requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "memoriai"
-version = "0.1.0"
+name = "memori-ai"
+version = "1.0.0"
 description = "The Open-Source Memory Layer for AI Agents & Multi-Agent Systems"
 authors = [{name = "Memori Team", email = "contact@memoriai.dev"}]
 license = {text = "Apache-2.0"}

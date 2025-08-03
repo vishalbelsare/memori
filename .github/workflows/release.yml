@@ -150,7 +150,7 @@ jobs:
     
     environment:
       name: testpypi
-      url: https://test.pypi.org/project/memoriai/
+      url: https://test.pypi.org/project/memori-ai/
     
     steps:
       - name: Download build artifacts
@@ -169,7 +169,7 @@ jobs:
         run: |
           echo "🧪 Testing installation from TestPyPI..."
           sleep 60  # Wait for package to be available
-          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ memoriai
+          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ memori-ai
           python -c "import memoriai; print(f'✅ TestPyPI installation successful: {memoriai.__version__}')"
 
   publish-pypi:
@@ -183,7 +183,7 @@ jobs:
     
     environment:
       name: pypi
-      url: https://pypi.org/project/memoriai/
+      url: https://pypi.org/project/memori-ai/
     
     steps:
       - name: Download build artifacts
@@ -201,7 +201,7 @@ jobs:
         run: |
           echo "🧪 Testing installation from PyPI..."
           sleep 60  # Wait for package to be available
-          pip install memoriai
+          pip install memori-ai
           python -c "import memoriai; print(f'✅ PyPI installation successful: {memoriai.__version__}')"
 
   create-github-release:
@@ -256,7 +256,7 @@ jobs:
           VERSION="${{ needs.validate-release.outputs.version }}"
           
           gh release create "$VERSION" \
-            --title "Memoriai $VERSION" \
+            --title "Memori AI $VERSION" \
             --notes-file release_notes.md \
             --draft=false \
             --prerelease=false \
@@ -305,7 +305,7 @@ jobs:
         if: needs.publish-pypi.result == 'success' && needs.create-github-release.result == 'success'
         run: |
           echo "🎉 Release ${{ needs.validate-release.outputs.version }} published successfully!"
-          echo "📦 PyPI: https://pypi.org/project/memoriai/"
+          echo "📦 PyPI: https://pypi.org/project/memori-ai/"
           echo "🐙 GitHub: https://github.com/GibsonAI/memoriai/releases/tag/${{ needs.validate-release.outputs.version }}"
 
       - name: Notify failure
