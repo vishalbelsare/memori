@@ -4,7 +4,7 @@ Pydantic Models for Structured Memory Processing
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Literal, Optional
+from typing import Dict, List, Literal, Optional, Tuple, Annotated
 
 from pydantic import BaseModel, Field
 
@@ -38,12 +38,19 @@ class EntityType(str, Enum):
     keyword = "keyword"
 
 
+# Define constrained types using Annotated
+ConfidenceScore = Annotated[float, Field(ge=0.0, le=1.0)]
+ImportanceScore = Annotated[float, Field(ge=0.0, le=1.0)]
+RelevanceScore = Annotated[float, Field(ge=0.0, le=1.0)]
+PriorityLevel = Annotated[int, Field(ge=1, le=10)]
+
+
 class MemoryCategory(BaseModel):
     """Memory categorization with confidence and reasoning"""
 
     primary_category: MemoryCategoryType
-    confidence_score: float = Field(
-        ge=0.0, le=1.0, description="Confidence in categorization (0.0-1.0)"
+    confidence_score: ConfidenceScore = Field(
+        description="Confidence in categorization (0.0-1.0)"
     )
     reasoning: str = Field(
         description="Brief explanation for why this category was chosen"
@@ -55,8 +62,8 @@ class ExtractedEntity(BaseModel):
 
     entity_type: EntityType
     value: str = Field(description="The actual entity value")
-    relevance_score: float = Field(
-        ge=0.0, le=1.0, description="How relevant this entity is to the memory"
+    relevance_score: RelevanceScore = Field(
+        description="How relevant this entity is to the memory"
     )
     context: Optional[str] = Field(
         default=None, description="Additional context about this entity"
@@ -95,8 +102,8 @@ class ExtractedEntities(BaseModel):
 class MemoryImportance(BaseModel):
     """Importance scoring and retention decisions"""
 
-    importance_score: float = Field(
-        ge=0.0, le=1.0, description="Overall importance score (0.0-1.0)"
+    importance_score: ImportanceScore = Field(
+        description="Overall importance score (0.0-1.0)"
     )
     retention_type: RetentionType = Field(description="Recommended retention type")
     reasoning: str = Field(
@@ -104,14 +111,17 @@ class MemoryImportance(BaseModel):
     )
 
     # Additional scoring factors
-    novelty_score: float = Field(
-        ge=0.0, le=1.0, default=0.5, description="How novel/new this information is"
+    novelty_score: RelevanceScore = Field(
+        default=0.5, 
+        description="How novel/new this information is"
     )
-    relevance_score: float = Field(
-        ge=0.0, le=1.0, default=0.5, description="How relevant to user's interests"
+    relevance_score: RelevanceScore = Field(
+        default=0.5, 
+        description="How relevant to user's interests"
     )
-    actionability_score: float = Field(
-        ge=0.0, le=1.0, default=0.5, description="How actionable this information is"
+    actionability_score: RelevanceScore = Field(
+        default=0.5, 
+        description="How actionable this information is"
     )
 
 
@@ -168,8 +178,9 @@ class MemorySearchQuery(BaseModel):
     time_range: Optional[str] = Field(
         default=None, description="Time range for search (e.g., 'last_week')"
     )
-    min_importance: float = Field(
-        ge=0.0, le=1.0, default=0.0, description="Minimum importance score"
+    min_importance: ImportanceScore = Field(
+        default=0.0, 
+        description="Minimum importance score"
     )
 
     # Search strategy
@@ -189,7 +200,9 @@ class MemoryRelationship(BaseModel):
     relationship_type: Literal[
         "builds_on", "contradicts", "supports", "related_to", "prerequisite"
     ]
-    strength: float = Field(ge=0.0, le=1.0, description="Strength of the relationship")
+    strength: RelevanceScore = Field(
+        description="Strength of the relationship"
+    )
     reasoning: str = Field(description="Why these memories are related")
 
 
@@ -198,7 +211,10 @@ class UserRule(BaseModel):
 
     rule_text: str = Field(description="The rule or preference in natural language")
     rule_type: Literal["preference", "instruction", "constraint", "goal"]
-    priority: int = Field(ge=1, le=10, default=5, description="Priority level (1-10)")
+    priority: PriorityLevel = Field(
+        default=5, 
+        description="Priority level (1-10)"
+    )
     context: Optional[str] = Field(default=None, description="When this rule applies")
     active: bool = Field(
         default=True, description="Whether this rule is currently active"
@@ -243,7 +259,7 @@ class MemoryStats(BaseModel):
     memories_by_retention: Dict[str, int]
     average_importance: float
     total_entities: int
-    most_common_entities: List[tuple[str, int]]
+    most_common_entities: List[Tuple[str, int]]
     storage_size_mb: float
     oldest_memory_date: Optional[datetime]
     newest_memory_date: Optional[datetime]
