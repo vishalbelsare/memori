@@ -115,6 +115,15 @@ extend-exclude = '''
 [tool.ruff]
 line-length = 88
 target-version = "py38"
+exclude = [
+    ".git",
+    "__pycache__",
+    "dist",
+    "build",
+    "archive",
+]
+
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -126,16 +135,11 @@ select = [
 ]
 ignore = [
     "E501",  # line too long, handled by black
-]
-exclude = [
-    ".git",
-    "__pycache__",
-    "dist",
-    "build",
-    "archive",
+    "B904",  # exception chaining - would require significant refactoring
+    "E722",  # bare except in legacy database code
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/*" = ["B018", "B017"]
 

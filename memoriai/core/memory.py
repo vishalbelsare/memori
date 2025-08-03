@@ -11,7 +11,7 @@ from loguru import logger
 
 try:
     import litellm
-    from litellm import failure_callback, success_callback
+    from litellm import success_callback
 
     LITELLM_AVAILABLE = True
 except ImportError:
@@ -662,10 +662,10 @@ class Memori:
                 # Get recent short-term memories ordered by importance and recency
                 cursor.execute(
                     """
-                    SELECT memory_id, processed_data, importance_score, 
+                    SELECT memory_id, processed_data, importance_score,
                            category_primary, summary, searchable_content,
                            created_at, access_count
-                    FROM short_term_memory 
+                    FROM short_term_memory
                     WHERE namespace = ? AND (expires_at IS NULL OR expires_at > ?)
                     ORDER BY importance_score DESC, created_at DESC
                     LIMIT 10
@@ -1320,7 +1320,7 @@ class Memori:
                 query = """
                 SELECT memory_id, summary, category_primary, importance_score,
                        created_at, searchable_content, processed_data
-                FROM short_term_memory 
+                FROM short_term_memory
                 WHERE namespace = ? AND category_primary LIKE 'essential_%'
                 ORDER BY importance_score DESC, created_at DESC
                 LIMIT ?

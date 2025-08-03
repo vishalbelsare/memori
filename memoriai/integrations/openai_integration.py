@@ -49,8 +49,8 @@ class MemoriOpenAI:
                 if not attr.startswith("_") and attr not in ["chat", "completions"]:
                     setattr(self, attr, getattr(self._openai, attr))
 
-        except ImportError:
-            raise ImportError("OpenAI package required: pip install openai")
+        except ImportError as err:
+            raise ImportError("OpenAI package required: pip install openai") from err
 
     def _create_chat_wrapper(self):
         """Create wrapped chat completions"""

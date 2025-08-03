@@ -48,8 +48,10 @@ class MemoriAnthropic:
                 if not attr.startswith("_") and attr not in ["messages"]:
                     setattr(self, attr, getattr(self._anthropic, attr))
 
-        except ImportError:
-            raise ImportError("Anthropic package required: pip install anthropic")
+        except ImportError as err:
+            raise ImportError(
+                "Anthropic package required: pip install anthropic"
+            ) from err
 
     def _create_messages_wrapper(self):
         """Create wrapped messages"""

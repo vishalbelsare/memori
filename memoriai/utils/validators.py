@@ -133,7 +133,7 @@ class DataValidator:
 
             json.dumps(value)  # Test JSON serialization
         except (TypeError, ValueError) as e:
-            raise ValidationError(f"{field_name} must be JSON serializable: {e}")
+            raise ValidationError(f"{field_name} must be JSON serializable: {e}") from e
 
         return value
 

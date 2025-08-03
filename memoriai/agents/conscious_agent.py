@@ -104,7 +104,7 @@ SCORING GUIDELINES:
 
 SELECT conversations that:
 - Contain foundational information about the person (name, role, preferences)
-- Are frequently referenced or built upon in later conversations  
+- Are frequently referenced or built upon in later conversations
 - Provide essential context for understanding future conversations
 - Represent stable, long-term characteristics rather than temporary states
 
@@ -188,9 +188,9 @@ AVOID conversations that:
             cutoff_date = datetime.now() - timedelta(days=30)
 
             query = """
-            SELECT memory_id, summary, category_primary, processed_data, 
+            SELECT memory_id, summary, category_primary, processed_data,
                    importance_score, created_at, access_count
-            FROM long_term_memory 
+            FROM long_term_memory
             WHERE namespace = ? AND created_at >= ?
             ORDER BY importance_score DESC, access_count DESC
             LIMIT 100
@@ -279,7 +279,7 @@ Limit selection to the top 5-10 most essential conversations."""
 
             if memory.get("entities"):
                 entities = []
-                for entity_type, values in memory["entities"].items():
+                for _entity_type, values in memory["entities"].items():
                     if values and isinstance(values, list):
                         # Handle both string entities and structured entities
                         for value in values:
@@ -348,7 +348,7 @@ Limit selection to the top 5-10 most essential conversations."""
             with db_manager._get_connection() as connection:
                 # Delete conversations marked as essential
                 query = """
-                DELETE FROM short_term_memory 
+                DELETE FROM short_term_memory
                 WHERE namespace = ? AND category_primary LIKE 'essential_%'
                 """
 
@@ -450,7 +450,7 @@ Limit selection to the top 5-10 most essential conversations."""
                 query = """
                 SELECT memory_id, original_chat_id, processed_data, importance_score,
                        category_primary, searchable_content, summary
-                FROM long_term_memory 
+                FROM long_term_memory
                 WHERE memory_id = ?
                 """
 

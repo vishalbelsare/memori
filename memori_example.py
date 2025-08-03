@@ -9,9 +9,10 @@ This example demonstrates how conscious_ingest=True works:
 - No repeated injection during the same session (one-shot behavior)
 """
 
-from memoriai import Memori
 from dotenv import load_dotenv
 from litellm import completion
+
+from memoriai import Memori
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -20,8 +21,8 @@ load_dotenv()  # Load environment variables from .env file
 office_work = Memori(
     database_connect="sqlite:///office_memory.db",
     conscious_ingest=True,  # 🧠 Enable short-term working memory
-    verbose=True,           # See the conscious agent in action
-    openai_api_key="your-openai-key"  # Required for conscious agent
+    verbose=True,  # See the conscious agent in action
+    openai_api_key="your-openai-key",  # Required for conscious agent
 )
 
 # Enable universal memory recording
@@ -43,11 +44,11 @@ first_call = True
 # Interactive conversation loop
 while True:
     user_input = input("You: ")
-    
+
     if user_input.lower() in ["exit", "quit", "bye"]:
         print("💾 All conversations saved to long-term memory! Goodbye!")
         break
-    
+
     if user_input.lower() == "help":
         print("\n📚 Conscious-Ingest Help:")
         print("- Your essential memories are already loaded in working memory")
@@ -56,7 +57,7 @@ while True:
         print("- Essential info includes: name, preferences, skills, current projects")
         print("- Type 'exit' to quit\n")
         continue
-    
+
     # Make LLM call - conscious_ingest will:
     # - Inject short-term working memory on FIRST call only
     # - Subsequent calls have no automatic injection
@@ -66,30 +67,29 @@ while True:
             first_call = False
         else:
             print("💭 Using conversation context (no memory re-injection)...")
-        
+
         response = completion(
             model="gpt-4o",
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant. Use any provided memory context to give personalized responses that acknowledge the user's background and preferences."
+                    "content": "You are a helpful assistant. Use any provided memory context to give personalized responses that acknowledge the user's background and preferences.",
                 },
-                {
-                    "role": "user", 
-                    "content": user_input
-                }
-            ]
+                {"role": "user", "content": user_input},
+            ],
         )
-        
+
         ai_response = response.choices[0].message.content
         print(f"🤖 AI: {ai_response}")
-        
+
         if not first_call:
-            print("✨ Short-term working memory was injected once and is now part of context!")
+            print(
+                "✨ Short-term working memory was injected once and is now part of context!"
+            )
         else:
             print("💭 Continuing conversation with established context...")
         print()
-        
+
     except Exception as e:
         print(f"❌ Error: {e}")
         print("Make sure you have set your OpenAI API key in .env file\n")
@@ -98,7 +98,11 @@ print("\n📊 Memory Statistics:")
 try:
     stats = office_work.get_memory_stats()
     print(f"Total memories stored: {stats.get('total_memories', 0)}")
-    print(f"Short-term memories: {stats.get('memories_by_retention', {}).get('short_term', 0)}")
-    print(f"Long-term memories: {stats.get('memories_by_retention', {}).get('long_term', 0)}")
-except:
+    print(
+        f"Short-term memories: {stats.get('memories_by_retention', {}).get('short_term', 0)}"
+    )
+    print(
+        f"Long-term memories: {stats.get('memories_by_retention', {}).get('long_term', 0)}"
+    )
+except Exception:
     print("Memory stats not available")

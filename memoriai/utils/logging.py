@@ -82,7 +82,7 @@ class LoggingManager:
             logger.info("Logging configuration initialized")
 
         except Exception as e:
-            raise ConfigurationError(f"Failed to setup logging: {e}")
+            raise ConfigurationError(f"Failed to setup logging: {e}") from e
 
     @classmethod
     def get_logger(cls, name: str) -> "logger":
@@ -180,8 +180,6 @@ class LoggingManager:
         warnings.filterwarnings("ignore")
 
         # Override the logging module's basicConfig to prevent new loggers
-        original_basicConfig = logging.basicConfig
-
         def disabled_basicConfig(*args, **kwargs):
             pass
 

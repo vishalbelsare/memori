@@ -86,7 +86,7 @@ class PostgreSQLConnector:
                                 inserted_id = str(list(inserted_id.values())[0])
                             else:
                                 inserted_id = str(cursor.rowcount)
-                        except:
+                        except Exception:
                             inserted_id = str(cursor.rowcount)
 
                     conn.commit()

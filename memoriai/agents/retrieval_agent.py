@@ -46,7 +46,7 @@ Your primary functions:
 
 **QUERY INTERPRETATION GUIDELINES:**
 - "What did I learn about X?" → Focus on facts and skills related to X
-- "My preferences for Y" → Focus on preference category 
+- "My preferences for Y" → Focus on preference category
 - "Rules about Z" → Focus on rule category
 - "Recent work on A" → Temporal filter + context/skill categories
 - "Important information about B" → Importance filter + keyword search

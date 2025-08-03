@@ -245,7 +245,7 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT OR REPLACE INTO chat_history 
+                INSERT OR REPLACE INTO chat_history
                 (chat_id, user_input, ai_output, model, timestamp, session_id, namespace, tokens_used, metadata)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -276,11 +276,11 @@ class DatabaseManager:
             if session_id:
                 cursor.execute(
                     """
-                    SELECT chat_id, user_input, ai_output, model, timestamp, 
+                    SELECT chat_id, user_input, ai_output, model, timestamp,
                            session_id, namespace, tokens_used, metadata
-                    FROM chat_history 
+                    FROM chat_history
                     WHERE namespace = ? AND session_id = ?
-                    ORDER BY timestamp DESC 
+                    ORDER BY timestamp DESC
                     LIMIT ?
                     """,
                     (namespace, session_id, limit),
@@ -290,9 +290,9 @@ class DatabaseManager:
                     """
                     SELECT chat_id, user_input, ai_output, model, timestamp,
                            session_id, namespace, tokens_used, metadata
-                    FROM chat_history 
+                    FROM chat_history
                     WHERE namespace = ?
-                    ORDER BY timestamp DESC 
+                    ORDER BY timestamp DESC
                     LIMIT ?
                     """,
                     (namespace, limit),
@@ -375,8 +375,8 @@ class DatabaseManager:
         cursor.execute(
             """
             INSERT INTO short_term_memory
-            (memory_id, chat_id, processed_data, importance_score, category_primary, 
-             retention_type, namespace, created_at, expires_at, access_count, 
+            (memory_id, chat_id, processed_data, importance_score, category_primary,
+             retention_type, namespace, created_at, expires_at, access_count,
              searchable_content, summary)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
@@ -458,7 +458,7 @@ class DatabaseManager:
         cursor.execute(
             """
             INSERT INTO rules_memory
-            (rule_id, rule_text, rule_type, priority, active, namespace, 
+            (rule_id, rule_text, rule_type, priority, active, namespace,
              created_at, updated_at, processed_data)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
@@ -643,19 +643,19 @@ class DatabaseManager:
 
             cursor.execute(
                 f"""
-                SELECT 
+                SELECT
                     fts.memory_id, fts.memory_type, fts.category_primary,
-                    CASE 
+                    CASE
                         WHEN fts.memory_type = 'short_term' THEN st.processed_data
                         WHEN fts.memory_type = 'long_term' THEN lt.processed_data
                         WHEN fts.memory_type = 'rules' THEN r.processed_data
                     END as processed_data,
-                    CASE 
+                    CASE
                         WHEN fts.memory_type = 'short_term' THEN st.importance_score
                         WHEN fts.memory_type = 'long_term' THEN lt.importance_score
                         ELSE 0.5
                     END as importance_score,
-                    CASE 
+                    CASE
                         WHEN fts.memory_type = 'short_term' THEN st.created_at
                         WHEN fts.memory_type = 'long_term' THEN lt.created_at
                         WHEN fts.memory_type = 'rules' THEN r.created_at
@@ -725,7 +725,7 @@ class DatabaseManager:
             f"""
             SELECT memory_id, processed_data, importance_score, created_at, summary,
                    category_primary, 'long_term' as memory_type
-            FROM long_term_memory 
+            FROM long_term_memory
             WHERE namespace = ? AND category_primary IN ({category_placeholders})
               AND (searchable_content LIKE ? OR summary LIKE ?)
             ORDER BY importance_score DESC, created_at DESC
@@ -807,21 +807,21 @@ class DatabaseManager:
         """Search memories by entity matching"""
         cursor.execute(
             """
-            SELECT 
+            SELECT
                 e.memory_id, e.memory_type, e.relevance_score,
-                CASE 
+                CASE
                     WHEN e.memory_type = 'short_term' THEN st.processed_data
                     WHEN e.memory_type = 'long_term' THEN lt.processed_data
                 END as processed_data,
-                CASE 
+                CASE
                     WHEN e.memory_type = 'short_term' THEN st.importance_score
                     WHEN e.memory_type = 'long_term' THEN lt.importance_score
                 END as importance_score,
-                CASE 
+                CASE
                     WHEN e.memory_type = 'short_term' THEN st.category_primary
                     WHEN e.memory_type = 'long_term' THEN lt.category_primary
                 END as category_primary,
-                CASE 
+                CASE
                     WHEN e.memory_type = 'short_term' THEN st.created_at
                     WHEN e.memory_type = 'long_term' THEN lt.created_at
                 END as created_at
@@ -892,7 +892,7 @@ class DatabaseManager:
                     SELECT category_primary FROM short_term_memory WHERE namespace = ?
                     UNION ALL
                     SELECT category_primary FROM long_term_memory WHERE namespace = ?
-                ) 
+                )
                 GROUP BY category_primary
             """,
                 (namespace, namespace),

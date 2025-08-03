@@ -122,7 +122,7 @@ class StringUtils:
         words = re.findall(r"\b[a-zA-Z]{3,}\b", text.lower())
 
         # Filter out stopwords and get unique words
-        keywords = list(set(word for word in words if word not in stopwords))
+        keywords = list({word for word in words if word not in stopwords})
 
         # Sort by length (longer words often more meaningful)
         keywords.sort(key=len, reverse=True)

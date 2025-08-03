@@ -162,7 +162,7 @@ class EntityQueries(BaseQueries):
 
     # ANALYTICS Queries
     GET_ENTITY_STATISTICS = """
-        SELECT 
+        SELECT
             entity_type,
             COUNT(*) as count,
             AVG(relevance_score) as avg_relevance,
@@ -183,7 +183,7 @@ class EntityQueries(BaseQueries):
     """
 
     GET_RELATIONSHIP_STATISTICS = """
-        SELECT 
+        SELECT
             relationship_type,
             COUNT(*) as count,
             AVG(strength) as avg_strength,
@@ -195,7 +195,7 @@ class EntityQueries(BaseQueries):
     """
 
     GET_MEMORY_CONNECTIVITY = """
-        SELECT 
+        SELECT
             memory_id,
             memory_type,
             COUNT(*) as connection_count
@@ -218,7 +218,7 @@ class EntityQueries(BaseQueries):
         SELECT entity_id, memory_id, memory_type, entity_type, entity_value, relevance_score
         FROM memory_entities
         WHERE namespace = ? AND (
-            entity_value LIKE ? OR 
+            entity_value LIKE ? OR
             entity_context LIKE ?
         )
         ORDER BY relevance_score DESC

@@ -62,8 +62,8 @@ class MemoryQueries(BaseQueries):
     # SELECT Queries
     SELECT_MEMORIES_BY_NAMESPACE = """
         SELECT memory_id, processed_data, importance_score, category_primary, created_at, summary
-        FROM {table} 
-        WHERE namespace = ? 
+        FROM {table}
+        WHERE namespace = ?
         ORDER BY importance_score DESC, created_at DESC
         LIMIT ?
     """
@@ -96,7 +96,7 @@ class MemoryQueries(BaseQueries):
 
     # UPDATE Queries
     UPDATE_MEMORY_ACCESS = """
-        UPDATE {table} 
+        UPDATE {table}
         SET access_count = access_count + 1, last_accessed = ?
         WHERE memory_id = ? AND namespace = ?
     """
@@ -119,7 +119,7 @@ class MemoryQueries(BaseQueries):
     """
 
     DELETE_EXPIRED_MEMORIES = """
-        DELETE FROM short_term_memory 
+        DELETE FROM short_term_memory
         WHERE namespace = ? AND expires_at <= ?
     """
 
@@ -141,7 +141,7 @@ class MemoryQueries(BaseQueries):
         SELECT memory_id, processed_data, importance_score, searchable_content, summary
         FROM {table}
         WHERE namespace = ? AND (
-            searchable_content LIKE ? OR 
+            searchable_content LIKE ? OR
             summary LIKE ? OR
             category_primary = ?
         )
@@ -159,7 +159,7 @@ class MemoryQueries(BaseQueries):
     """
 
     GET_MEMORY_STATISTICS = """
-        SELECT 
+        SELECT
             COUNT(*) as total_memories,
             AVG(importance_score) as avg_importance,
             MAX(importance_score) as max_importance,

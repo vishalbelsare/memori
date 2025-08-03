@@ -29,14 +29,14 @@ class ChatQueries(BaseQueries):
     # INSERT Queries
     INSERT_CHAT_HISTORY = """
         INSERT INTO chat_history (
-            chat_id, user_input, ai_output, model, timestamp, 
+            chat_id, user_input, ai_output, model, timestamp,
             session_id, namespace, tokens_used, metadata
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
     # SELECT Queries
     SELECT_CHAT_BY_ID = """
-        SELECT * FROM chat_history 
+        SELECT * FROM chat_history
         WHERE chat_id = ? AND namespace = ?
     """
 
@@ -64,7 +64,7 @@ class ChatQueries(BaseQueries):
     """
 
     SELECT_CHAT_STATISTICS = """
-        SELECT 
+        SELECT
             COUNT(*) as total_chats,
             COUNT(DISTINCT session_id) as unique_sessions,
             COUNT(DISTINCT model) as unique_models,
@@ -93,7 +93,7 @@ class ChatQueries(BaseQueries):
 
     # DELETE Queries
     DELETE_CHAT = """
-        DELETE FROM chat_history 
+        DELETE FROM chat_history
         WHERE chat_id = ? AND namespace = ?
     """
 
@@ -109,7 +109,7 @@ class ChatQueries(BaseQueries):
 
     # ANALYTICS Queries
     GET_CHAT_VOLUME_BY_DATE = """
-        SELECT 
+        SELECT
             DATE(timestamp) as chat_date,
             COUNT(*) as chat_count,
             SUM(tokens_used) as tokens_used
@@ -120,7 +120,7 @@ class ChatQueries(BaseQueries):
     """
 
     GET_MODEL_USAGE_STATS = """
-        SELECT 
+        SELECT
             model,
             COUNT(*) as usage_count,
             SUM(tokens_used) as total_tokens,
@@ -132,7 +132,7 @@ class ChatQueries(BaseQueries):
     """
 
     GET_SESSION_STATS = """
-        SELECT 
+        SELECT
             session_id,
             COUNT(*) as message_count,
             MIN(timestamp) as session_start,
@@ -149,7 +149,7 @@ class ChatQueries(BaseQueries):
         SELECT chat_id, user_input, ai_output, model, timestamp
         FROM chat_history
         WHERE namespace = ? AND (
-            user_input LIKE ? OR 
+            user_input LIKE ? OR
             ai_output LIKE ?
         )
         ORDER BY timestamp DESC
