@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
 from memoriai.utils.pydantic_models import (
-    ConversationRecord,
     ExtractedEntities,
     MemoryCategory,
     MemoryCategoryType,
@@ -205,21 +204,21 @@ class SampleData:
         ]
 
     @staticmethod
-    def get_sample_conversation_records() -> List[ConversationRecord]:
+    def get_sample_conversation_records() -> List[Dict[str, Any]]:
         """Get sample conversation record objects."""
         conversations = SampleData.get_sample_conversations()
         records = []
 
         for i, conv in enumerate(conversations):
-            record = ConversationRecord(
-                chat_id=f"chat_{i+1:03d}",
-                user_input=conv["user_input"],
-                ai_output=conv["ai_output"],
-                model=conv["model"],
-                session_id=f"session_{(i//2)+1:03d}",  # Group conversations by session
-                namespace="test_namespace",
-                metadata=conv["metadata"],
-            )
+            record = {
+                "chat_id": f"chat_{i+1:03d}",
+                "user_input": conv["user_input"],
+                "ai_output": conv["ai_output"],
+                "model": conv["model"],
+                "session_id": f"session_{(i//2)+1:03d}",  # Group conversations by session
+                "namespace": "test_namespace",
+                "metadata": conv["metadata"],
+            }
             records.append(record)
 
         return records

@@ -1,6 +1,6 @@
 """
-Personal Assistant with Memoriai
-AI assistant that remembers your preferences and context
+Personal Assistant with Memoriai v1.1
+AI assistant with conscious ingestion and intelligent memory
 """
 
 from dotenv import load_dotenv
@@ -12,19 +12,22 @@ load_dotenv()
 
 
 def main():
-    print("🤖 Personal Assistant with Memoriai")
-    print("=" * 35)
+    print("🤖 Personal Assistant with Conscious Memory v1.1")
+    print("=" * 50)
 
-    # Create personal memory space
+    # Create personal memory space with conscious ingestion
     personal = Memori(
         database_connect="sqlite:///personal_assistant.db",
         namespace="personal",  # Separate from work memories
-        conscious_ingest=True,
-        openai_api_key="your-openai-key",
+        conscious_ingest=True,  # 🧠 Enable background analysis
+        verbose=True,  # Show conscious agent activity
+        openai_api_key=None,  # Uses OPENAI_API_KEY from environment
     )
 
     personal.enable()
     print("✅ Personal assistant memory enabled")
+    print("🧠 Background conscious analysis started")
+    print("🎯 Essential memories will be automatically promoted")
 
     # Simulate a conversation flow
     conversations = [
@@ -66,11 +69,23 @@ def main():
         print(f"Assistant: {response.choices[0].message.content}")
         print(f"💡 Expected memory: {conv['expected']}")
 
-    print("\n🎯 Memory in Action:")
-    print("  ✅ Preferences stored and applied")
-    print("  ✅ Context carried across conversations")
-    print("  ✅ Personalized responses based on memory")
+    print("\n🎯 Conscious Memory in Action:")
+    print("  ✅ Preferences automatically categorized and stored")
+    print("  ✅ Essential information promoted for instant access")
+    print("  ✅ Context intelligently injected based on relevance")
+    print("  ✅ Personalized responses improve over time")
+
+    # Demonstrate conscious analysis
+    print("\n🧠 Triggering conscious analysis...")
+    try:
+        personal.trigger_conscious_analysis()
+        essential = personal.get_essential_conversations(limit=3)
+        print(f"  ✅ Analysis complete: {len(essential)} essential memories promoted")
+    except Exception as e:
+        print(f"  ⚠️ Analysis requires more conversation data: {e}")
+
     print("\n💾 Check 'personal_assistant.db' to see stored memories!")
+    print("🔬 Enable verbose=True to see agent activity in real-time")
 
 
 if __name__ == "__main__":

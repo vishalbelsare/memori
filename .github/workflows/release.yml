@@ -133,7 +133,7 @@ jobs:
           python -c "import memoriai; print(f'✅ Package import successful: {memoriai.__version__}')"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release-dist-${{ needs.validate-release.outputs.version }}
           path: dist/
@@ -154,7 +154,7 @@ jobs:
     
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: release-dist-${{ needs.validate-release.outputs.version }}
           path: dist/
@@ -188,7 +188,7 @@ jobs:
     
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: release-dist-${{ needs.validate-release.outputs.version }}
           path: dist/
@@ -222,7 +222,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: release-dist-${{ needs.validate-release.outputs.version }}
           path: dist/

@@ -10,28 +10,15 @@ edit_uri: edit/main/docs/
 theme:
   name: material
   palette:
-    # Palette toggle for light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: blue
-      accent: blue
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    # Palette toggle for dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: blue
-      accent: blue
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
+    scheme: slate
+    primary: black
+    accent: blue
   features:
-    - navigation.tabs
     - navigation.sections
     - navigation.expand
     - navigation.path
     - navigation.top
+    - navigation.indexes
     - search.highlight
     - search.share
     - toc.follow
@@ -55,7 +42,11 @@ markdown_extensions:
       pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.tasklist:
@@ -73,22 +64,16 @@ nav:
     - Installation: getting-started/installation.md
     - Quick Start: getting-started/quick-start.md
     - Basic Usage: getting-started/basic-usage.md
+  - Features: features.md
+  - Architecture: architecture.md
   - Configuration:
     - Settings: configuration/settings.md
     - Database Setup: configuration/database.md
-    - Environment Variables: configuration/environment.md
+  - Conscious Ingestion:
+    - Overview: conscious-ingestion/overview.md
+    - Agents: conscious-ingestion/agents.md
   - Examples:
-    - Basic Example: examples/basic.md
-    - Personal Assistant: examples/personal-assistant.md
-    - Advanced Config: examples/advanced-config.md
-  - API Reference:
-    - Core: api/core.md
-    - Configuration: api/configuration.md
-    - Utils: api/utils.md
-  - Integrations:
-    - LiteLLM: integrations/litellm.md
-    - OpenAI: integrations/openai.md
-    - Anthropic: integrations/anthropic.md
+    - Basic Usage: examples/basic-usage.md
   - Contributing: contributing.md
 
 extra:
@@ -97,3 +82,6 @@ extra:
       link: https://github.com/yourusername/memoriai
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/memoriai/
+
+extra_javascript:
+  - https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js

@@ -59,7 +59,7 @@ jobs:
           pip-audit
 
       - name: Upload dependency scan results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: dependency-scan-results
@@ -118,7 +118,7 @@ jobs:
             --severity=ERROR
 
       - name: Upload code scan results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: code-security-scan-results
@@ -232,7 +232,7 @@ jobs:
           publish_results: true
 
       - name: "Upload artifact"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: SARIF file
           path: results.sarif
@@ -251,7 +251,9 @@ jobs:
     
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
 
       - name: Generate security summary
         run: |

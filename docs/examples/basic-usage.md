@@ -1,13 +1,14 @@
-# Basic Example
+# Basic Example with Conscious Ingestion
 
-Simple demonstration of Memoriai's core functionality.
+Simple demonstration of Memoriai v1.1's enhanced conscious ingestion system.
 
 ## Overview
 
 This example shows how to:
-- Initialize Memoriai with basic settings
-- Enable universal memory recording
-- See automatic context injection in action
+- Initialize Memoriai with conscious ingestion
+- Enable AI-powered background analysis
+- See intelligent context injection in action
+- Understand memory promotion and essential information extraction
 
 ## Code
 
@@ -19,13 +20,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def main():
-    print("🧠 Memoriai - Your AI's Second Memory")
+    print("🧠 Memoriai v1.1 - AI Memory with Conscious Ingestion")
     
-    # Initialize your workspace memory
+    # Initialize your workspace memory with conscious ingestion
     office_work = Memori(
         database_connect="sqlite:///office_memory.db",
-        conscious_ingest=True,  # Auto-inject relevant context
-        openai_api_key="your-openai-key"
+        conscious_ingest=True,  # 🔥 Enable AI-powered background analysis
+        verbose=True,  # Show what's happening behind the scenes
+        openai_api_key=None  # Uses OPENAI_API_KEY from environment
     )
     
     # Enable memory recording
@@ -69,6 +71,10 @@ def main():
     print("  • Tech stack (FastAPI, PostgreSQL)")  
     print("  • Coding preferences (clean code, type hints)")
     print("  • Project context (user models, database connections)")
+    print("\n🧠 With conscious_ingest=True:")
+    print("  • Background analysis will identify essential information")
+    print("  • Key facts automatically promoted for instant access")
+    print("  • Context injection gets smarter over time")
     print("\nNo more repeating context - just chat naturally!")
 
 if __name__ == "__main__":
@@ -77,18 +83,26 @@ if __name__ == "__main__":
 
 ## What Happens
 
-### 1. Memory Initialization
+### 1. Memory Initialization with Conscious Ingestion
 ```python
 office_work = Memori(
     database_connect="sqlite:///office_memory.db",
-    conscious_ingest=True,  # Key feature!
-    openai_api_key="your-openai-key"
+    conscious_ingest=True,  # 🔥 The magic happens here
+    verbose=True,  # Show background activity
+    openai_api_key=None  # Uses environment variable
 )
 ```
 
-- Creates SQLite database for memory storage
-- Enables intelligent context injection
-- Sets up memory processing agent
+**What `conscious_ingest=True` enables:**
+- 🧠 **Background Analysis**: AI analyzes memory patterns every 6 hours
+- 🎯 **Essential Memory Promotion**: Key personal facts promoted to immediate access
+- 📝 **Smart Context Injection**: 3-5 most relevant memories automatically included
+- 🔄 **Continuous Learning**: System adapts to your preferences and patterns
+
+**Intelligence Layers:**
+1. **Memory Agent** - Processes conversations with Pydantic structured outputs
+2. **Conscious Agent** - Identifies essential information worth promoting
+3. **Retrieval Agent** - Selects most relevant context for injection
 
 ### 2. Universal Recording
 ```python
@@ -99,13 +113,20 @@ office_work.enable()
 - Works with ANY LLM library (LiteLLM, OpenAI, Anthropic)
 - Processes conversations with Pydantic-based intelligence
 
-### 3. Context Injection
-Each conversation builds on the previous:
+### 3. Intelligent Context Injection
+Each conversation builds on the previous with AI-powered selection:
 
-1. **First**: Establishes tech stack (FastAPI, PostgreSQL)
-2. **Second**: Provides FastAPI + PostgreSQL specific database help  
-3. **Third**: Records code preferences
-4. **Future**: All responses consider your preferences and context
+1. **First**: Establishes tech stack (FastAPI, PostgreSQL) → Gets categorized as "fact"
+2. **Second**: Memory automatically provides FastAPI + PostgreSQL context
+3. **Third**: Records code preferences → Gets categorized as "preference"  
+4. **Background**: Conscious agent identifies these as essential personal facts
+5. **Future**: All responses include essential + contextually relevant memories
+
+**Memory Categories Learned:**
+- **Facts**: "I use FastAPI and PostgreSQL"
+- **Preferences**: "I prefer clean, documented code with type hints"
+- **Skills**: Programming expertise and technology familiarity
+- **Context**: Current project details and work patterns
 
 ## Expected Output
 
