@@ -2,18 +2,16 @@
 Integration modules for auto-recording LLM conversations
 """
 
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 # Import all integrations
-from . import openai_integration
-from . import litellm_integration
-from . import anthropic_integration
+from . import anthropic_integration, litellm_integration, openai_integration
 
 # Available integrations
 AVAILABLE_INTEGRATIONS = {
-    'openai': openai_integration,
-    'litellm': litellm_integration, 
-    'anthropic': anthropic_integration
+    "openai": openai_integration,
+    "litellm": litellm_integration,
+    "anthropic": anthropic_integration,
 }
 
 
@@ -21,7 +19,7 @@ def install_all_hooks():
     """Install hooks for all available integrations"""
     for name, integration in AVAILABLE_INTEGRATIONS.items():
         try:
-            hook_func = getattr(integration, f'install_{name}_hooks')
+            hook_func = getattr(integration, f"install_{name}_hooks")
             hook_func()
         except Exception as e:
             print(f"Failed to install {name} hooks: {e}")
@@ -31,7 +29,7 @@ def uninstall_all_hooks():
     """Uninstall hooks for all integrations"""
     for name, integration in AVAILABLE_INTEGRATIONS.items():
         try:
-            hook_func = getattr(integration, f'uninstall_{name}_hooks')
+            hook_func = getattr(integration, f"uninstall_{name}_hooks")
             hook_func()
         except Exception as e:
             print(f"Failed to uninstall {name} hooks: {e}")

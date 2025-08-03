@@ -238,3 +238,4 @@ sample_data/
 benchmark_results/
 memoriai/scripts/llm_text.py
 ingested_data.txt
+memori_architecture-v2.md
