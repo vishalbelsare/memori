@@ -10,8 +10,8 @@ from typing import Any, Dict, List, Optional
 from loguru import logger
 
 try:
-    from litellm import failure_callback, success_callback
     import litellm
+    from litellm import failure_callback, success_callback
 
     LITELLM_AVAILABLE = True
 except ImportError:
@@ -94,8 +94,12 @@ class Memori:
                 self.search_engine = MemorySearchEngine(
                     api_key=openai_api_key, model="gpt-4o"
                 )
-                self.conscious_agent = ConsciouscAgent(api_key=openai_api_key, model="gpt-4o")
-                logger.info("Pydantic-based memory, search, and conscious agents initialized")
+                self.conscious_agent = ConsciouscAgent(
+                    api_key=openai_api_key, model="gpt-4o"
+                )
+                logger.info(
+                    "Pydantic-based memory, search, and conscious agents initialized"
+                )
             except Exception as e:
                 logger.warning(
                     f"Failed to initialize OpenAI agents: {e}. Conscious ingestion disabled."
@@ -125,16 +129,18 @@ class Memori:
         if not LoggingManager.is_initialized():
             # Create default logging settings
             logging_settings = LoggingSettings()
-            
+
             # If verbose mode is enabled, set logging level to DEBUG
             if self.verbose:
                 logging_settings.level = LogLevel.DEBUG
-            
+
             # Setup logging with verbose mode
             LoggingManager.setup_logging(logging_settings, verbose=self.verbose)
-            
+
             if self.verbose:
-                logger.info("Verbose logging enabled - only loguru logs will be displayed")
+                logger.info(
+                    "Verbose logging enabled - only loguru logs will be displayed"
+                )
 
     def _setup_database(self):
         """Setup database tables based on template"""
@@ -200,9 +206,11 @@ class Memori:
                 success_callback.remove(self._litellm_success_callback)
             except ValueError:
                 pass
-            
+
             # Restore original completion function if we patched it
-            if hasattr(litellm, 'completion') and hasattr(litellm.completion, '_memori_patched'):
+            if hasattr(litellm, "completion") and hasattr(
+                litellm.completion, "_memori_patched"
+            ):
                 # Note: We can't easily restore the original function in a multi-instance scenario
                 # This is a limitation of the monkey-patching approach
                 pass
@@ -227,23 +235,27 @@ class Memori:
 
         try:
             success_callback.append(self._litellm_success_callback)
-            
+
             # Set up context injection by monkey-patching completion function
-            if hasattr(litellm, 'completion') and not hasattr(litellm.completion, '_memori_patched'):
+            if hasattr(litellm, "completion") and not hasattr(
+                litellm.completion, "_memori_patched"
+            ):
                 original_completion = litellm.completion
-                
+
                 def memori_completion(*args, **kwargs):
                     # Inject context if conscious ingestion is enabled and this instance is enabled
                     if self.conscious_ingest and self._enabled:
                         kwargs = self._inject_litellm_context(kwargs)
-                    
+
                     # Call original completion
                     return original_completion(*args, **kwargs)
-                
+
                 litellm.completion = memori_completion
                 litellm.completion._memori_patched = True
-                logger.debug("LiteLLM completion function patched for context injection")
-            
+                logger.debug(
+                    "LiteLLM completion function patched for context injection"
+                )
+
             logger.debug("LiteLLM native callbacks registered")
             return True
         except Exception as e:
@@ -498,7 +510,7 @@ class Memori:
             # Extract user input from messages
             user_input = ""
             messages = params.get("messages", [])
-            
+
             for msg in reversed(messages):
                 if msg.get("role") == "user":
                     user_input = msg.get("content", "")
@@ -511,7 +523,9 @@ class Memori:
                     context_prompt = "--- Relevant Context ---\n"
                     for mem in context:
                         if isinstance(mem, dict):
-                            summary = mem.get("summary", "") or mem.get("searchable_content", "")
+                            summary = mem.get("summary", "") or mem.get(
+                                "searchable_content", ""
+                            )
                             category = mem.get("category_primary", "")
                             if category.startswith("essential_"):
                                 context_prompt += f"[ESSENTIAL] {summary}\n"
@@ -526,7 +540,9 @@ class Memori:
                             break
                     else:
                         # No system message exists, add one
-                        messages.insert(0, {"role": "system", "content": context_prompt})
+                        messages.insert(
+                            0, {"role": "system", "content": context_prompt}
+                        )
 
                     logger.debug(f"LiteLLM: Injected context with {len(context)} items")
             else:
@@ -536,7 +552,9 @@ class Memori:
                     if essential_conversations:
                         context_prompt = "--- Your Context ---\n"
                         for conv in essential_conversations:
-                            summary = conv.get("summary", "") or conv.get("searchable_content", "")
+                            summary = conv.get("summary", "") or conv.get(
+                                "searchable_content", ""
+                            )
                             context_prompt += f"[ESSENTIAL] {summary}\n"
                         context_prompt += "-------------------------\n"
 
@@ -547,13 +565,17 @@ class Memori:
                                 break
                         else:
                             # No system message exists, add one
-                            messages.insert(0, {"role": "system", "content": context_prompt})
+                            messages.insert(
+                                0, {"role": "system", "content": context_prompt}
+                            )
 
-                        logger.debug(f"LiteLLM: Injected {len(essential_conversations)} essential conversations")
+                        logger.debug(
+                            f"LiteLLM: Injected {len(essential_conversations)} essential conversations"
+                        )
 
         except Exception as e:
             logger.error(f"LiteLLM context injection failed: {e}")
-        
+
         return params
 
     def _record_openai_conversation(self, kwargs, response):
@@ -831,17 +853,17 @@ class Memori:
         """
         try:
             context_items = []
-            
+
             if self.conscious_ingest:
                 # First, get essential conversations from short-term memory (always relevant)
                 essential_conversations = self.get_essential_conversations(limit=3)
                 context_items.extend(essential_conversations)
-                
+
                 # Calculate remaining slots for specific context
                 remaining_limit = max(0, limit - len(essential_conversations))
             else:
                 remaining_limit = limit
-            
+
             if remaining_limit > 0:
                 # Get specific context using search engine or database
                 if self.search_engine:
@@ -856,10 +878,13 @@ class Memori:
                     specific_context = self.db_manager.search_memories(
                         query=query, namespace=self.namespace, limit=remaining_limit
                     )
-                
+
                 # Add specific context, avoiding duplicates
                 for item in specific_context:
-                    if not any(ctx.get('memory_id') == item.get('memory_id') for ctx in context_items):
+                    if not any(
+                        ctx.get("memory_id") == item.get("memory_id")
+                        for ctx in context_items
+                    ):
                         context_items.append(item)
 
             logger.debug(
@@ -1046,7 +1071,7 @@ class Memori:
             except RuntimeError:
                 # No event loop running, create a new thread for async tasks
                 import threading
-                
+
                 def run_background_loop():
                     new_loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(new_loop)
@@ -1056,7 +1081,7 @@ class Memori:
                         logger.error(f"Background analysis loop failed: {e}")
                     finally:
                         new_loop.close()
-                
+
                 thread = threading.Thread(target=run_background_loop, daemon=True)
                 thread.start()
                 logger.info("Background analysis started in separate thread")
@@ -1065,7 +1090,7 @@ class Memori:
             # If we have a running loop, schedule the task
             self._background_task = loop.create_task(self._background_analysis_loop())
             logger.info("Background analysis task started")
-            
+
         except Exception as e:
             logger.error(f"Failed to start background analysis: {e}")
 
@@ -1081,18 +1106,17 @@ class Memori:
     async def _background_analysis_loop(self):
         """Main background analysis loop"""
         logger.info("ConsciouscAgent: Background analysis loop started")
-        
+
         while self._enabled and self.conscious_ingest:
             try:
                 if self.conscious_agent and self.conscious_agent.should_run_analysis():
                     await self.conscious_agent.run_background_analysis(
-                        self.db_manager, 
-                        self.namespace
+                        self.db_manager, self.namespace
                     )
-                
+
                 # Wait 30 minutes before next check
                 await asyncio.sleep(1800)  # 30 minutes
-                
+
             except asyncio.CancelledError:
                 logger.info("ConsciouscAgent: Background analysis cancelled")
                 break
@@ -1100,7 +1124,7 @@ class Memori:
                 logger.error(f"ConsciouscAgent: Background analysis error: {e}")
                 # Wait 5 minutes before retrying on error
                 await asyncio.sleep(300)
-        
+
         logger.info("ConsciouscAgent: Background analysis loop ended")
 
     def trigger_conscious_analysis(self):
@@ -1114,28 +1138,32 @@ class Memori:
             try:
                 loop = asyncio.get_running_loop()
                 task = loop.create_task(
-                    self.conscious_agent.run_background_analysis(self.db_manager, self.namespace)
+                    self.conscious_agent.run_background_analysis(
+                        self.db_manager, self.namespace
+                    )
                 )
                 logger.info("Conscious analysis triggered")
                 return task
             except RuntimeError:
                 # No event loop, run synchronously in thread
                 import threading
-                
+
                 def run_analysis():
                     new_loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(new_loop)
                     try:
                         new_loop.run_until_complete(
-                            self.conscious_agent.run_background_analysis(self.db_manager, self.namespace)
+                            self.conscious_agent.run_background_analysis(
+                                self.db_manager, self.namespace
+                            )
                         )
                     finally:
                         new_loop.close()
-                
+
                 thread = threading.Thread(target=run_analysis)
                 thread.start()
                 logger.info("Conscious analysis triggered in separate thread")
-                
+
         except Exception as e:
             logger.error(f"Failed to trigger conscious analysis: {e}")
 
@@ -1152,23 +1180,25 @@ class Memori:
                 ORDER BY importance_score DESC, created_at DESC
                 LIMIT ?
                 """
-                
+
                 cursor = connection.execute(query, (self.namespace, limit))
-                
+
                 essential_conversations = []
                 for row in cursor.fetchall():
-                    essential_conversations.append({
-                        'memory_id': row[0],
-                        'summary': row[1],
-                        'category_primary': row[2],
-                        'importance_score': row[3],
-                        'created_at': row[4],
-                        'searchable_content': row[5],
-                        'processed_data': row[6]
-                    })
-                
+                    essential_conversations.append(
+                        {
+                            "memory_id": row[0],
+                            "summary": row[1],
+                            "category_primary": row[2],
+                            "importance_score": row[3],
+                            "created_at": row[4],
+                            "searchable_content": row[5],
+                            "processed_data": row[6],
+                        }
+                    )
+
                 return essential_conversations
-                
+
         except Exception as e:
             logger.error(f"Failed to get essential conversations: {e}")
             return []

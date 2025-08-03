@@ -333,15 +333,17 @@ Be strategic and comprehensive in your search planning."""
         return []
 
 
-def create_retrieval_agent(memori_instance=None, api_key: str = None, model: str = "gpt-4o") -> MemorySearchEngine:
+def create_retrieval_agent(
+    memori_instance=None, api_key: str = None, model: str = "gpt-4o"
+) -> MemorySearchEngine:
     """
     Create a retrieval agent instance
-    
+
     Args:
         memori_instance: Optional Memori instance for direct database access
         api_key: OpenAI API key
         model: Model to use for query planning
-        
+
     Returns:
         MemorySearchEngine instance
     """
@@ -354,66 +356,73 @@ def create_retrieval_agent(memori_instance=None, api_key: str = None, model: str
 def smart_memory_search(query: str, memori_instance, limit: int = 5) -> str:
     """
     Direct string-based memory search function that uses intelligent retrieval
-    
+
     Args:
         query: Search query string
         memori_instance: Memori instance with database access
         limit: Maximum number of results
-        
+
     Returns:
         Formatted string with search results
     """
     try:
         # Create search engine
         search_engine = MemorySearchEngine()
-        
+
         # Execute intelligent search
         results = search_engine.execute_search(
             query=query,
             db_manager=memori_instance.db_manager,
             namespace=memori_instance.namespace,
-            limit=limit
+            limit=limit,
         )
-        
+
         if not results:
             return f"No relevant memories found for query: '{query}'"
-        
+
         # Format results as a readable string
         output = f"🔍 Smart Memory Search Results for: '{query}'\n\n"
-        
+
         for i, result in enumerate(results, 1):
             try:
                 # Try to parse processed data for better formatting
                 if "processed_data" in result:
                     import json
+
                     processed_data = json.loads(result["processed_data"])
                     summary = processed_data.get("summary", "")
-                    category = processed_data.get("category", {}).get("primary_category", "")
+                    category = processed_data.get("category", {}).get(
+                        "primary_category", ""
+                    )
                 else:
-                    summary = result.get("summary", result.get("searchable_content", "")[:100] + "...")
+                    summary = result.get(
+                        "summary", result.get("searchable_content", "")[:100] + "..."
+                    )
                     category = result.get("category_primary", "unknown")
-                
+
                 importance = result.get("importance_score", 0.0)
                 created_at = result.get("created_at", "")
                 search_strategy = result.get("search_strategy", "unknown")
                 search_reasoning = result.get("search_reasoning", "")
-                
+
                 output += f"{i}. [{category.upper()}] {summary}\n"
                 output += f"   📊 Importance: {importance:.2f} | 📅 {created_at}\n"
                 output += f"   🔍 Strategy: {search_strategy}\n"
-                
+
                 if search_reasoning:
                     output += f"   🎯 {search_reasoning}\n"
-                
+
                 output += "\n"
-                
-            except Exception as e:
+
+            except Exception:
                 # Fallback formatting
-                content = result.get("searchable_content", "Memory content available")[:100]
+                content = result.get("searchable_content", "Memory content available")[
+                    :100
+                ]
                 output += f"{i}. {content}...\n\n"
-        
+
         return output.strip()
-        
+
     except Exception as e:
         logger.error(f"Smart memory search failed: {e}")
         return f"Error in smart memory search: {str(e)}"

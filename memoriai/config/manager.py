@@ -258,16 +258,15 @@ class ConfigManager:
         """Setup logging based on current configuration"""
         if self._settings is None:
             raise ConfigurationError("Configuration not loaded")
-        
+
         try:
             # Import here to avoid circular import
             from ..utils.logging import LoggingManager
-            
+
             LoggingManager.setup_logging(
-                self._settings.logging, 
-                verbose=self._settings.verbose
+                self._settings.logging, verbose=self._settings.verbose
             )
-            
+
             if self._settings.verbose:
                 logger.info("Verbose logging enabled through ConfigManager")
         except Exception as e:

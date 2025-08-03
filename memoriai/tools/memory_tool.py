@@ -67,62 +67,72 @@ class MemoryTool:
         # Accept query as direct parameter or from kwargs
         if query is None:
             query = kwargs.get("query", "")
-        
+
         if not query:
             return "Error: Query is required for memory search"
-        
+
         # Use retrieval agent for intelligent search
         try:
             from ..agents.retrieval_agent import MemorySearchEngine
-            
+
             # Create search engine if not already initialized
-            if not hasattr(self, '_search_engine'):
+            if not hasattr(self, "_search_engine"):
                 self._search_engine = MemorySearchEngine()
-            
+
             # Execute search using retrieval agent
             results = self._search_engine.execute_search(
-                query=query, 
-                db_manager=self.memori.db_manager, 
-                namespace=self.memori.namespace, 
-                limit=5
+                query=query,
+                db_manager=self.memori.db_manager,
+                namespace=self.memori.namespace,
+                limit=5,
             )
-            
+
             if not results:
                 return f"No relevant memories found for query: '{query}'"
-            
+
             # Format results as a readable string
             formatted_output = f"🔍 Memory Search Results for: '{query}'\n\n"
-            
+
             for i, result in enumerate(results, 1):
                 try:
                     # Try to parse processed data for better formatting
                     if "processed_data" in result:
                         import json
+
                         processed_data = json.loads(result["processed_data"])
                         summary = processed_data.get("summary", "")
-                        category = processed_data.get("category", {}).get("primary_category", "")
+                        category = processed_data.get("category", {}).get(
+                            "primary_category", ""
+                        )
                     else:
-                        summary = result.get("summary", result.get("searchable_content", "")[:100] + "...")
+                        summary = result.get(
+                            "summary",
+                            result.get("searchable_content", "")[:100] + "...",
+                        )
                         category = result.get("category_primary", "unknown")
-                    
+
                     importance = result.get("importance_score", 0.0)
                     created_at = result.get("created_at", "")
-                    
+
                     formatted_output += f"{i}. [{category.upper()}] {summary}\n"
-                    formatted_output += f"   📊 Importance: {importance:.2f} | 📅 {created_at}\n"
-                    
+                    formatted_output += (
+                        f"   📊 Importance: {importance:.2f} | 📅 {created_at}\n"
+                    )
+
                     if result.get("search_reasoning"):
                         formatted_output += f"   🎯 {result['search_reasoning']}\n"
-                    
+
                     formatted_output += "\n"
-                    
-                except Exception as e:
+
+                except Exception:
                     # Fallback formatting
-                    content = result.get("searchable_content", "Memory content available")[:100]
+                    content = result.get(
+                        "searchable_content", "Memory content available"
+                    )[:100]
                     formatted_output += f"{i}. {content}...\n\n"
-            
+
             return formatted_output.strip()
-            
+
         except ImportError:
             # Fallback to original search methods if retrieval agent is not available
             # Try different search strategies based on query content
@@ -131,16 +141,16 @@ class MemoryTool:
                 essential_result = self._get_essential_conversations()
                 if essential_result.get("count", 0) > 0:
                     return self._format_dict_to_string(essential_result)
-            
+
             # General search
             search_result = self._search_memories(query=query, limit=10)
             if search_result.get("results_count", 0) > 0:
                 return self._format_dict_to_string(search_result)
-                
+
             # Fallback to context retrieval
             context_result = self._retrieve_context(query=query, limit=5)
             return self._format_dict_to_string(context_result)
-        
+
         except Exception as e:
             return f"Error searching memories: {str(e)}"
 
@@ -148,12 +158,12 @@ class MemoryTool:
         """Helper method to format dictionary results to readable strings"""
         if result_dict.get("error"):
             return f"Error: {result_dict['error']}"
-        
+
         if "essential_conversations" in result_dict:
             conversations = result_dict.get("essential_conversations", [])
             if not conversations:
                 return "No essential conversations found in memory."
-            
+
             output = f"🧠 Essential Information ({len(conversations)} items):\n\n"
             for i, conv in enumerate(conversations, 1):
                 category = conv.get("category", "").title()
@@ -162,30 +172,30 @@ class MemoryTool:
                 output += f"{i}. [{category}] {summary}\n"
                 output += f"   📊 Importance: {importance:.2f}\n\n"
             return output.strip()
-        
+
         elif "results" in result_dict:
             results = result_dict.get("results", [])
             if not results:
-                return f"No memories found for your search."
-            
+                return "No memories found for your search."
+
             output = f"🔍 Memory Search Results ({len(results)} found):\n\n"
             for i, result in enumerate(results, 1):
                 content = result.get("searchable_content", "Memory content")[:100]
                 output += f"{i}. {content}...\n\n"
             return output.strip()
-        
+
         elif "context" in result_dict:
             context_items = result_dict.get("context", [])
             if not context_items:
                 return "No relevant context found in memory."
-            
+
             output = f"📚 Relevant Context ({len(context_items)} items):\n\n"
             for i, item in enumerate(context_items, 1):
                 content = item.get("content", "")[:100]
                 category = item.get("category", "unknown")
                 output += f"{i}. [{category.upper()}] {content}...\n\n"
             return output.strip()
-        
+
         else:
             # Generic formatting
             message = result_dict.get("message", "Memory search completed")
@@ -304,30 +314,34 @@ class MemoryTool:
         """Get essential conversations from short-term memory"""
         try:
             limit = kwargs.get("limit", 10)
-            
-            if hasattr(self.memori, 'get_essential_conversations'):
+
+            if hasattr(self.memori, "get_essential_conversations"):
                 essential_conversations = self.memori.get_essential_conversations(limit)
-                
+
                 # Format for better readability
                 formatted_conversations = []
                 for conv in essential_conversations:
-                    formatted_conversations.append({
-                        "summary": conv.get("summary", ""),
-                        "category": conv.get("category_primary", "").replace("essential_", ""),
-                        "importance": conv.get("importance_score", 0),
-                        "created_at": conv.get("created_at", ""),
-                        "content": conv.get("searchable_content", "")
-                    })
-                
+                    formatted_conversations.append(
+                        {
+                            "summary": conv.get("summary", ""),
+                            "category": conv.get("category_primary", "").replace(
+                                "essential_", ""
+                            ),
+                            "importance": conv.get("importance_score", 0),
+                            "created_at": conv.get("created_at", ""),
+                            "content": conv.get("searchable_content", ""),
+                        }
+                    )
+
                 return {
                     "success": True,
                     "essential_conversations": formatted_conversations,
                     "count": len(formatted_conversations),
-                    "message": f"Retrieved {len(formatted_conversations)} essential conversations from short-term memory"
+                    "message": f"Retrieved {len(formatted_conversations)} essential conversations from short-term memory",
                 }
             else:
                 return {"error": "Essential conversations feature not available"}
-                
+
         except Exception as e:
             logger.error(f"Failed to get essential conversations: {e}")
             return {"error": f"Failed to get essential conversations: {str(e)}"}
@@ -335,15 +349,15 @@ class MemoryTool:
     def _trigger_analysis(self, **kwargs) -> Dict[str, Any]:
         """Trigger conscious agent analysis"""
         try:
-            if hasattr(self.memori, 'trigger_conscious_analysis'):
+            if hasattr(self.memori, "trigger_conscious_analysis"):
                 self.memori.trigger_conscious_analysis()
                 return {
                     "success": True,
-                    "message": "Conscious agent analysis triggered successfully. This will analyze memory patterns and update essential conversations in short-term memory."
+                    "message": "Conscious agent analysis triggered successfully. This will analyze memory patterns and update essential conversations in short-term memory.",
                 }
             else:
                 return {"error": "Conscious analysis feature not available"}
-                
+
         except Exception as e:
             logger.error(f"Failed to trigger analysis: {e}")
             return {"error": f"Failed to trigger analysis: {str(e)}"}
@@ -511,16 +525,16 @@ def create_memory_search_tool(memori_instance: Memori):
 
             # Format as readable string instead of JSON
             output = f"🔍 Memory Search Results for: '{query}' ({len(formatted_results)} found)\n\n"
-            
+
             for i, result in enumerate(formatted_results, 1):
                 summary = result.get("summary", "Memory content available")
                 category = result.get("category", "unknown")
                 importance = result.get("importance_score", 0.0)
                 created_at = result.get("created_at", "")
-                
+
                 output += f"{i}. [{category.upper()}] {summary}\n"
                 output += f"   📊 Importance: {importance:.2f} | 📅 {created_at}\n\n"
-            
+
             return output.strip()
 
         except Exception as e:

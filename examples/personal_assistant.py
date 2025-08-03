@@ -74,7 +74,7 @@ def main():
     print("  ✅ Essential information promoted for instant access")
     print("  ✅ Context intelligently injected based on relevance")
     print("  ✅ Personalized responses improve over time")
-    
+
     # Demonstrate conscious analysis
     print("\n🧠 Triggering conscious analysis...")
     try:
@@ -83,7 +83,7 @@ def main():
         print(f"  ✅ Analysis complete: {len(essential)} essential memories promoted")
     except Exception as e:
         print(f"  ⚠️ Analysis requires more conversation data: {e}")
-    
+
     print("\n💾 Check 'personal_assistant.db' to see stored memories!")
     print("🔬 Enable verbose=True to see agent activity in real-time")
 

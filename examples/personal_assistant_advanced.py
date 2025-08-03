@@ -9,12 +9,14 @@ This example shows how to build a sophisticated personal assistant that:
 """
 
 import json
-from datetime import datetime
-from memoriai import Memori, create_memory_tool
-from litellm import completion
+
 from dotenv import load_dotenv
+from litellm import completion
+
+from memoriai import Memori, create_memory_tool
 
 load_dotenv()
+
 
 class PersonalAssistant:
     def __init__(self):
@@ -23,15 +25,15 @@ class PersonalAssistant:
             database_connect="sqlite:///personal_assistant.db",
             conscious_ingest=True,  # Enable background analysis
             verbose=True,
-            namespace="personal_assistant"  # Separate namespace for organization
+            namespace="personal_assistant",  # Separate namespace for organization
         )
-        
+
         # Enable memory recording
         self.memori.enable()
-        
+
         # Create memory search tool for function calling
         self.memory_tool = create_memory_tool(self.memori)
-        
+
         # Define available tools
         self.tools = [
             {
@@ -44,32 +46,34 @@ class PersonalAssistant:
                         "properties": {
                             "query": {
                                 "type": "string",
-                                "description": "What to search for in memory"
+                                "description": "What to search for in memory",
                             },
                             "category": {
-                                "type": "string", 
-                                "enum": ["fact", "preference", "skill", "context", "rule"],
-                                "description": "Optional: filter by memory category"
-                            }
+                                "type": "string",
+                                "enum": [
+                                    "fact",
+                                    "preference",
+                                    "skill",
+                                    "context",
+                                    "rule",
+                                ],
+                                "description": "Optional: filter by memory category",
+                            },
                         },
-                        "required": ["query"]
-                    }
-                }
+                        "required": ["query"],
+                    },
+                },
             },
             {
                 "type": "function",
                 "function": {
                     "name": "get_essential_info",
                     "description": "Get my essential personal information and preferences",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {},
-                        "required": []
-                    }
-                }
-            }
+                    "parameters": {"type": "object", "properties": {}, "required": []},
+                },
+            },
         ]
-        
+
         # System prompt for the assistant
         self.system_prompt = """You are an advanced personal assistant with access to the user's memory and preferences.
 
@@ -97,7 +101,11 @@ Memory Tools Available:
                 results = self.memori.search_memories_by_category(category, limit=5)
                 # Filter results by query relevance
                 relevant = [r for r in results if query.lower() in str(r).lower()]
-                return json.dumps(relevant[:3], indent=2) if relevant else "No relevant memories found"
+                return (
+                    json.dumps(relevant[:3], indent=2)
+                    if relevant
+                    else "No relevant memories found"
+                )
             else:
                 results = self.memory_tool.execute(query=query)
                 return results
@@ -112,7 +120,7 @@ Memory Tools Available:
                 info = []
                 for conv in essential:
                     if isinstance(conv, dict):
-                        summary = conv.get('summary', conv.get('content', ''))
+                        summary = conv.get("summary", conv.get("content", ""))
                         if summary:
                             info.append(f"- {summary}")
                 return "Essential information about you:\\n" + "\\n".join(info[:5])
@@ -129,83 +137,86 @@ Memory Tools Available:
         print("I learn about you with each conversation and remember everything.")
         print("Type 'help' for tips, 'memory' for memory stats, or 'quit' to exit.")
         print()
-        
-        conversation_history = [
-            {"role": "system", "content": self.system_prompt}
-        ]
-        
+
+        conversation_history = [{"role": "system", "content": self.system_prompt}]
+
         while True:
             user_input = input("You: ").strip()
-            
-            if user_input.lower() in ['quit', 'exit', 'bye']:
+
+            if user_input.lower() in ["quit", "exit", "bye"]:
                 print("👋 Goodbye! I'll remember our conversation for next time.")
                 break
-            elif user_input.lower() == 'help':
+            elif user_input.lower() == "help":
                 self.show_help()
                 continue
-            elif user_input.lower() == 'memory':
+            elif user_input.lower() == "memory":
                 self.show_memory_stats()
                 continue
             elif not user_input:
                 continue
-            
+
             # Add user message to conversation
             conversation_history.append({"role": "user", "content": user_input})
-            
+
             try:
                 # Make LLM call with function calling support
                 response = completion(
                     model="gpt-4o",
                     messages=conversation_history,
                     tools=self.tools,
-                    tool_choice="auto"
+                    tool_choice="auto",
                 )
-                
+
                 response_message = response.choices[0].message
                 tool_calls = response_message.tool_calls
-                
+
                 # Handle function calls
                 if tool_calls:
                     conversation_history.append(response_message)
-                    
+
                     for tool_call in tool_calls:
                         function_name = tool_call.function.name
                         function_args = json.loads(tool_call.function.arguments)
-                        
+
                         # Execute the appropriate function
                         if function_name == "search_memory":
                             result = self.search_memory(
                                 function_args.get("query", ""),
-                                function_args.get("category")
+                                function_args.get("category"),
                             )
                         elif function_name == "get_essential_info":
                             result = self.get_essential_info()
                         else:
                             result = "Unknown function"
-                        
+
                         # Add function result to conversation
-                        conversation_history.append({
-                            "role": "tool",
-                            "tool_call_id": tool_call.id,
-                            "content": result
-                        })
-                    
+                        conversation_history.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": tool_call.id,
+                                "content": result,
+                            }
+                        )
+
                     # Get final response after function calls
                     final_response = completion(
-                        model="gpt-4o",
-                        messages=conversation_history
+                        model="gpt-4o", messages=conversation_history
                     )
-                    
+
                     content = final_response.choices[0].message.content
                     print(f"🤖 Assistant: {content}")
-                    conversation_history.append({"role": "assistant", "content": content})
-                    
+                    conversation_history.append(
+                        {"role": "assistant", "content": content}
+                    )
+
                 else:
                     # No function calls, just respond normally
                     content = response_message.content
                     print(f"🤖 Assistant: {content}")
-                    conversation_history.append({"role": "assistant", "content": content})
-                
+                    conversation_history.append(
+                        {"role": "assistant", "content": content}
+                    )
+
             except Exception as e:
                 print(f"❌ Error: {e}")
                 conversation_history.pop()  # Remove failed user message
@@ -232,25 +243,27 @@ Memory Tools Available:
             stats = self.memori.get_memory_stats()
             print(f"💬 Total conversations: {stats.get('total_conversations', 0)}")
             print(f"🧠 Memory entries: {stats.get('total_memories', 0)}")
-            
+
             essential = self.memori.get_essential_conversations(limit=10)
             print(f"⭐ Essential memories: {len(essential)}")
-            
+
             # Show a few essential memories
             if essential:
                 print("\\n🎯 Recent essential information:")
                 for i, conv in enumerate(essential[:3], 1):
                     if isinstance(conv, dict):
-                        summary = conv.get('summary', conv.get('content', ''))[:100]
+                        summary = conv.get("summary", conv.get("content", ""))[:100]
                         print(f"  {i}. {summary}...")
-            
+
         except Exception as e:
             print(f"❌ Could not get memory stats: {e}")
         print()
 
+
 def main():
     assistant = PersonalAssistant()
     assistant.chat()
+
 
 if __name__ == "__main__":
     main()

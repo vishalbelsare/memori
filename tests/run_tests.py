@@ -80,7 +80,10 @@ def main():
     if args.coverage and args.type != "performance":
         try:
             import subprocess
-            result = subprocess.run([sys.executable, "-c", "import pytest_cov"], capture_output=True)
+
+            result = subprocess.run(
+                [sys.executable, "-c", "import pytest_cov"], capture_output=True
+            )
             if result.returncode == 0:
                 cmd.extend(
                     [
@@ -91,7 +94,9 @@ def main():
                     ]
                 )
             else:
-                print("Warning: pytest-cov not installed, running tests without coverage")
+                print(
+                    "Warning: pytest-cov not installed, running tests without coverage"
+                )
         except Exception:
             print("Warning: pytest-cov not available, running tests without coverage")
 

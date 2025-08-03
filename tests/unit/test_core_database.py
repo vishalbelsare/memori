@@ -10,9 +10,6 @@ import pytest
 
 from memoriai.config.settings import DatabaseSettings
 from memoriai.core.database import DatabaseManager
-from memoriai.utils.exceptions import (
-    DatabaseError,
-)
 
 
 class TestDatabaseManager:

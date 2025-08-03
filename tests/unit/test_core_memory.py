@@ -7,11 +7,12 @@ from unittest.mock import patch
 import pytest
 
 # Skip all tests in this module until API is updated
-pytestmark = pytest.mark.skip(reason="Memori class has different API than expected Memori")
+pytestmark = pytest.mark.skip(
+    reason="Memori class has different API than expected Memori"
+)
 
 from memoriai.core.database import DatabaseManager
 from memoriai.core.memory import Memori
-from memoriai.utils.exceptions import MemoriError
 from memoriai.utils.pydantic_models import (
     ExtractedEntities,
     MemoryCategory,
@@ -28,9 +29,11 @@ class TestMemori:
     def test_memori_initialization(self, db_manager: DatabaseManager):
         """Test Memori initialization."""
         memory_manager = Memori(database_connect=db_manager.connection_string)
-        assert memory_manager.db_manager.connection_string == db_manager.connection_string
+        assert (
+            memory_manager.db_manager.connection_string == db_manager.connection_string
+        )
         # Check if properly initialized
-        assert hasattr(memory_manager, 'db_manager')
+        assert hasattr(memory_manager, "db_manager")
 
     def test_store_memory_success(
         self, memory_manager: Memori, sample_processed_memory: ProcessedMemory

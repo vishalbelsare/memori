@@ -7,8 +7,10 @@ import tempfile
 
 import pytest
 
-# Skip all integration tests until API is updated  
-pytestmark = pytest.mark.skip(reason="Memori class has different API than expected Memori")
+# Skip all integration tests until API is updated
+pytestmark = pytest.mark.skip(
+    reason="Memori class has different API than expected Memori"
+)
 
 from memoriai.config.settings import DatabaseSettings
 from memoriai.core.database import DatabaseManager

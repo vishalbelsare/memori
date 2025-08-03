@@ -7,10 +7,12 @@ from unittest.mock import Mock, patch
 import pytest
 
 # Skip all integration tests until API is updated
-pytestmark = pytest.mark.skip(reason="Integration classes have different names than expected")
+pytestmark = pytest.mark.skip(
+    reason="Integration classes have different names than expected"
+)
 
 # from memoriai.integrations.anthropic_integration import MemoriAnthropic
-# from memoriai.integrations.litellm_integration import LiteLLMIntegration  
+# from memoriai.integrations.litellm_integration import LiteLLMIntegration
 # from memoriai.integrations.openai_integration import OpenAIIntegration
 
 

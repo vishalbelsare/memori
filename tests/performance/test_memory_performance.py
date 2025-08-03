@@ -8,7 +8,9 @@ from typing import List
 import pytest
 
 # Skip all performance tests until API is updated
-pytestmark = pytest.mark.skip(reason="Memori class has different API than expected Memori")
+pytestmark = pytest.mark.skip(
+    reason="Memori class has different API than expected Memori"
+)
 
 from memoriai.core.memory import Memori
 from memoriai.utils.pydantic_models import ProcessedMemory
@@ -77,9 +79,7 @@ class TestMemoryPerformance:
         assert stats["total_memories"] >= batch_size
 
     @pytest.mark.performance
-    def test_memory_retrieval_performance(
-        self, performance_memory_manager: Memori
-    ):
+    def test_memory_retrieval_performance(self, performance_memory_manager: Memori):
         """Test performance of memory retrieval."""
         # First, populate with test data
         sample_memories = SampleData.get_sample_processed_memories()
@@ -127,9 +127,7 @@ class TestMemoryPerformance:
         print(f"Total query time: {total_time:.3f}s for {len(test_queries)} queries")
 
     @pytest.mark.performance
-    def test_concurrent_memory_operations(
-        self, performance_memory_manager: Memori
-    ):
+    def test_concurrent_memory_operations(self, performance_memory_manager: Memori):
         """Test performance under concurrent access."""
         import concurrent.futures
 
@@ -277,9 +275,7 @@ class TestMemoryPerformance:
             )
 
     @pytest.mark.performance
-    def test_memory_statistics_performance(
-        self, performance_memory_manager: Memori
-    ):
+    def test_memory_statistics_performance(self, performance_memory_manager: Memori):
         """Test performance of memory statistics calculation."""
         # Populate with test data
         sample_memories = SampleData.get_sample_processed_memories()
@@ -313,9 +309,7 @@ class TestMemoryPerformance:
         )
 
     @pytest.mark.performance
-    def test_database_cleanup_performance(
-        self, performance_memory_manager: Memori
-    ):
+    def test_database_cleanup_performance(self, performance_memory_manager: Memori):
         """Test performance of database cleanup operations."""
         # Populate with test data
         sample_memories = SampleData.get_sample_processed_memories()
