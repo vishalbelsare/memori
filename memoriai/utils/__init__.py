@@ -1,12 +1,55 @@
-"""Utility modules for Memoriai"""
+"""
+Utils package for Memoriai - Comprehensive utilities and helpers
+"""
 
-from .exceptions import AgentError, DatabaseError, MemoriError
-from .pydantic_models import (ConversationContext, EntityType,
-                              ExtractedEntities, MemoryCategory,
-                              MemoryCategoryType, MemoryImportance,
-                              ProcessedMemory, RetentionType)
+# Enhanced exception handling
+from .exceptions import (
+    AgentError,
+    AuthenticationError,
+    ConfigurationError,
+    DatabaseError,
+    ExceptionHandler,
+    IntegrationError,
+    MemoriError,
+    MemoryNotFoundError,
+    ProcessingError,
+    RateLimitError,
+    ResourceExhaustedError,
+    TimeoutError,
+    ValidationError,
+)
+
+# Helper utilities
+from .helpers import (
+    AsyncUtils,
+    DateTimeUtils,
+    FileUtils,
+    JsonUtils,
+    PerformanceUtils,
+    RetryUtils,
+    StringUtils,
+)
+
+# Logging utilities
+from .logging import LoggingManager, get_logger
+
+# Core Pydantic models
+from .pydantic_models import (
+    ConversationContext,
+    EntityType,
+    ExtractedEntities,
+    MemoryCategory,
+    MemoryCategoryType,
+    MemoryImportance,
+    ProcessedMemory,
+    RetentionType,
+)
+
+# Validation utilities
+from .validators import DataValidator, MemoryValidator
 
 __all__ = [
+    # Pydantic Models
     "ProcessedMemory",
     "MemoryCategory",
     "ExtractedEntities",
@@ -15,7 +58,32 @@ __all__ = [
     "MemoryCategoryType",
     "RetentionType",
     "EntityType",
+    # Exceptions
     "MemoriError",
     "DatabaseError",
     "AgentError",
+    "ConfigurationError",
+    "ValidationError",
+    "IntegrationError",
+    "AuthenticationError",
+    "RateLimitError",
+    "MemoryNotFoundError",
+    "ProcessingError",
+    "TimeoutError",
+    "ResourceExhaustedError",
+    "ExceptionHandler",
+    # Validators
+    "DataValidator",
+    "MemoryValidator",
+    # Helpers
+    "StringUtils",
+    "DateTimeUtils",
+    "JsonUtils",
+    "FileUtils",
+    "RetryUtils",
+    "PerformanceUtils",
+    "AsyncUtils",
+    # Logging
+    "LoggingManager",
+    "get_logger",
 ]

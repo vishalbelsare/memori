@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,13 +7,14 @@ name = "memoriai"
 version = "0.1.0"
 description = "The Open-Source Memory Layer for AI Agents & Multi-Agent Systems"
 authors = [{name = "Memori Team", email = "contact@memoriai.dev"}]
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 readme = "README.md"
 requires-python = ">=3.8"
+keywords = ["ai", "memory", "agents", "llm", "artificial-intelligence", "multi-agent"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
@@ -22,40 +23,68 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Database :: Database Engines/Servers",
+    "Typing :: Typed",
 ]
 
 dependencies = [
-    "sqlite3",  # Built-in, but listed for clarity
     "loguru>=0.6.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "click>=8.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=6.0",
     "pytest-cov>=2.0",
-    "black>=21.0",
-    "flake8>=3.8",
-    "mypy>=0.910",
+    "pytest-mock>=3.0",
+    "pytest-asyncio>=0.18.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+    "isort>=5.9.0",
+    "mypy>=1.0",
     "pre-commit>=2.15",
-    "sphinx>=4.0",
-    "sphinx-rtd-theme>=1.0",
+    "coverage>=6.0",
+    "bandit>=1.7.0",
+    "safety>=2.0",
 ]
-postgres = ["psycopg2-binary>=2.9"]
-mysql = ["PyMySQL>=1.0"]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+    "mkdocs-git-revision-date-localized-plugin>=1.2.0",
+    "mkdocs-minify-plugin>=0.7.0",
+    "mkdocs-redirects>=1.2.0",
+]
+postgres = ["psycopg2-binary>=2.9.0"]
+mysql = ["PyMySQL>=1.0.0"]
 integrations = [
-    "openai>=1.0",
-    "litellm>=1.0",
-    "anthropic>=0.3",
+    "openai>=1.0.0",
+    "litellm>=1.0.0",
+    "anthropic>=0.3.0",
+]
+all = [
+    "memoriai[dev,docs,postgres,mysql,integrations]"
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/memoriai"
-Documentation = "https://memoriai.readthedocs.io"
-Repository = "https://github.com/yourusername/memoriai.git"
-"Bug Tracker" = "https://github.com/yourusername/memoriai/issues"
+Homepage = "https://github.com/GibsonAI/memoriai"
+Documentation = "https://gibsonai.github.io/memoriai"
+Repository = "https://github.com/GibsonAI/memoriai.git"
+"Bug Tracker" = "https://github.com/GibsonAI/memoriai/issues"
+"Changelog" = "https://github.com/GibsonAI/memoriai/blob/main/CHANGELOG.md"
+"Contributing" = "https://github.com/GibsonAI/memoriai/blob/main/CONTRIBUTING.md"
 
 [project.scripts]
 memori = "memoriai.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["memoriai*"]
+exclude = ["tests*", "docs*", "examples*", "scripts*", "archive*"]
+
+[tool.setuptools.package-data]
+memoriai = ["py.typed", "*.json", "*.sql"]
 
 [tool.black]
 line-length = 88
@@ -72,8 +101,46 @@ extend-exclude = '''
   | \.venv
   | build
   | dist
+  | archive
 )/
 '''
+
+[tool.ruff]
+line-length = 88
+target-version = "py38"
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    "dist",
+    "build",
+    "archive",
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["B018", "B017"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+src_paths = ["memoriai", "tests"]
 
 [tool.mypy]
 python_version = "3.8"
@@ -89,98 +156,55 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
+show_error_codes = true
+exclude = ["archive/", "build/", "dist/"]
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q --strict-markers"
+addopts = "-ra -q --strict-markers --strict-config"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+]
 
-# requirements.txt
-# Core dependencies - keeping minimal for now
-# Database will use built-in sqlite3
+[tool.coverage.run]
+source = ["memoriai"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "archive/*",
+    "examples/*",
+    "scripts/*",
+]
 
-# requirements-dev.txt
-# Development dependencies
-pytest>=6.0.0
-pytest-cov>=2.10.0
-pytest-asyncio>=0.18.0
-black>=21.0.0
-flake8>=3.8.0
-mypy>=0.910
-pre-commit>=2.15.0
-isort>=5.9.0
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
 
-# Documentation
-sphinx>=4.0.0
-sphinx-rtd-theme>=1.0.0
-myst-parser>=0.15.0
-
-# Testing utilities
-coverage>=5.5
-factory-boy>=3.2.0
-freezegun>=1.2.0
-
-# Optional integrations for testing
-openai>=1.0.0
-litellm>=1.0.0
-anthropic>=0.3.0
-
-# Makefile
-.PHONY: help setup-dev test lint format clean build install docs
-
-help:
-	@echo "Memori Development Commands:"
-	@echo ""
-	@echo "  setup-dev     Setup development environment"
-	@echo "  test          Run tests"
-	@echo "  test-cov      Run tests with coverage"
-	@echo "  lint          Run linting"
-	@echo "  format        Format code"
-	@echo "  clean         Clean build artifacts"
-	@echo "  build         Build package"
-	@echo "  install       Install package in development mode"
-	@echo "  docs          Build documentation"
-	@echo ""
-
-setup-dev:
-	python -m pip install --upgrade pip
-	pip install -r requirements-dev.txt
-	pip install -e .
-	pre-commit install
-
-test:
-	pytest tests/ -v
-
-test-cov:
-	pytest tests/ --cov=memoriai --cov-report=html --cov-report=term
-
-lint:
-	flake8 src/ tests/
-	mypy src/
-	black --check src/ tests/
-
-format:
-	black src/ tests/
-	isort src/ tests/
-
-clean:
-	rm -rf build/
-	rm -rf dist/
-	rm -rf *.egg-info/
-	rm -rf .pytest_cache/
-	rm -rf .mypy_cache/
-	rm -rf htmlcov/
-	find . -type d -name __pycache__ -delete
-	find . -type f -name "*.pyc" -delete
-
-build: clean
-	python -m build
-
-install:
-	pip install -e .
-
-docs:
-	cd docs && make html
+[tool.bandit]
+exclude_dirs = ["tests", "archive", "examples"]
+skips = ["B101", "B601"]

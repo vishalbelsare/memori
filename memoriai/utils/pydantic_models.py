@@ -4,7 +4,7 @@ Pydantic Models for Structured Memory Processing
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Literal, Optional, Tuple, Annotated
+from typing import Annotated, Dict, List, Literal, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -112,16 +112,13 @@ class MemoryImportance(BaseModel):
 
     # Additional scoring factors
     novelty_score: RelevanceScore = Field(
-        default=0.5, 
-        description="How novel/new this information is"
+        default=0.5, description="How novel/new this information is"
     )
     relevance_score: RelevanceScore = Field(
-        default=0.5, 
-        description="How relevant to user's interests"
+        default=0.5, description="How relevant to user's interests"
     )
     actionability_score: RelevanceScore = Field(
-        default=0.5, 
-        description="How actionable this information is"
+        default=0.5, description="How actionable this information is"
     )
 
 
@@ -179,8 +176,7 @@ class MemorySearchQuery(BaseModel):
         default=None, description="Time range for search (e.g., 'last_week')"
     )
     min_importance: ImportanceScore = Field(
-        default=0.0, 
-        description="Minimum importance score"
+        default=0.0, description="Minimum importance score"
     )
 
     # Search strategy
@@ -200,9 +196,7 @@ class MemoryRelationship(BaseModel):
     relationship_type: Literal[
         "builds_on", "contradicts", "supports", "related_to", "prerequisite"
     ]
-    strength: RelevanceScore = Field(
-        description="Strength of the relationship"
-    )
+    strength: RelevanceScore = Field(description="Strength of the relationship")
     reasoning: str = Field(description="Why these memories are related")
 
 
@@ -211,10 +205,7 @@ class UserRule(BaseModel):
 
     rule_text: str = Field(description="The rule or preference in natural language")
     rule_type: Literal["preference", "instruction", "constraint", "goal"]
-    priority: PriorityLevel = Field(
-        default=5, 
-        description="Priority level (1-10)"
-    )
+    priority: PriorityLevel = Field(default=5, description="Priority level (1-10)")
     context: Optional[str] = Field(default=None, description="When this rule applies")
     active: bool = Field(
         default=True, description="Whether this rule is currently active"

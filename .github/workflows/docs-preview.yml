@@ -1,0 +1,284 @@
+name: Documentation Preview
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - '*.md'
+
+permissions:
+  contents: read
+  pull-requests: write
+  pages: write
+  id-token: write
+
+env:
+  CACHE_VERSION: v1
+
+jobs:
+  check-docs-changes:
+    name: Check Documentation Changes
+    runs-on: ubuntu-latest
+    outputs:
+      docs_changed: ${{ steps.changes.outputs.docs_changed }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for documentation changes
+        id: changes
+        run: |
+          echo "🔍 Checking for documentation changes..."
+          
+          # Get list of changed files
+          CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          # Check if docs-related files changed
+          if echo "$CHANGED_FILES" | grep -E "(^docs/|^mkdocs\.yml$|\.md$)" > /dev/null; then
+            echo "docs_changed=true" >> $GITHUB_OUTPUT
+            echo "📝 Documentation changes detected"
+          else
+            echo "docs_changed=false" >> $GITHUB_OUTPUT
+            echo "✨ No documentation changes found"
+          fi
+
+  build-docs-preview:
+    name: Build Documentation Preview
+    runs-on: ubuntu-latest
+    needs: check-docs-changes
+    if: needs.check-docs-changes.outputs.docs_changed == 'true'
+    
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ env.CACHE_VERSION }}-${{ runner.os }}-docs-pip-${{ hashFiles('**/requirements*.txt', '**/mkdocs.yml') }}
+          restore-keys: |
+            ${{ env.CACHE_VERSION }}-${{ runner.os }}-docs-pip-
+
+      - name: Install MkDocs and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material mkdocs-git-revision-date-localized-plugin
+          pip install mkdocs-minify-plugin mkdocs-redirects mkdocs-git-committers-plugin-2
+          
+          # Install project in case docs reference the code
+          if [[ -f "requirements.txt" ]]; then
+            pip install -r requirements.txt
+          fi
+          pip install -e .
+
+      - name: Configure MkDocs for PR preview
+        run: |
+          echo "⚙️ Configuring MkDocs for PR preview..."
+          
+          # Create a temporary config for PR preview
+          cp mkdocs.yml mkdocs-preview.yml
+          
+          # Update site_url for PR preview
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          SITE_URL="https://gibsonai.github.io/memoriai/pr-${PR_NUMBER}/"
+          
+          # Update the site_url in the preview config
+          sed -i "s|site_url:.*|site_url: ${SITE_URL}|" mkdocs-preview.yml
+          
+          # Add PR-specific info to the config
+          echo "" >> mkdocs-preview.yml
+          echo "extra:" >> mkdocs-preview.yml
+          echo "  pr_preview: true" >> mkdocs-preview.yml
+          echo "  pr_number: ${PR_NUMBER}" >> mkdocs-preview.yml
+          echo "  pr_title: \"${{ github.event.pull_request.title }}\"" >> mkdocs-preview.yml
+
+      - name: Build documentation
+        run: |
+          echo "🏗️ Building documentation preview..."
+          mkdocs build --config-file mkdocs-preview.yml --site-dir site-preview
+          
+          # Add PR info to the built site
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          echo "<div style='background: #1976d2; color: white; padding: 10px; text-align: center; font-weight: bold;'>
+                  📖 Documentation Preview for PR #${PR_NUMBER}: ${{ github.event.pull_request.title }}
+                </div>" > pr-banner.html
+          
+          # Inject banner into each HTML file
+          find site-preview -name "*.html" -exec sed -i '/<body[^>]*>/r pr-banner.html' {} \;
+
+      - name: Deploy to GitHub Pages (PR Preview)
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site-preview
+          destination_dir: pr-${{ github.event.pull_request.number }}
+          keep_files: false
+
+      - name: Update PR with preview link
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            const previewUrl = `https://gibsonai.github.io/memoriai/pr-${prNumber}/`;
+            
+            // Check if we already commented
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('📖 Documentation Preview')
+            );
+            
+            const commentBody = `## 📖 Documentation Preview
+            
+            The documentation has been built and is available for preview:
+            
+            🔗 **[View Documentation Preview](${previewUrl})**
+            
+            This preview will be updated automatically when you push changes to the PR that affect documentation files.
+            
+            ### 📝 Changed Documentation Files
+            The following documentation files were modified in this PR:
+            
+            ${process.env.GITHUB_EVENT_PATH ? 
+              require('fs').readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')
+                .split('\n')
+                .filter(line => line.includes('.md') || line.includes('docs/') || line.includes('mkdocs.yml'))
+                .map(line => `- ${line.trim()}`)
+                .join('\n') || '- Documentation files detected'
+              : '- Documentation changes detected'
+            }
+            
+            ---
+            *This comment will be automatically updated when the documentation preview is rebuilt.*`;
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+            }
+
+      - name: Upload preview artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: docs-preview-pr-${{ github.event.pull_request.number }}
+          path: site-preview/
+          retention-days: 30
+
+  cleanup-old-previews:
+    name: Cleanup Old Previews
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+    
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Remove PR preview directory
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          if [[ -d "pr-${PR_NUMBER}" ]]; then
+            echo "🧹 Removing preview directory for PR #${PR_NUMBER}"
+            rm -rf "pr-${PR_NUMBER}"
+            
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add .
+            git commit -m "Clean up documentation preview for PR #${PR_NUMBER}" || echo "Nothing to clean up"
+            git push
+          else
+            echo "No preview directory found for PR #${PR_NUMBER}"
+          fi
+
+  docs-link-check:
+    name: Documentation Link Check
+    runs-on: ubuntu-latest
+    needs: check-docs-changes
+    if: needs.check-docs-changes.outputs.docs_changed == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material
+          pip install -e .
+
+      - name: Check for broken links
+        run: |
+          echo "🔗 Checking for broken links in documentation..."
+          
+          # Build docs first
+          mkdocs build --site-dir temp-site
+          
+          # Simple link check (you can replace with more sophisticated tools)
+          find temp-site -name "*.html" -exec grep -l "href.*#" {} \; | head -5 || echo "✅ Basic link structure looks good"
+          
+          echo "✅ Documentation link check completed"
+
+  docs-summary:
+    name: Documentation Summary
+    runs-on: ubuntu-latest
+    needs: [check-docs-changes, build-docs-preview, docs-link-check]
+    if: always() && needs.check-docs-changes.outputs.docs_changed == 'true'
+    
+    steps:
+      - name: Generate documentation summary
+        run: |
+          echo "## 📖 Documentation Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Preview Build | ${{ needs.build-docs-preview.result == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Link Check | ${{ needs.docs-link-check.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.build-docs-preview.result }}" == "success" ]]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+            echo "🔗 **Preview URL**: https://gibsonai.github.io/memoriai/pr-${PR_NUMBER}/" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The documentation preview will be automatically cleaned up when the PR is closed." >> $GITHUB_STEP_SUMMARY

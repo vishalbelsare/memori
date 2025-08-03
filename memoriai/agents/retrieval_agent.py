@@ -200,8 +200,10 @@ Be strategic and comprehensive in your search planning."""
                 key=lambda x: (
                     x.get("importance_score", 0) * 0.7  # Importance weight
                     + (
-                        datetime.now()
-                        - datetime.fromisoformat(x.get("created_at", "2000-01-01"))
+                        datetime.now().replace(tzinfo=None)  # Ensure timezone-naive
+                        - datetime.fromisoformat(
+                            x.get("created_at", "2000-01-01")
+                        ).replace(tzinfo=None)
                     ).days
                     * -0.001  # Recency weight
                 ),

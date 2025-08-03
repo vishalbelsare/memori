@@ -1,64 +1,68 @@
 """
-Integration modules for auto-recording LLM conversations
+Universal LLM Integration - Plug-and-Play Memory Recording
+
+🎯 SIMPLE USAGE (RECOMMENDED):
+Just call memori.enable() and use ANY LLM library normally!
+
+```python
+from memoriai import Memori
+
+memori = Memori(...)
+memori.enable()  # 🎉 That's it!
+
+# Now use ANY LLM library normally - all calls will be auto-recorded:
+
+# LiteLLM (native callbacks)
+from litellm import completion
+completion(model="gpt-4o", messages=[...])  # ✅ Auto-recorded
+
+# Direct OpenAI (auto-wrapping)
+import openai
+client = openai.OpenAI(api_key="...")
+client.chat.completions.create(...)  # ✅ Auto-recorded
+
+# Direct Anthropic (auto-wrapping)
+import anthropic
+client = anthropic.Anthropic(api_key="...")
+client.messages.create(...)  # ✅ Auto-recorded
+```
+
+The universal system automatically detects and records ALL LLM providers
+without requiring wrapper classes or complex setup.
 """
 
 from typing import Any, Dict, List
 
-# Import all integrations
+from loguru import logger
+
+# Legacy imports (all deprecated)
 from . import anthropic_integration, litellm_integration, openai_integration
 
-# Available integrations
-AVAILABLE_INTEGRATIONS = {
-    "openai": openai_integration,
-    "litellm": litellm_integration,
-    "anthropic": anthropic_integration,
-}
+__all__ = [
+    # Wrapper classes for direct SDK usage
+    "MemoriOpenAI",
+    "MemoriAnthropic",
+]
 
 
-def install_all_hooks():
-    """Install hooks for all available integrations"""
-    for name, integration in AVAILABLE_INTEGRATIONS.items():
-        try:
-            hook_func = getattr(integration, f"install_{name}_hooks")
-            hook_func()
-        except Exception as e:
-            print(f"Failed to install {name} hooks: {e}")
+# For backward compatibility, provide simple passthrough
+try:
+    from .anthropic_integration import MemoriAnthropic
+    from .openai_integration import MemoriOpenAI
 
+    # But warn users about the better way
+    def __getattr__(name):
+        if name in ["MemoriOpenAI", "MemoriAnthropic"]:
+            logger.warning(
+                f"🚨 {name} wrapper classes are deprecated!\n"
+                f"✅ NEW SIMPLE WAY: Use memori.enable() and import {name.replace('Memori', '').lower()} normally"
+            )
+            if name == "MemoriOpenAI":
+                return MemoriOpenAI
+            elif name == "MemoriAnthropic":
+                return MemoriAnthropic
+        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
-def uninstall_all_hooks():
-    """Uninstall hooks for all integrations"""
-    for name, integration in AVAILABLE_INTEGRATIONS.items():
-        try:
-            hook_func = getattr(integration, f"uninstall_{name}_hooks")
-            hook_func()
-        except Exception as e:
-            print(f"Failed to uninstall {name} hooks: {e}")
-
-
-def register_memori_instance(memori_instance):
-    """Register a Memori instance with all integrations"""
-    for integration in AVAILABLE_INTEGRATIONS.values():
-        try:
-            integration.register_memori_instance(memori_instance)
-        except Exception as e:
-            print(f"Failed to register instance with integration: {e}")
-
-
-def unregister_memori_instance(memori_instance):
-    """Unregister a Memori instance from all integrations"""
-    for integration in AVAILABLE_INTEGRATIONS.values():
-        try:
-            integration.unregister_memori_instance(memori_instance)
-        except Exception as e:
-            print(f"Failed to unregister instance from integration: {e}")
-
-
-def get_integration_stats() -> List[Dict[str, Any]]:
-    """Get statistics from all integrations"""
-    stats = []
-    for integration in AVAILABLE_INTEGRATIONS.values():
-        try:
-            stats.append(integration.get_stats())
-        except Exception as e:
-            print(f"Failed to get stats from integration: {e}")
-    return stats
+except ImportError:
+    # Wrapper classes not available, that's fine
+    pass

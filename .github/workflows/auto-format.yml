@@ -1,0 +1,125 @@
+name: Auto Format Code
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-format-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-format-
+            ${{ runner.os }}-pip-
+
+      - name: Install formatting tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install black ruff isort
+
+      - name: Run Black formatter
+        run: |
+          echo "🎨 Running Black formatter..."
+          black memoriai/ tests/ examples/ scripts/ --line-length 88 --target-version py38
+          echo "✅ Black formatting complete"
+
+      - name: Run isort
+        run: |
+          echo "📦 Running isort for import sorting..."
+          isort memoriai/ tests/ examples/ scripts/ --profile black
+          echo "✅ Import sorting complete"
+
+      - name: Run Ruff auto-fixes
+        run: |
+          echo "🔧 Running Ruff auto-fixes..."
+          ruff check memoriai/ tests/ examples/ scripts/ --fix --exit-zero
+          echo "✅ Ruff auto-fixes complete"
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "📝 Code formatting changes detected"
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "✨ No formatting changes needed"
+          fi
+
+      - name: Commit and push changes
+        if: steps.changes.outputs.changes == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git commit -m "🎨 Auto-format code with Black, isort, and Ruff
+
+          - Applied Black formatting (line-length: 88)
+          - Sorted imports with isort (black profile)
+          - Applied Ruff auto-fixes
+          
+          Co-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+          git push
+
+      - name: Add PR comment
+        if: steps.changes.outputs.changes == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🎨 Auto-Formatting Applied
+
+              Your code has been automatically formatted with:
+              - **Black** (line-length: 88)
+              - **isort** (import sorting)
+              - **Ruff** (auto-fixes)
+
+              The changes have been committed to this PR. Please review and continue with your development! ✨`
+            });
+
+      - name: Add success comment
+        if: steps.changes.outputs.changes == 'false'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ✅ Code Formatting Check
+
+              Great job! Your code is already properly formatted according to our standards:
+              - Black formatting ✅
+              - Import sorting ✅  
+              - Ruff checks ✅
+
+              No changes needed! 🎉`
+            });

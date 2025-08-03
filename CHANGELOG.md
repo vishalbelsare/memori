@@ -1,122 +1,110 @@
 # Changelog
 
-All notable changes to Memori will be documented in this file.
+All notable changes to Memoriai will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-02-02
+## [1.0.0] - 2025-08-03
 
-### 🎉 **Major Release: Pydantic-based Memory Processing**
+### 🎉 **Production-Ready Memory Layer for AI Agents**
 
-This is a complete architectural overhaul moving from enum-driven function calling to Pydantic BaseModel + OpenAI Structured Outputs for more reliable, structured memory processing. This release represents a production-ready memory layer for AI agents with comprehensive database support, advanced search capabilities, and multi-agent system examples.
+Complete professional-grade memory system with modular architecture, comprehensive error handling, and configuration management.
 
-### Added
-- **🔧 Pydantic-based Memory Agent**: Complete rewrite using OpenAI Structured Outputs with `client.beta.chat.completions.parse()`
-- **📊 Structured Memory Processing**: Full `ProcessedMemory` objects with comprehensive entity extraction and validation
-- **🧠 Advanced Entity System**: Automatic extraction of people, technologies, topics, skills, projects, and keywords
-- **🔍 Intelligent Search Engine**: Pydantic-based query understanding with multi-strategy search planning
-- **💾 Enhanced Database Schema v1.0**: 
-  - Full-text search (FTS5) support for advanced text search capabilities
-  - Entity indexing for lightning-fast entity-based retrieval
-  - Memory relationships table foundation for future graph features
-  - Comprehensive metadata storage with ProcessedMemory JSON objects
-- **📈 Multi-dimensional Importance Scoring**: Novelty, relevance, and actionability scoring algorithms
-- **🎯 User Context Management**: Project, skill, and preference tracking for intelligent categorization
-- **⚡ Advanced Retrieval Strategies**: Keyword, entity, category, importance, and hybrid search methods
-- **🔗 Database Connectors**: Production-ready SQLite, PostgreSQL, and MySQL connectors with optimized performance
-- **🛠️ Memory Search Tools**: LLM-compatible search tools with `create_memory_search_tool()` for function calling
-- **📊 Comprehensive Analytics**: Memory statistics, entity counts, category breakdowns, and usage metrics
-- **🎭 Multi-Agent Examples**: Complete examples for multi-agent memory systems and cross-agent information sharing
+### ✨ Core Features
+- **Universal LLM Integration**: Works with ANY LLM library (LiteLLM, OpenAI, Anthropic)
+- **Pydantic-based Intelligence**: Structured memory processing with validation
+- **Automatic Context Injection**: Relevant memories automatically added to conversations
+- **Multiple Memory Types**: Short-term, long-term, rules, and entity relationships
+- **Advanced Search**: Full-text search with semantic ranking
 
-### Enhanced
-- **🗄️ Database Architecture**: Complete schema redesign with entity indexing, FTS support, and optimized queries
-- **🎨 Memory Categories**: Expanded to fact, preference, skill, context, rule with confidence scoring and reasoning
-- **🔄 Retention Types**: Short-term (7 days), long-term, and permanent retention strategies with intelligent promotion
-- **📋 Memory Metadata**: Rich metadata with reasoning, processing timestamps, agent versioning, and search traces
-- **🔍 Search Capabilities**: Multi-strategy search with relevance ranking, search metadata, and result caching
-- **🧩 Modular Architecture**: Clean separation between memory agents, search engines, and database managers
-- **📝 Error Handling**: Comprehensive error handling with fallback processing and graceful degradation
-- **🔧 Tool Integration**: Enhanced memory tools for seamless LLM integration with standardized interfaces
+### 🏗️ Architecture
+- **Modular Design**: Separated concerns with clear component boundaries
+- **SQL Query Centralization**: Dedicated query modules for maintainability
+- **Configuration Management**: Pydantic-based settings with auto-loading
+- **Comprehensive Error Handling**: Context-aware exceptions with sanitized logging
+- **Production Logging**: Structured logging with multiple output targets
 
-### Changed
-- **🚀 Breaking Change**: Complete API overhaul - migrated from enum-driven to Pydantic-based approach
-- **⚡ OpenAI Integration**: Now uses `gpt-4o` with Structured Outputs for reliable parsing
-- **📊 Memory Storage**: ProcessedMemory objects stored as JSON with extracted fields for indexing
-- **🎯 Memory Agent**: Switched from function calling to `response_format=ProcessedMemory`
-- **🔍 Search Engine**: Replaced RetrievalAgent with MemorySearchEngine using structured query planning
+### 🗄️ Database Support
+- **Multi-Database**: SQLite, PostgreSQL, MySQL connectors
+- **Query Optimization**: Indexed searches and connection pooling
+- **Schema Management**: Version-controlled migrations and templates
+- **Full-Text Search**: FTS5 support for advanced text search
 
-### New Features
-- **🏷️ Entity-based Search**: Search memories by specific entities (people, technologies, etc.) with `get_entity_memories()`
-- **📁 Category Filtering**: Filter memories by specific categories with `search_memories_by_category()`
-- **⭐ Importance Filtering**: Search high-importance memories with configurable thresholds
-- **👤 User Context**: Track current projects, skills, and preferences for intelligent processing
-- **📊 Advanced Statistics**: Comprehensive memory analytics with entity counts and category breakdowns
-- **💾 Memory Relationships**: Foundation for future graph-based memory connections
-- **🌐 Namespace Support**: Multi-tenant memory isolation with namespace-based organization
-- **🔧 Integration Examples**: Production-ready examples for LiteLLM, LangChain, AGNO, and multi-agent systems
-- **📈 Memory Lifecycle**: Automatic memory promotion, expiration, and lifecycle management
-- **🎯 Conscious Ingestion**: Smart context retrieval and injection for enhanced AI responses
+### 🔧 Developer Experience
+- **Type Safety**: Full Pydantic validation throughout
+- **Simple API**: One-line enablement with `memori.enable()`
+- **Flexible Configuration**: File, environment, or programmatic setup
+- **Rich Examples**: Basic usage, personal assistant, advanced config
 
-### Technical Improvements
-- **✅ Structured Validation**: All memory data validated through Pydantic models with comprehensive type checking
-- **🛡️ Error Handling**: Improved error handling with refusal detection, fallback processing, and graceful degradation
-- **📝 Comprehensive Logging**: Detailed logging for memory processing, search operations, and system events using loguru
-- **⚡ Performance**: Optimized database queries with proper indexing, FTS, and connection pooling
-- **🔧 Maintainability**: Clean separation of concerns with well-defined interfaces and modular architecture
-- **🧪 Testing**: Comprehensive test suite with unit tests, integration tests, and example validation
-- **🔒 Reliability**: Production-ready error handling with transaction management and data consistency
-- **📊 Monitoring**: Built-in metrics collection and performance monitoring capabilities
+### 📊 Memory Processing
+- **Entity Extraction**: People, technologies, projects, skills
+- **Smart Categorization**: Facts, preferences, skills, rules, context
+- **Importance Scoring**: Multi-dimensional relevance assessment
+- **Relationship Mapping**: Entity interconnections and memory graphs
 
-### Examples & Documentation
-- **📖 Updated Examples**: Complete rewrite of all examples showcasing v1.0 Pydantic-based features
-  - `simple_example.py`: Comprehensive v1.0 demonstration with entity extraction and search
-  - `basic_usage.py`: Personal assistant memory with categorization and retrieval
-  - `advanced_usage.py`: Multi-namespace, entity search, and memory analytics
-- **🔗 Integration Examples**: Production-ready integration examples for popular frameworks
-  - `examples/integrations/litellm_example.py`: LiteLLM auto-recording and memory search
-  - `examples/integrations/langchain_example.py`: LangChain memory-augmented responses
-  - `examples/integrations/agno_example.py`: AGNO framework goal-oriented memory
-- **🤖 Multi-Agent Examples**: Advanced multi-agent memory sharing and coordination
-  - `examples/advanced/multi_agent_memory.py`: Research, planning, and communication agents
-  - `examples/basic_usage/personal_assistant.py`: Context-aware personal assistant
-- **📊 Usage Patterns**: Demonstrates entity search, category filtering, context management, and analytics
-- **🎯 Real-world Scenarios**: Examples for coding assistants, learning systems, preference tracking, and team collaboration
+### 🔌 Integrations
+- **LiteLLM Native**: Uses official callback system (recommended)
+- **OpenAI/Anthropic**: Clean wrapper classes for direct usage
+- **Tool Support**: Memory search tools for function calling
 
-### Migration Notes
-- **⚠️ Breaking Changes**: This release requires code changes for existing users migrating from v0.x
-- **📈 Benefits**: Significantly more reliable and structured memory processing with 10x better accuracy
-- **🎯 Upgrade Path**: See `MIGRATION_GUIDE.md` for step-by-step conversion from v0.x to v1.0
-- **🚀 New Users**: Start directly with v1.0 - no migration needed for new implementations
-- **📚 Documentation**: Updated README.md with comprehensive v1.0 examples and API reference
-- **🔧 Compatibility**: Maintained similar high-level API for easier migration where possible
+### 🛡️ Security & Reliability
+- **Input Sanitization**: Protection against injection attacks
+- **Error Context**: Detailed error information without exposing secrets
+- **Graceful Degradation**: Continues operation when components fail
+- **Resource Management**: Automatic cleanup and connection pooling
 
-### Production Readiness
-- **🏭 Production Testing**: Extensively tested with real-world AI agent workloads
-- **📈 Performance Benchmarks**: Handles thousands of memories with sub-second search times
-- **🔧 Developer Experience**: Intuitive API with comprehensive error messages and debugging support
-- **📦 Package Distribution**: Ready for PyPI distribution with proper dependency management
-- **🛠️ Deployment Ready**: Docker support and production deployment guides included
+### 📁 Project Structure
+```
+memoriai/
+├── core/              # Main memory interface and database
+├── config/            # Configuration management system
+├── agents/            # Pydantic-based memory processing
+├── database/          # Multi-database support and queries
+├── integrations/      # LLM provider integrations
+├── utils/             # Helpers, validation, logging
+└── tools/             # Memory search and retrieval tools
+```
+
+### 🎯 Philosophy Alignment
+- **Second-memory for LLM work**: Never repeat context again
+- **Flexible database connections**: Production-ready adapters
+- **Simple, reliable architecture**: Just works out of the box
+- **Conscious context injection**: Intelligent memory retrieval
+
+### ⚡ Quick Start
+```python
+from memoriai import Memori
+
+memori = Memori(
+    database_connect="sqlite:///my_memory.db",
+    conscious_ingest=True,
+    openai_api_key="sk-..."
+)
+memori.enable()  # Start recording all LLM conversations
+
+# Use any LLM library - context automatically injected!
+from litellm import completion
+response = completion(model="gpt-4", messages=[...])
+```
+
+### 📚 Documentation
+- Clean, focused README aligned with project vision
+- Essential examples without complexity bloat
+- Configuration guides for development and production
+- Architecture documentation for contributors
+
+### 🗂️ Archive Management
+- Moved outdated files to `archive/` folder
+- Updated `.gitignore` to exclude archive from version control
+- Preserved development history while cleaning main structure
+
+### 💡 Breaking Changes from Pre-1.0
+- Moved from enum-driven to Pydantic-based processing
+- Simplified API surface with focus on `enable()/disable()`
+- Restructured package layout for better modularity
+- Enhanced configuration system replaces simple parameters
 
 ---
 
-## [0.0.2] - 2025-01-10 (Legacy)
-
-### Added (Legacy - Enum-based Approach - DEPRECATED)
-- **OpenAI-powered Memory Agent**: Intelligent conversation processing using GPT-4 with enum-driven categorization  
-- **Retrieval Agent**: Smart memory retrieval using OpenAI for query understanding and strategy planning
-- **Auto-recording Integrations**: Automatic conversation recording for popular LLM libraries
-- **Enhanced Memory System**: Enum-driven memory categorization and importance scoring
-
-**Note**: This version is deprecated. Please upgrade to v1.0.0 for Pydantic-based processing.
-
-## [0.0.1] - 2024-07-31 (Legacy)
-
-### Added (Legacy - DEPRECATED)
-- Initial Memori implementation
-- Basic SQLite database support
-- Simple memory categorization
-- Manual conversation recording
-- Basic memory retrieval
-
-**Note**: This version is deprecated. Please upgrade to v1.0.0 for the complete Pydantic-based rewrite with advanced features.
+*This release represents the culmination of the vision outlined in the original architecture documents, delivering a production-ready memory layer that "just works" for AI developers.*

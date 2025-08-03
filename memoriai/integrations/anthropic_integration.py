@@ -1,171 +1,192 @@
 """
-Anthropic Integration - Automatic conversation recording for Anthropic API calls
+Anthropic Integration - Clean wrapper without monkey-patching
+
+RECOMMENDED: Use LiteLLM instead for unified API and native callback support.
+This integration is provided for direct Anthropic SDK usage.
+
+Usage:
+    from memoriai.integrations.anthropic_integration import MemoriAnthropic
+
+    # Initialize with your memori instance
+    client = MemoriAnthropic(memori_instance, api_key="your-key")
+
+    # Use exactly like Anthropic client
+    response = client.messages.create(...)
 """
 
-from typing import Any, Dict
+from typing import Optional
 
 from loguru import logger
 
-# Global registry for Memori instances
-_memori_instances = []
-_original_anthropic_functions = {}
-_hooks_installed = False
 
+class MemoriAnthropic:
+    """
+    Clean Anthropic wrapper that automatically records conversations
+    without monkey-patching. Drop-in replacement for Anthropic client.
+    """
 
-def install_anthropic_hooks():
-    """Install hooks to intercept Anthropic API calls"""
-    global _hooks_installed, _original_anthropic_functions
+    def __init__(self, memori_instance, api_key: Optional[str] = None, **kwargs):
+        """
+        Initialize MemoriAnthropic wrapper
 
-    if _hooks_installed:
-        return
+        Args:
+            memori_instance: Memori instance for recording conversations
+            api_key: Anthropic API key
+            **kwargs: Additional arguments passed to Anthropic client
+        """
+        try:
+            import anthropic
 
-    try:
-        import anthropic
+            self._anthropic = anthropic.Anthropic(api_key=api_key, **kwargs)
+            self._memori = memori_instance
 
-        # Store original functions
-        _original_anthropic_functions["messages_create"] = (
-            anthropic.resources.messages.Messages.create
-        )
+            # Create wrapped messages
+            self.messages = self._create_messages_wrapper()
 
-        # Replace with our wrapped versions
-        anthropic.resources.messages.Messages.create = _wrapped_messages_create
+            # Pass through other attributes
+            for attr in dir(self._anthropic):
+                if not attr.startswith("_") and attr not in ["messages"]:
+                    setattr(self, attr, getattr(self._anthropic, attr))
 
-        _hooks_installed = True
-        logger.info("Anthropic hooks installed for auto-recording")
+        except ImportError:
+            raise ImportError("Anthropic package required: pip install anthropic")
 
-    except ImportError:
-        logger.warning("Anthropic not installed, cannot install hooks")
-    except Exception as e:
-        logger.error(f"Failed to install Anthropic hooks: {e}")
+    def _create_messages_wrapper(self):
+        """Create wrapped messages"""
 
+        class MessagesWrapper:
+            def __init__(self, anthropic_client, memori_instance):
+                self._anthropic = anthropic_client
+                self._memori = memori_instance
 
-def uninstall_anthropic_hooks():
-    """Uninstall Anthropic hooks and restore original functions"""
-    global _hooks_installed, _original_anthropic_functions
+            def create(self, **kwargs):
+                # Inject context if conscious ingestion is enabled
+                if self._memori.is_enabled and self._memori.conscious_ingest:
+                    kwargs = self._inject_context(kwargs)
 
-    if not _hooks_installed:
-        return
+                # Make the actual API call
+                response = self._anthropic.messages.create(**kwargs)
 
-    try:
-        import anthropic
+                # Record conversation if memori is enabled
+                if self._memori.is_enabled:
+                    self._record_conversation(kwargs, response)
 
-        # Restore original functions
-        if "messages_create" in _original_anthropic_functions:
-            anthropic.resources.messages.Messages.create = (
-                _original_anthropic_functions["messages_create"]
-            )
+                return response
 
-        _hooks_installed = False
-        _original_anthropic_functions.clear()
-        logger.info("Anthropic hooks uninstalled")
-
-    except ImportError:
-        logger.warning("Anthropic not available for hook uninstallation")
-    except Exception as e:
-        logger.error(f"Failed to uninstall Anthropic hooks: {e}")
-
-
-def register_memori_instance(memori_instance):
-    """Register a Memori instance for auto-recording"""
-    global _memori_instances
-    if memori_instance not in _memori_instances:
-        _memori_instances.append(memori_instance)
-        logger.debug(f"Registered Memori instance: {memori_instance.namespace}")
-
-
-def unregister_memori_instance(memori_instance):
-    """Unregister a Memori instance"""
-    global _memori_instances
-    if memori_instance in _memori_instances:
-        _memori_instances.remove(memori_instance)
-        logger.debug(f"Unregistered Memori instance: {memori_instance.namespace}")
-
-
-def _wrapped_messages_create(self, **kwargs):
-    """Wrapped version of Anthropic messages create"""
-    # Call original function
-    response = _original_anthropic_functions["messages_create"](self, **kwargs)
-
-    # Record conversation for all active Memori instances
-    _record_anthropic_conversation(kwargs, response)
-
-    return response
-
-
-def _record_anthropic_conversation(request_kwargs: Dict[str, Any], response):
-    """Record an Anthropic conversation"""
-    global _memori_instances
-
-    try:
-        # Extract conversation details
-        messages = request_kwargs.get("messages", [])
-        model = request_kwargs.get("model", "claude-unknown")
-
-        # Find user input (last user message)
-        user_input = ""
-        for message in reversed(messages):
-            if message.get("role") == "user":
-                content = message.get("content", "")
-                if isinstance(content, list):
-                    # Handle content blocks
-                    user_input = " ".join(
-                        [
-                            block.get("text", "")
-                            for block in content
-                            if isinstance(block, dict) and block.get("type") == "text"
-                        ]
-                    )
-                else:
-                    user_input = content
-                break
-
-        # Extract AI response
-        ai_output = ""
-        if hasattr(response, "content") and response.content:
-            if isinstance(response.content, list):
-                # Handle content blocks
-                ai_output = " ".join(
-                    [block.text for block in response.content if hasattr(block, "text")]
-                )
-            else:
-                ai_output = str(response.content)
-
-        # Calculate tokens used
-        tokens_used = 0
-        if hasattr(response, "usage") and response.usage:
-            input_tokens = getattr(response.usage, "input_tokens", 0)
-            output_tokens = getattr(response.usage, "output_tokens", 0)
-            tokens_used = input_tokens + output_tokens
-
-        # Record for all active instances
-        for memori_instance in _memori_instances:
-            if memori_instance.is_enabled:
+            def _inject_context(self, kwargs):
+                """Inject relevant context into messages"""
                 try:
-                    memori_instance.record_conversation(
+                    # Extract user input from messages
+                    user_input = ""
+                    for msg in reversed(kwargs.get("messages", [])):
+                        if msg.get("role") == "user":
+                            content = msg.get("content", "")
+                            if isinstance(content, list):
+                                # Handle content blocks
+                                user_input = " ".join(
+                                    [
+                                        block.get("text", "")
+                                        for block in content
+                                        if isinstance(block, dict)
+                                        and block.get("type") == "text"
+                                    ]
+                                )
+                            else:
+                                user_input = content
+                            break
+
+                    if user_input:
+                        # Fetch relevant context
+                        context = self._memori.retrieve_context(user_input, limit=3)
+
+                        if context:
+                            # Create a context prompt
+                            context_prompt = "--- Relevant Memories ---\n"
+                            for mem in context:
+                                if isinstance(mem, dict):
+                                    summary = mem.get("summary", "") or mem.get(
+                                        "content", ""
+                                    )
+                                    context_prompt += f"- {summary}\n"
+                                else:
+                                    context_prompt += f"- {str(mem)}\n"
+                            context_prompt += "-------------------------\n"
+
+                            # Inject context into the system parameter
+                            if kwargs.get("system"):
+                                # Prepend to existing system message
+                                kwargs["system"] = context_prompt + kwargs["system"]
+                            else:
+                                # Add as system message
+                                kwargs["system"] = context_prompt
+
+                            logger.debug(f"Injected context: {len(context)} memories")
+                except Exception as e:
+                    logger.error(f"Context injection failed: {e}")
+
+                return kwargs
+
+            def _record_conversation(self, kwargs, response):
+                """Record the conversation"""
+                try:
+                    # Extract details
+                    messages = kwargs.get("messages", [])
+                    model = kwargs.get("model", "claude-unknown")
+
+                    # Find user input (last user message)
+                    user_input = ""
+                    for message in reversed(messages):
+                        if message.get("role") == "user":
+                            content = message.get("content", "")
+                            if isinstance(content, list):
+                                # Handle content blocks
+                                user_input = " ".join(
+                                    [
+                                        block.get("text", "")
+                                        for block in content
+                                        if isinstance(block, dict)
+                                        and block.get("type") == "text"
+                                    ]
+                                )
+                            else:
+                                user_input = content
+                            break
+
+                    # Extract AI response
+                    ai_output = ""
+                    if hasattr(response, "content") and response.content:
+                        if isinstance(response.content, list):
+                            # Handle content blocks
+                            ai_output = " ".join(
+                                [
+                                    block.text
+                                    for block in response.content
+                                    if hasattr(block, "text")
+                                ]
+                            )
+                        else:
+                            ai_output = str(response.content)
+
+                    # Calculate tokens used
+                    tokens_used = 0
+                    if hasattr(response, "usage") and response.usage:
+                        input_tokens = getattr(response.usage, "input_tokens", 0)
+                        output_tokens = getattr(response.usage, "output_tokens", 0)
+                        tokens_used = input_tokens + output_tokens
+
+                    # Record conversation
+                    self._memori.record_conversation(
                         user_input=user_input,
                         ai_output=ai_output,
                         model=model,
                         metadata={
-                            "integration": "anthropic",
+                            "integration": "anthropic_wrapper",
                             "api_type": "messages",
                             "tokens_used": tokens_used,
                             "auto_recorded": True,
                         },
                     )
                 except Exception as e:
-                    logger.error(
-                        f"Failed to record conversation for instance {memori_instance.namespace}: {e}"
-                    )
+                    logger.error(f"Failed to record Anthropic conversation: {e}")
 
-    except Exception as e:
-        logger.error(f"Failed to record Anthropic conversation: {e}")
-
-
-def get_stats() -> Dict[str, Any]:
-    """Get integration statistics"""
-    return {
-        "integration": "anthropic",
-        "hooks_installed": _hooks_installed,
-        "active_instances": len(_memori_instances),
-        "instance_namespaces": [instance.namespace for instance in _memori_instances],
-    }
+        return MessagesWrapper(self._anthropic, self._memori)

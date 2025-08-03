@@ -1,206 +1,273 @@
 """
-OpenAI Integration - Automatic conversation recording for OpenAI API calls
+OpenAI Integration - Clean wrapper without monkey-patching
+
+RECOMMENDED: Use LiteLLM instead for unified API and native callback support.
+This integration is provided for direct OpenAI SDK usage.
+
+Usage:
+    from memoriai.integrations.openai_integration import MemoriOpenAI
+
+    # Initialize with your memori instance
+    client = MemoriOpenAI(memori_instance, api_key="your-key")
+
+    # Use exactly like OpenAI client
+    response = client.chat.completions.create(...)
 """
 
-from typing import Any, Dict
+from typing import Optional
 
-import openai
 from loguru import logger
 
-# Global registry for Memori instances
-_memori_instances = []
-_original_openai_functions = {}
-_hooks_installed = False
 
+class MemoriOpenAI:
+    """
+    Clean OpenAI wrapper that automatically records conversations
+    without monkey-patching. Drop-in replacement for OpenAI client.
+    """
 
-def install_openai_hooks():
-    """Install hooks to intercept OpenAI API calls"""
-    global _hooks_installed, _original_openai_functions
+    def __init__(self, memori_instance, api_key: Optional[str] = None, **kwargs):
+        """
+        Initialize MemoriOpenAI wrapper
 
-    if _hooks_installed:
-        return
+        Args:
+            memori_instance: Memori instance for recording conversations
+            api_key: OpenAI API key
+            **kwargs: Additional arguments passed to OpenAI client
+        """
+        try:
+            import openai
 
-    # Store original functions
-    _original_openai_functions["chat_completions_create"] = (
-        openai.resources.chat.completions.Completions.create
-    )
-    _original_openai_functions["completions_create"] = (
-        openai.resources.completions.Completions.create
-    )
+            self._openai = openai.OpenAI(api_key=api_key, **kwargs)
+            self._memori = memori_instance
 
-    # Replace with our wrapped versions
-    openai.resources.chat.completions.Completions.create = (
-        _wrapped_chat_completions_create
-    )
-    openai.resources.completions.Completions.create = _wrapped_completions_create
+            # Create wrapped completions
+            self.chat = self._create_chat_wrapper()
+            self.completions = self._create_completions_wrapper()
 
-    _hooks_installed = True
-    logger.info("OpenAI hooks installed for auto-recording")
+            # Pass through other attributes
+            for attr in dir(self._openai):
+                if not attr.startswith("_") and attr not in ["chat", "completions"]:
+                    setattr(self, attr, getattr(self._openai, attr))
 
+        except ImportError:
+            raise ImportError("OpenAI package required: pip install openai")
 
-def uninstall_openai_hooks():
-    """Uninstall OpenAI hooks and restore original functions"""
-    global _hooks_installed, _original_openai_functions
+    def _create_chat_wrapper(self):
+        """Create wrapped chat completions"""
 
-    if not _hooks_installed:
-        return
+        class ChatWrapper:
+            def __init__(self, openai_client, memori_instance):
+                self._openai = openai_client
+                self._memori = memori_instance
+                self.completions = self._create_completions_wrapper()
 
-    # Restore original functions
-    if "chat_completions_create" in _original_openai_functions:
-        openai.resources.chat.completions.Completions.create = (
-            _original_openai_functions["chat_completions_create"]
-        )
+            def _create_completions_wrapper(self):
+                class CompletionsWrapper:
+                    def __init__(self, openai_client, memori_instance):
+                        self._openai = openai_client
+                        self._memori = memori_instance
 
-    if "completions_create" in _original_openai_functions:
-        openai.resources.completions.Completions.create = _original_openai_functions[
-            "completions_create"
-        ]
+                    def create(self, **kwargs):
+                        # Inject context if conscious ingestion is enabled
+                        if self._memori.is_enabled and self._memori.conscious_ingest:
+                            kwargs = self._inject_context(kwargs)
 
-    _hooks_installed = False
-    _original_openai_functions.clear()
-    logger.info("OpenAI hooks uninstalled")
+                        # Make the actual API call
+                        response = self._openai.chat.completions.create(**kwargs)
 
+                        # Record conversation if memori is enabled
+                        if self._memori.is_enabled:
+                            self._record_conversation(kwargs, response)
 
-def register_memori_instance(memori_instance):
-    """Register a Memori instance for auto-recording"""
-    global _memori_instances
-    if memori_instance not in _memori_instances:
-        _memori_instances.append(memori_instance)
-        logger.debug(f"Registered Memori instance: {memori_instance.namespace}")
+                        return response
 
+                    def _inject_context(self, kwargs):
+                        """Inject relevant context into messages"""
+                        try:
+                            # Extract user input from messages
+                            user_input = ""
+                            for msg in reversed(kwargs.get("messages", [])):
+                                if msg.get("role") == "user":
+                                    user_input = msg.get("content", "")
+                                    break
 
-def unregister_memori_instance(memori_instance):
-    """Unregister a Memori instance"""
-    global _memori_instances
-    if memori_instance in _memori_instances:
-        _memori_instances.remove(memori_instance)
-        logger.debug(f"Unregistered Memori instance: {memori_instance.namespace}")
+                            if user_input:
+                                # Fetch relevant context
+                                context = self._memori.retrieve_context(
+                                    user_input, limit=3
+                                )
 
+                                if context:
+                                    # Create a context prompt
+                                    context_prompt = "--- Relevant Memories ---\n"
+                                    for mem in context:
+                                        if isinstance(mem, dict):
+                                            summary = mem.get("summary", "") or mem.get(
+                                                "content", ""
+                                            )
+                                            context_prompt += f"- {summary}\n"
+                                        else:
+                                            context_prompt += f"- {str(mem)}\n"
+                                    context_prompt += "-------------------------\n"
 
-def _wrapped_chat_completions_create(self, **kwargs):
-    """Wrapped version of OpenAI chat completions create"""
-    # Call original function
-    response = _original_openai_functions["chat_completions_create"](self, **kwargs)
+                                    # Inject context into the system message
+                                    messages = kwargs.get("messages", [])
+                                    system_message_found = False
+                                    for msg in messages:
+                                        if msg.get("role") == "system":
+                                            msg["content"] = context_prompt + msg.get(
+                                                "content", ""
+                                            )
+                                            system_message_found = True
+                                            break
 
-    # Record conversation for all active Memori instances
-    _record_chat_conversation(kwargs, response)
+                                    if not system_message_found:
+                                        messages.insert(
+                                            0,
+                                            {
+                                                "role": "system",
+                                                "content": context_prompt,
+                                            },
+                                        )
 
-    return response
+                                    logger.debug(
+                                        f"Injected context: {len(context)} memories"
+                                    )
+                        except Exception as e:
+                            logger.error(f"Context injection failed: {e}")
 
+                        return kwargs
 
-def _wrapped_completions_create(self, **kwargs):
-    """Wrapped version of OpenAI completions create"""
-    # Call original function
-    response = _original_openai_functions["completions_create"](self, **kwargs)
+                    def _record_conversation(self, kwargs, response):
+                        """Record the conversation"""
+                        try:
+                            # Extract details
+                            messages = kwargs.get("messages", [])
+                            model = kwargs.get("model", "unknown")
 
-    # Record conversation for all active Memori instances
-    _record_completion_conversation(kwargs, response)
+                            # Find user input (last user message)
+                            user_input = ""
+                            for message in reversed(messages):
+                                if message.get("role") == "user":
+                                    user_input = message.get("content", "")
+                                    break
 
-    return response
+                            # Extract AI response
+                            ai_output = ""
+                            if hasattr(response, "choices") and response.choices:
+                                choice = response.choices[0]
+                                if hasattr(choice, "message") and choice.message:
+                                    ai_output = choice.message.content or ""
 
+                            # Calculate tokens used
+                            tokens_used = 0
+                            if hasattr(response, "usage") and response.usage:
+                                tokens_used = getattr(response.usage, "total_tokens", 0)
 
-def _record_chat_conversation(request_kwargs: Dict[str, Any], response):
-    """Record a chat completion conversation"""
-    global _memori_instances
+                            # Record conversation
+                            self._memori.record_conversation(
+                                user_input=user_input,
+                                ai_output=ai_output,
+                                model=model,
+                                metadata={
+                                    "integration": "openai_wrapper",
+                                    "api_type": "chat_completions",
+                                    "tokens_used": tokens_used,
+                                    "auto_recorded": True,
+                                },
+                            )
+                        except Exception as e:
+                            logger.error(f"Failed to record OpenAI conversation: {e}")
 
-    try:
-        # Extract conversation details
-        messages = request_kwargs.get("messages", [])
-        model = request_kwargs.get("model", "unknown")
+                return CompletionsWrapper(self._openai, self._memori)
 
-        # Find user input (last user message)
-        user_input = ""
-        for message in reversed(messages):
-            if message.get("role") == "user":
-                user_input = message.get("content", "")
-                break
+        return ChatWrapper(self._openai, self._memori)
 
-        # Extract AI response
-        ai_output = ""
-        if hasattr(response, "choices") and response.choices:
-            choice = response.choices[0]
-            if hasattr(choice, "message") and choice.message:
-                ai_output = choice.message.content or ""
+    def _create_completions_wrapper(self):
+        """Create wrapped legacy completions"""
 
-        # Calculate tokens used
-        tokens_used = 0
-        if hasattr(response, "usage") and response.usage:
-            tokens_used = getattr(response.usage, "total_tokens", 0)
+        class CompletionsWrapper:
+            def __init__(self, openai_client, memori_instance):
+                self._openai = openai_client
+                self._memori = memori_instance
 
-        # Record for all active instances
-        for memori_instance in _memori_instances:
-            if memori_instance.is_enabled:
+            def create(self, **kwargs):
+                # Inject context if conscious ingestion is enabled
+                if self._memori.is_enabled and self._memori.conscious_ingest:
+                    kwargs = self._inject_context(kwargs)
+
+                # Make the actual API call
+                response = self._openai.completions.create(**kwargs)
+
+                # Record conversation if memori is enabled
+                if self._memori.is_enabled:
+                    self._record_conversation(kwargs, response)
+
+                return response
+
+            def _inject_context(self, kwargs):
+                """Inject relevant context into prompt"""
                 try:
-                    memori_instance.record_conversation(
-                        user_input=user_input,
-                        ai_output=ai_output,
-                        model=model,
-                        metadata={
-                            "integration": "openai",
-                            "api_type": "chat_completions",
-                            "tokens_used": tokens_used,
-                            "auto_recorded": True,
-                        },
-                    )
+                    user_input = kwargs.get("prompt", "")
+
+                    if user_input:
+                        # Fetch relevant context
+                        context = self._memori.retrieve_context(user_input, limit=3)
+
+                        if context:
+                            # Create a context prompt
+                            context_prompt = "--- Relevant Memories ---\n"
+                            for mem in context:
+                                if isinstance(mem, dict):
+                                    summary = mem.get("summary", "") or mem.get(
+                                        "content", ""
+                                    )
+                                    context_prompt += f"- {summary}\n"
+                                else:
+                                    context_prompt += f"- {str(mem)}\n"
+                            context_prompt += "-------------------------\n"
+
+                            # Prepend context to the prompt
+                            kwargs["prompt"] = context_prompt + user_input
+
+                            logger.debug(f"Injected context: {len(context)} memories")
                 except Exception as e:
-                    logger.error(
-                        f"Failed to record conversation for instance {memori_instance.namespace}: {e}"
-                    )
+                    logger.error(f"Context injection failed: {e}")
 
-    except Exception as e:
-        logger.error(f"Failed to record OpenAI chat conversation: {e}")
+                return kwargs
 
-
-def _record_completion_conversation(request_kwargs: Dict[str, Any], response):
-    """Record a completion conversation"""
-    global _memori_instances
-
-    try:
-        # Extract conversation details
-        prompt = request_kwargs.get("prompt", "")
-        model = request_kwargs.get("model", "unknown")
-
-        # Extract AI response
-        ai_output = ""
-        if hasattr(response, "choices") and response.choices:
-            choice = response.choices[0]
-            if hasattr(choice, "text"):
-                ai_output = choice.text or ""
-
-        # Calculate tokens used
-        tokens_used = 0
-        if hasattr(response, "usage") and response.usage:
-            tokens_used = getattr(response.usage, "total_tokens", 0)
-
-        # Record for all active instances
-        for memori_instance in _memori_instances:
-            if memori_instance.is_enabled:
+            def _record_conversation(self, kwargs, response):
+                """Record the conversation"""
                 try:
-                    memori_instance.record_conversation(
+                    # Extract details
+                    prompt = kwargs.get("prompt", "")
+                    model = kwargs.get("model", "unknown")
+
+                    # Extract AI response
+                    ai_output = ""
+                    if hasattr(response, "choices") and response.choices:
+                        choice = response.choices[0]
+                        if hasattr(choice, "text"):
+                            ai_output = choice.text or ""
+
+                    # Calculate tokens used
+                    tokens_used = 0
+                    if hasattr(response, "usage") and response.usage:
+                        tokens_used = getattr(response.usage, "total_tokens", 0)
+
+                    # Record conversation
+                    self._memori.record_conversation(
                         user_input=prompt,
                         ai_output=ai_output,
                         model=model,
                         metadata={
-                            "integration": "openai",
+                            "integration": "openai_wrapper",
                             "api_type": "completions",
                             "tokens_used": tokens_used,
                             "auto_recorded": True,
                         },
                     )
                 except Exception as e:
-                    logger.error(
-                        f"Failed to record conversation for instance {memori_instance.namespace}: {e}"
-                    )
+                    logger.error(f"Failed to record OpenAI conversation: {e}")
 
-    except Exception as e:
-        logger.error(f"Failed to record OpenAI completion conversation: {e}")
-
-
-def get_stats() -> Dict[str, Any]:
-    """Get integration statistics"""
-    return {
-        "integration": "openai",
-        "hooks_installed": _hooks_installed,
-        "active_instances": len(_memori_instances),
-        "instance_namespaces": [instance.namespace for instance in _memori_instances],
-    }
+        return CompletionsWrapper(self._openai, self._memori)
