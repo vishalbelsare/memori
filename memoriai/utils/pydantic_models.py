@@ -214,7 +214,7 @@ class UserRule(BaseModel):
 
 class ConversationContext(BaseModel):
     """Context information for memory processing"""
-    
+
     model_config = {"protected_namespaces": ()}
 
     user_id: Optional[str] = Field(default=None)
