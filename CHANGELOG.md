@@ -5,6 +5,122 @@ All notable changes to Memoriai will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-08-03
+
+### 🚀 **Dual-Mode Memory System - Revolutionary Architecture**
+
+**Major Release**: Complete overhaul of memory injection system with two distinct modes - Conscious short-term memory and Auto dynamic search.
+
+#### ✨ **New Memory Modes**
+
+**🧠 Conscious Mode (`conscious_ingest=True`)**
+- **Short-Term Working Memory**: Mimics human conscious memory with essential info readily available
+- **Startup Analysis**: Conscious agent analyzes long-term memory patterns at initialization
+- **Memory Promotion**: Automatically promotes 5-10 essential conversations from long-term to short-term storage
+- **One-Shot Injection**: Injects working memory context ONCE at conversation start, no repetition
+- **Essential Context**: Names, current projects, preferences, skills always accessible
+
+**🔍 Auto Mode (`auto_ingest=True`)**
+- **Dynamic Database Search**: Uses retrieval agent for intelligent full-database search
+- **Query Analysis**: AI-powered query understanding with OpenAI Structured Outputs
+- **Continuous Retrieval**: Searches and injects 3-5 relevant memories on EVERY LLM call
+- **Performance Optimized**: Caching, async processing, background threading
+- **Full Coverage**: Searches both short-term and long-term memory databases
+
+**⚡ Combined Mode (`conscious_ingest=True, auto_ingest=True`)**
+- **Best of Both Worlds**: Working memory foundation + dynamic search capability
+- **Layered Context**: Essential memories + query-specific memories
+- **Maximum Intelligence**: Comprehensive memory utilization
+
+#### 🔧 **API Changes**
+
+**New Parameters**
+```python
+memori = Memori(
+    conscious_ingest=True,  # Short-term working memory (one-shot)
+    auto_ingest=True,       # Dynamic database search (continuous)
+    openai_api_key="sk-..."
+)
+```
+
+**Mode Behaviors**
+- **Conscious**: Analysis at startup → Memory promotion → One-shot context injection
+- **Auto**: Query analysis → Database search → Context injection per call
+- **Combined**: Startup analysis + Per-call search
+
+#### 🏗️ **Architecture Improvements**
+
+**Enhanced Agents**
+- **Conscious Agent**: Smarter long-term → short-term memory promotion
+- **Retrieval Agent**: Performance optimized with caching and async support
+- **Memory Agent**: Improved Pydantic-based processing
+
+**Performance Enhancements**
+- **Query Caching**: 5-minute TTL cache for search plans to reduce API calls
+- **Async Processing**: `execute_search_async()` for concurrent operations
+- **Background Threading**: Non-blocking search execution
+- **Thread Safety**: Proper locking mechanisms for concurrent access
+
+#### 📚 **Documentation & Examples**
+
+**Updated Examples**
+- **`memori_example.py`**: Complete conscious-ingest demonstration with detailed comments
+- **`auto_ingest_example.py`**: New example showcasing dynamic memory retrieval
+- **Enhanced Comments**: Detailed explanations of each mode's behavior
+
+**Updated Documentation**
+- **README.md**: Comprehensive dual-mode system explanation
+- **Mode Comparisons**: Clear distinctions between conscious vs auto modes
+- **Configuration Examples**: All possible mode combinations
+
+#### 🎯 **Use Cases**
+
+**Conscious Mode Perfect For:**
+- Personal assistants needing user context
+- Project-specific conversations requiring background knowledge
+- Situations where essential info should always be available
+- One-time context establishment scenarios
+
+**Auto Mode Perfect For:**
+- Dynamic Q&A systems
+- Research assistants requiring specific memory retrieval
+- Multi-topic conversations needing relevant context injection
+- Performance-critical applications with intelligent caching
+
+**Combined Mode Perfect For:**
+- Comprehensive personal AI assistants
+- Maximum context utilization scenarios
+- Professional applications requiring both background and specific context
+
+#### 🛠️ **Developer Experience**
+
+**Simplified Configuration**
+```json
+{
+  "agents": {
+    "conscious_ingest": true,
+    "auto_ingest": false,
+    "openai_api_key": "sk-..."
+  }
+}
+```
+
+**Enhanced Logging**
+- Detailed mode-specific logging
+- Performance metrics for caching and search
+- Background processing status updates
+
+#### ⚡ **Breaking Changes**
+
+**Behavioral Changes**
+- `conscious_ingest=True` now works differently (one-shot vs continuous)
+- Memory injection timing changed based on selected mode
+- Context injection strategies optimized per mode
+
+**New Dependencies**
+- Enhanced async processing requirements
+- Additional threading support for background operations
+
 ## [1.1.0] - 2025-08-03
 
 ### 🧠 **Enhanced Conscious Ingestion System**

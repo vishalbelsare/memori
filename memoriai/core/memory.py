@@ -42,6 +42,7 @@ class Memori:
         template: str = "basic",
         mem_prompt: Optional[str] = None,
         conscious_ingest: bool = False,
+        auto_ingest: bool = False,
         namespace: Optional[str] = None,
         shared_memory: bool = False,
         memory_filters: Optional[Dict[str, Any]] = None,
@@ -56,7 +57,8 @@ class Memori:
             database_connect: Database connection string
             template: Memory template to use ('basic')
             mem_prompt: Optional prompt to guide memory recording
-            conscious_ingest: Enable intelligent memory filtering
+            conscious_ingest: Enable one-shot short-term memory context injection at conversation start
+            auto_ingest: Enable automatic memory injection on every LLM call
             namespace: Optional namespace for memory isolation
             shared_memory: Enable shared memory across agents
             memory_filters: Filters for memory ingestion
@@ -68,6 +70,7 @@ class Memori:
         self.template = template
         self.mem_prompt = mem_prompt
         self.conscious_ingest = conscious_ingest
+        self.auto_ingest = auto_ingest
         self.namespace = namespace or "default"
         self.shared_memory = shared_memory
         self.memory_filters = memory_filters or {}
@@ -87,7 +90,7 @@ class Memori:
         self.conscious_agent = None
         self._background_task = None
 
-        if conscious_ingest:
+        if conscious_ingest or auto_ingest:
             try:
                 # Initialize Pydantic-based agents
                 self.memory_agent = MemoryAgent(api_key=openai_api_key, model="gpt-4o")
@@ -102,13 +105,15 @@ class Memori:
                 )
             except Exception as e:
                 logger.warning(
-                    f"Failed to initialize OpenAI agents: {e}. Conscious ingestion disabled."
+                    f"Failed to initialize OpenAI agents: {e}. Memory ingestion disabled."
                 )
                 self.conscious_ingest = False
+                self.auto_ingest = False
 
         # State tracking
         self._enabled = False
         self._session_id = str(uuid.uuid4())
+        self._conscious_context_injected = False  # Track if conscious context was already injected
 
         # User context for memory processing
         self._user_context = {
@@ -119,6 +124,10 @@ class Memori:
 
         # Initialize database
         self._setup_database()
+
+        # Run conscious agent initialization if enabled
+        if self.conscious_ingest and self.conscious_agent:
+            self._initialize_conscious_memory()
 
         logger.info(
             f"Memori v1.0 initialized with template: {template}, namespace: {namespace}"
@@ -149,6 +158,36 @@ class Memori:
             logger.info("Database schema initialized successfully")
         except Exception as e:
             raise DatabaseError(f"Failed to setup database: {e}")
+
+    def _initialize_conscious_memory(self):
+        """Initialize conscious memory by running conscious agent analysis"""
+        try:
+            logger.info("Conscious-ingest: Starting conscious agent analysis at startup")
+            
+            # Run conscious agent analysis in background
+            if self._background_task is None or self._background_task.done():
+                self._background_task = asyncio.create_task(
+                    self._run_conscious_initialization()
+                )
+                logger.debug("Conscious-ingest: Background initialization task started")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize conscious memory: {e}")
+
+    async def _run_conscious_initialization(self):
+        """Run conscious agent initialization in background"""
+        try:
+            if not self.conscious_agent:
+                return
+                
+            logger.debug("Conscious-ingest: Running background analysis")
+            await self.conscious_agent.run_background_analysis(
+                self.db_manager, self.namespace
+            )
+            logger.info("Conscious-ingest: Background analysis completed")
+            
+        except Exception as e:
+            logger.error(f"Conscious agent initialization failed: {e}")
 
     def enable(self):
         """
@@ -243,9 +282,14 @@ class Memori:
                 original_completion = litellm.completion
 
                 def memori_completion(*args, **kwargs):
-                    # Inject context if conscious ingestion is enabled and this instance is enabled
-                    if self.conscious_ingest and self._enabled:
-                        kwargs = self._inject_litellm_context(kwargs)
+                    # Inject context based on ingestion mode
+                    if self._enabled:
+                        if self.auto_ingest:
+                            # Auto-inject: continuous memory injection on every call
+                            kwargs = self._inject_litellm_context(kwargs, mode="auto")
+                        elif self.conscious_ingest:
+                            # Conscious-inject: one-shot short-term memory context
+                            kwargs = self._inject_litellm_context(kwargs, mode="conscious")
 
                     # Call original completion
                     return original_completion(*args, **kwargs)
@@ -504,8 +548,14 @@ class Memori:
             logger.error(f"Context injection failed: {e}")
         return kwargs
 
-    def _inject_litellm_context(self, params):
-        """Inject context for LiteLLM calls"""
+    def _inject_litellm_context(self, params, mode="auto"):
+        """
+        Inject context for LiteLLM calls based on mode
+        
+        Args:
+            params: LiteLLM parameters
+            mode: "conscious" (one-shot short-term) or "auto" (continuous retrieval)
+        """
         try:
             # Extract user input from messages
             user_input = ""
@@ -517,18 +567,34 @@ class Memori:
                     break
 
             if user_input:
-                # Get essential conversations + specific context
-                context = self.retrieve_context(user_input, limit=5)
+                if mode == "conscious":
+                    # Conscious mode: inject short-term memory only once at conversation start
+                    if not self._conscious_context_injected:
+                        context = self._get_conscious_context()
+                        self._conscious_context_injected = True
+                        logger.debug("Conscious context injected (one-shot)")
+                    else:
+                        context = []  # Already injected, don't inject again
+                elif mode == "auto":
+                    # Auto mode: use retrieval agent for intelligent database search
+                    if self.search_engine:
+                        context = self._get_auto_ingest_context(user_input)
+                    else:
+                        # Fallback to basic retrieval
+                        context = self.retrieve_context(user_input, limit=5)
+                else:
+                    context = []
+
                 if context:
-                    context_prompt = "--- Relevant Context ---\n"
+                    context_prompt = f"--- {mode.capitalize()} Memory Context ---\n"
                     for mem in context:
                         if isinstance(mem, dict):
                             summary = mem.get("summary", "") or mem.get(
                                 "searchable_content", ""
                             )
                             category = mem.get("category_primary", "")
-                            if category.startswith("essential_"):
-                                context_prompt += f"[ESSENTIAL] {summary}\n"
+                            if category.startswith("essential_") or mode == "conscious":
+                                context_prompt += f"[{category.upper()}] {summary}\n"
                             else:
                                 context_prompt += f"- {summary}\n"
                     context_prompt += "-------------------------\n"
@@ -577,6 +643,72 @@ class Memori:
             logger.error(f"LiteLLM context injection failed: {e}")
 
         return params
+
+    def _get_conscious_context(self) -> List[Dict[str, Any]]:
+        """
+        Get conscious context from short-term memory only.
+        This represents the 'working memory' or conscious thoughts.
+        """
+        try:
+            with self.db_manager._get_connection() as conn:
+                cursor = conn.cursor()
+                
+                # Get recent short-term memories ordered by importance and recency
+                cursor.execute("""
+                    SELECT memory_id, processed_data, importance_score, 
+                           category_primary, summary, searchable_content,
+                           created_at, access_count
+                    FROM short_term_memory 
+                    WHERE namespace = ? AND (expires_at IS NULL OR expires_at > ?)
+                    ORDER BY importance_score DESC, created_at DESC
+                    LIMIT 10
+                """, (self.namespace, datetime.now()))
+                
+                memories = []
+                for row in cursor.fetchall():
+                    memories.append({
+                        "memory_id": row[0],
+                        "processed_data": row[1],
+                        "importance_score": row[2],
+                        "category_primary": row[3],
+                        "summary": row[4],
+                        "searchable_content": row[5],
+                        "created_at": row[6],
+                        "access_count": row[7],
+                        "memory_type": "short_term"
+                    })
+                
+                logger.debug(f"Retrieved {len(memories)} conscious memories from short-term storage")
+                return memories
+                
+        except Exception as e:
+            logger.error(f"Failed to get conscious context: {e}")
+            return []
+
+    def _get_auto_ingest_context(self, user_input: str) -> List[Dict[str, Any]]:
+        """
+        Get auto-ingest context using retrieval agent for intelligent search.
+        Searches through entire database for relevant memories.
+        """
+        try:
+            if not self.search_engine:
+                logger.warning("Auto-ingest: No search engine available")
+                return []
+            
+            # Use retrieval agent for intelligent search
+            results = self.search_engine.execute_search(
+                query=user_input,
+                db_manager=self.db_manager,
+                namespace=self.namespace,
+                limit=5
+            )
+            
+            logger.debug(f"Auto-ingest: Retrieved {len(results)} relevant memories")
+            return results
+            
+        except Exception as e:
+            logger.error(f"Failed to get auto-ingest context: {e}")
+            return []
 
     def _record_openai_conversation(self, kwargs, response):
         """Record OpenAI conversation"""
