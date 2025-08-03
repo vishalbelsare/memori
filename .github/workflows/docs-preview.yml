@@ -63,12 +63,12 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Cache pip dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ env.CACHE_VERSION }}-${{ runner.os }}-docs-pip-${{ hashFiles('**/requirements*.txt', '**/mkdocs.yml') }}
@@ -123,7 +123,7 @@ jobs:
           find site-preview -name "*.html" -exec sed -i '/<body[^>]*>/r pr-banner.html' {} \;
 
       - name: Deploy to GitHub Pages (PR Preview)
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./site-preview
@@ -131,7 +131,7 @@ jobs:
           keep_files: false
 
       - name: Update PR with preview link
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const prNumber = context.issue.number;
@@ -236,7 +236,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
