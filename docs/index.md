@@ -52,7 +52,7 @@ response = completion(
 pip install memorisdk
 ```
 
-## Basic Usage with LiteLLM
+### Basic Usage with LiteLLM
 
 1. Install litellm:
 
