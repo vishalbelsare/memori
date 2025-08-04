@@ -10,7 +10,7 @@
 ## Installation
 
 ```bash
-pip install memori
+pip install memorisdk
 ```
 
 ## Basic Usage
