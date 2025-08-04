@@ -1,7 +1,7 @@
 """
 Conscious Ingestion Demo - Showcase of AI-powered memory management
 
-This example demonstrates the full power of Memoriai's conscious ingestion system:
+This example demonstrates the full power of Memori's conscious ingestion system:
 - Background analysis every 6 hours
 - Essential memory promotion
 - Intelligent context injection
@@ -13,13 +13,13 @@ import time
 from dotenv import load_dotenv
 from litellm import completion
 
-from memoriai import Memori
+from memori import Memori
 
 load_dotenv()  # Load environment variables from .env file
 
 
 def main():
-    print("🧠 Memoriai Conscious Ingestion Demo")
+    print("🧠 Memori Conscious Ingestion Demo")
     print("=" * 50)
     print()
 

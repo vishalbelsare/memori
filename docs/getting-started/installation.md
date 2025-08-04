@@ -8,29 +8,29 @@
 ## Install from PyPI
 
 ```bash
-pip install memoriai
+pip install memorisdk
 ```
 
 ## Install from Source
 
 ```bash
-git clone https://github.com/GibsonAI/memoriai.git
-cd memoriai
+git clone https://github.com/GibsonAI/memori.git
+cd memori
 pip install -e .
 ```
 
 ## Development Installation
 
 ```bash
-git clone https://github.com/GibsonAI/memoriai.git
-cd memoriai
+git clone https://github.com/GibsonAI/memori.git
+cd memori
 pip install -e ".[dev]"
 ```
 
 ## Verify Installation
 
 ```python
-from memoriai import Memori
+from memori import Memori
 print("Memoriai installed successfully!")
 ```
 
@@ -66,7 +66,7 @@ OPENAI_API_KEY=sk-your-openai-key-here
 
 ### Option 3: Direct Configuration
 ```python
-from memoriai import Memori
+from memori import Memori
 
 memori = Memori(openai_api_key="sk-your-openai-key-here")
 ```

@@ -1,18 +1,18 @@
 """
-Basic Memoriai Usage Example
+Basic Memori Usage Example
 Simple demonstration of conscious ingestion and context injection
 """
 
 from dotenv import load_dotenv
 from litellm import completion
 
-from memoriai import Memori
+from memori import Memori
 
 load_dotenv()
 
 
 def main():
-    print("🧠 Memoriai v1.1 - AI Memory with Conscious Ingestion")
+    print("🧠 Memori v1.1 - AI Memory with Conscious Ingestion")
     print("=" * 55)
 
     # Initialize your workspace memory with conscious ingestion

@@ -1,8 +1,8 @@
-# Memoriai Documentation
+# Memori Documentation
 
 ## Quick Links
 
-- **[Installation](#installation)** - Get started with Memoriai
+- **[Installation](#installation)** - Get started with Memori
 - **[Basic Usage](#basic-usage)** - Simple examples
 - **[Configuration](#configuration)** - Setup and customization
 - **[API Reference](#api-reference)** - Technical details
@@ -10,7 +10,7 @@
 ## Installation
 
 ```bash
-pip install memoriai
+pip install memori
 ```
 
 ## Basic Usage
@@ -18,7 +18,7 @@ pip install memoriai
 ### Simple Memory Setup
 
 ```python
-from memoriai import Memori
+from memori import Memori
 
 # Create memory for your workspace
 memori = Memori(
@@ -76,7 +76,7 @@ export MEMORI_DATABASE__CONNECTION_STRING="postgresql://..."
 ### Configuration Manager
 
 ```python
-from memoriai import ConfigManager
+from memori import ConfigManager
 
 config = ConfigManager()
 config.auto_load()  # Loads from files and environment
@@ -126,7 +126,7 @@ config.get_setting("database.connection_string")
 ### Memory Search
 
 ```python
-from memoriai.tools import create_memory_tool
+from memori.tools import create_memory_tool
 
 # Create search tool for LLM function calling
 memory_tool = create_memory_tool(memori)
@@ -161,6 +161,6 @@ See `/examples` directory:
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/memoriai/issues)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/memori/issues)
 - **Documentation**: This README and inline docstrings
 - **Examples**: Check `/examples` directory

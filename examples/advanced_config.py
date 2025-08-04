@@ -1,15 +1,15 @@
 """
-Advanced Memoriai Configuration Example
+Advanced Memori Configuration Example
 Demonstrates configuration management and production settings
 """
 
 from litellm import completion
 
-from memoriai import ConfigManager, Memori
+from memori import ConfigManager, Memori
 
 
 def main():
-    print("⚙️ Advanced Memoriai Configuration")
+    print("⚙️ Advanced Memori Configuration")
     print("=" * 35)
 
     # Method 1: Configuration Manager (Recommended)

@@ -13,7 +13,7 @@ import json
 from dotenv import load_dotenv
 from litellm import completion
 
-from memoriai import Memori, create_memory_tool
+from memori import Memori, create_memory_tool
 
 load_dotenv()
 

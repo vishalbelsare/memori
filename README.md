@@ -1,10 +1,10 @@
-# Memoriai
+# Memori
 
 **The Open-Source Memory Layer for AI Agents & Multi-Agent Systems v1.2**
 
 *Give your AI agents structured, persistent memory with intelligent context injection - no more repeating yourself!*
 
-[![PyPI version](https://badge.fury.io/py/memoriai.svg)](https://badge.fury.io/py/memoriai)
+[![PyPI version](https://badge.fury.io/py/memori.svg)](https://badge.fury.io/py/memori)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
@@ -21,11 +21,11 @@
 ## ⚡ Quick Start
 
 ```bash
-pip install memoriai
+pip install memorisdk
 ```
 
 ```python
-from memoriai import Memori
+from memori import Memori
 
 # Create your workspace memory with conscious mode
 office_work = Memori(
@@ -150,7 +150,7 @@ memori = Memori(
 
 ### Simple Setup
 ```python
-from memoriai import Memori
+from memori import Memori
 
 # Conscious mode - Short-term working memory
 memori = Memori(
@@ -177,7 +177,7 @@ memori = Memori(
 
 ### Advanced Configuration
 ```python
-from memoriai import Memori, ConfigManager
+from memori import Memori, ConfigManager
 
 # Load from memori.json or environment
 config = ConfigManager()
@@ -245,7 +245,7 @@ essential = memori.get_essential_conversations(limit=5)
 
 ### **Memory Retrieval Tools**
 ```python
-from memoriai.tools import create_memory_tool
+from memori.tools import create_memory_tool
 
 # Create memory search tool for your LLM
 memory_tool = create_memory_tool(memori)
@@ -283,7 +283,7 @@ memory_relationships # Entity connections
 ## 📁 Project Structure
 
 ```
-memoriai/
+memori/
 ├── core/           # Main Memori class, database manager
 ├── agents/         # Memory processing with Pydantic  
 ├── database/       # SQLite/PostgreSQL/MySQL support

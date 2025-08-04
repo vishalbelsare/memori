@@ -1,6 +1,6 @@
-# Memoriai Test Suite
+# Memori Test Suite
 
-This directory contains comprehensive tests for the Memoriai project, organized into different categories based on their purpose and scope.
+This directory contains comprehensive tests for the Memori project, organized into different categories based on their purpose and scope.
 
 ## 📁 Test Structure
 
@@ -66,7 +66,7 @@ python tests/run_tests.py --type performance
 
 ```bash
 # Run all tests with coverage
-pytest --cov=memoriai --cov-report=html
+pytest --cov=memori --cov-report=html
 
 # Run unit tests only
 pytest -m unit
@@ -150,7 +150,7 @@ Coverage reports are generated in multiple formats:
 ### Coverage Configuration
 
 Coverage settings are configured in `pytest.ini`:
-- Source: `memoriai/` package
+- Source: `memori/` package
 - Minimum coverage: 80%
 - Excludes test files and generated code
 
@@ -222,7 +222,7 @@ Tests run on multiple configurations:
 
 ```python
 import pytest
-from memoriai.core.memory import MemoryManager
+from memori.core.memory import MemoryManager
 
 class TestMemoryManager:
     """Test the MemoryManager class."""

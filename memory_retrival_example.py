@@ -3,7 +3,7 @@ import json
 import litellm
 from dotenv import load_dotenv
 
-from memoriai import Memori, create_memory_tool
+from memori import Memori, create_memory_tool
 
 load_dotenv()  # Load environment variables from .env file
 

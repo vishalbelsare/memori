@@ -1,6 +1,6 @@
 # Basic Usage
 
-Learn Memoriai's core concepts with practical examples.
+Learn Memori's core concepts with practical examples.
 
 ## Core Concepts
 
@@ -33,7 +33,7 @@ graph LR
 ## Simple Example
 
 ```python
-from memoriai import Memori
+from memori import Memori
 
 # Initialize
 memori = Memori(
@@ -180,7 +180,7 @@ completion(model="gemini-pro", messages=[...])
 
 ### Function Calling Integration
 ```python
-from memoriai.tools import create_memory_tool
+from memori.tools import create_memory_tool
 
 # Create search tool
 memory_tool = create_memory_tool(memori)
@@ -195,7 +195,7 @@ response = completion(
 
 ### Direct Search
 ```python
-from memoriai.tools import create_memory_search_tool
+from memori.tools import create_memory_search_tool
 
 search_tool = create_memory_search_tool(memori)
 result = search_tool("Python preferences", max_results=3)
@@ -231,7 +231,7 @@ if stats['short_term_count'] > 1000:
 
 ### 4. Use Configuration Files
 ```python
-from memoriai import ConfigManager
+from memori import ConfigManager
 
 config = ConfigManager()
 config.auto_load()  # Loads from memori.json, env vars

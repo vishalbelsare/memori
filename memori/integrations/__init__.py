@@ -5,7 +5,7 @@ Universal LLM Integration - Plug-and-Play Memory Recording
 Just call memori.enable() and use ANY LLM library normally!
 
 ```python
-from memoriai import Memori
+from memori import Memori
 
 memori = Memori(...)
 memori.enable()  # 🎉 That's it!

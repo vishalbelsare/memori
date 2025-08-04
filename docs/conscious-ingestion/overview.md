@@ -1,6 +1,6 @@
 # Conscious Ingestion System
 
-Memoriai v1.1 introduces a revolutionary conscious ingestion system that mimics human memory patterns to provide intelligent, context-aware AI interactions.
+Memori v1.1 introduces a revolutionary conscious ingestion system that mimics human memory patterns to provide intelligent, context-aware AI interactions.
 
 ## What is Conscious Ingestion?
 
@@ -37,7 +37,7 @@ Conscious ingestion is an AI-powered memory management system that:
 ### Simple Setup
 
 ```python
-from memoriai import Memori
+from memori import Memori
 
 memori = Memori(
     database_connect="sqlite:///my_memory.db",
@@ -192,7 +192,7 @@ print(f"Essential memories: {len(memori.get_essential_conversations())}")
 ```python
 # Default: 6 hours
 # Can be configured when creating custom conscious agents
-from memoriai.agents import ConsciouscAgent
+from memori.agents import ConsciouscAgent
 
 agent = ConsciouscAgent(api_key="sk-...")
 agent.analysis_interval = timedelta(hours=3)  # More frequent

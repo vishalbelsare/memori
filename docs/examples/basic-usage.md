@@ -1,11 +1,11 @@
 # Basic Example with Conscious Ingestion
 
-Simple demonstration of Memoriai v1.1's enhanced conscious ingestion system.
+Simple demonstration of Memori v1.1's enhanced conscious ingestion system.
 
 ## Overview
 
 This example shows how to:
-- Initialize Memoriai with conscious ingestion
+- Initialize Memori with conscious ingestion
 - Enable AI-powered background analysis
 - See intelligent context injection in action
 - Understand memory promotion and essential information extraction
@@ -13,14 +13,14 @@ This example shows how to:
 ## Code
 
 ```python title="basic_example.py"
-from memoriai import Memori
+from memori import Memori
 from litellm import completion
 from dotenv import load_dotenv
 
 load_dotenv()
 
 def main():
-    print("🧠 Memoriai v1.1 - AI Memory with Conscious Ingestion")
+    print("🧠 Memori v1.1 - AI Memory with Conscious Ingestion")
     
     # Initialize your workspace memory with conscious ingestion
     office_work = Memori(
@@ -131,7 +131,7 @@ Each conversation builds on the previous with AI-powered selection:
 ## Expected Output
 
 ```
-🧠 Memoriai - Your AI's Second Memory
+🧠 Memori - Your AI's Second Memory
 ✅ Memory enabled - all conversations will be recorded!
 
 --- First conversation ---
@@ -171,7 +171,7 @@ Each conversation is processed to extract:
 
 ### Prerequisites
 ```bash
-pip install memoriai python-dotenv
+pip install memorisdk python-dotenv
 ```
 
 ### Setup

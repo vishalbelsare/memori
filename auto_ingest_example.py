@@ -11,7 +11,7 @@ This example demonstrates how auto_ingest=True works:
 from dotenv import load_dotenv
 from litellm import completion
 
-from memoriai import Memori
+from memori import Memori
 
 load_dotenv()  # Load environment variables from .env file
 

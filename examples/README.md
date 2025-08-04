@@ -1,6 +1,6 @@
-# Memoriai Examples
+# Memori Examples
 
-Simple, focused examples demonstrating core Memoriai functionality.
+Simple, focused examples demonstrating core Memori functionality.
 
 ## 📁 Examples
 
@@ -8,7 +8,7 @@ Simple, focused examples demonstrating core Memoriai functionality.
 **Simple memory recording and context injection**
 
 Shows how to:
-- Initialize Memoriai with basic settings
+- Initialize Memori with basic settings
 - Enable universal memory recording  
 - See context automatically injected across conversations
 
@@ -51,9 +51,9 @@ Template configuration showing:
 
 ## 🚀 Running Examples
 
-1. **Install Memoriai**:
+1. **Install Memori**:
    ```bash
-   pip install memoriai
+   pip install memorisdk
    ```
 
 2. **Set API Key**:
@@ -81,7 +81,7 @@ Template configuration showing:
 
 ## 🎯 Philosophy in Action
 
-These examples show Memoriai's core philosophy:
+These examples show Memori's core philosophy:
 - **Second-memory for LLM work** - Never repeat context
 - **Simple, reliable architecture** - Just works out of the box  
 - **Flexible configuration** - Adapt to your workflow

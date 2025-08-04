@@ -47,28 +47,28 @@ jobs:
       - name: Check Black formatting
         run: |
           echo "🎨 Checking Black formatting..."
-          black --check --diff memoriai/ tests/ examples/ scripts/ --line-length 88
+          black --check --diff memori/ tests/ examples/ scripts/ --line-length 88
 
       - name: Check import sorting
         run: |
           echo "📦 Checking import sorting..."
-          isort --check-only --diff memoriai/ tests/ examples/ scripts/ --profile black
+          isort --check-only --diff memori/ tests/ examples/ scripts/ --profile black
 
       - name: Lint with Ruff
         run: |
           echo "🔍 Running Ruff linter..."
-          ruff check memoriai/ tests/ examples/ scripts/ --output-format=github
+          ruff check memori/ tests/ examples/ scripts/ --output-format=github
 
       - name: Type check with mypy
         run: |
           echo "🏷️ Running mypy type checking..."
-          mypy memoriai/ --ignore-missing-imports --show-error-codes
+          mypy memori/ --ignore-missing-imports --show-error-codes
 
       - name: Security check with Bandit
         run: |
           echo "🔒 Running Bandit security check..."
-          bandit -r memoriai/ -f json -o bandit-report.json || true
-          bandit -r memoriai/ --severity-level medium
+          bandit -r memori/ -f json -o bandit-report.json || true
+          bandit -r memori/ --severity-level medium
 
       - name: Dependency security check
         run: |
@@ -132,7 +132,7 @@ jobs:
           echo "Creating minimal coverage report for CI compatibility..."
           mkdir -p htmlcov
           echo "No tests available yet" > htmlcov/index.html
-          echo "<?xml version='1.0' encoding='UTF-8'?><coverage version='6.0'><sources><source>memoriai</source></sources><packages/></coverage>" > coverage.xml
+          echo "<?xml version='1.0' encoding='UTF-8'?><coverage version='6.0'><sources><source>memori</source></sources><packages/></coverage>" > coverage.xml
           echo "<?xml version='1.0' encoding='utf-8'?><testsuites><testsuite name='pytest' tests='0' failures='0' errors='0' time='0'/></testsuites>" > pytest-results.xml
 
       - name: Upload test results
@@ -150,7 +150,7 @@ jobs:
         with:
           file: ./coverage.xml
           flags: unittests
-          name: memoriai-coverage
+          name: memori-coverage
           fail_ci_if_error: false
 
   integration-tests:
