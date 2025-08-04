@@ -52,34 +52,41 @@ response = completion(
 pip install memorisdk litellm
 ```
 
-### Basic Usage
+## Basic Usage
+
+### Set OpenAI API Key
+
+```bash
+export OPENAI_API_KEY="sk-your-openai-key-here"
+```
 
 ```python
 from memori import Memori
+from litellm import completion
 
-# Initialize with default SQLite database
-memori = Memori(
-    openai_api_key="your-openai-key",
-    conscious_ingest=True  # Intelligent memory filtering
-)
-
-# Enable universal memory recording
+# Initialize memory
+memori = Memori(conscious_ingest=True)
 memori.enable()
 
-# Now use ANY LLM library - memories auto-recorded!
-import openai
-client = openai.OpenAI()
-response = client.chat.completions.create(
-    model="gpt-4",
-    messages=[{"role": "user", "content": "I work with Python and prefer clean code"}]
+# First conversation - establish context
+response1 = completion(
+    model="gpt-4o-mini",
+    messages=[{
+        "role": "user", 
+        "content": "I'm working on a Python FastAPI project"
+    }]
 )
+print("Assistant:", response1.choices[0].message.content)
 
-# Or with LiteLLM
-from litellm import completion
-response = completion(
-    model="gpt-4",
-    messages=[{"role": "user", "content": "Help me build a Flask API"}]
+# Second conversation - memory provides context  
+response2 = completion(
+    model="gpt-4o-mini", 
+    messages=[{
+        "role": "user",
+        "content": "Help me add user authentication"
+    }]
 )
+print("Assistant:", response2.choices[0].message.content)
 ```
 
 ## 📋 Memory Types

@@ -38,30 +38,47 @@
 
 ## ⚡ Quick Start
 
+Install Memori:
+
 ```bash
 pip install memorisdk
 ```
 
+Set OpenAI API Key:
+
+```bash
+export OPENAI_API_KEY="sk-your-openai-key-here"
+```
+
+Example with LiteLLM:
+
 ```python
 from memori import Memori
-
-# Create your workspace memory with conscious mode
-office_work = Memori(
-    database_connect="sqlite:///office_memory.db",
-    conscious_ingest=True,  # Short-term working memory (one-shot context)
-    openai_api_key="your-key"
-)
-
-office_work.enable()  # Start recording conversations
-
-# Use ANY LLM library - context automatically injected!
 from litellm import completion
 
-response = completion(
-    model="gpt-4o", 
-    messages=[{"role": "user", "content": "Help me with Python testing"}]
+# Initialize memory
+memori = Memori(conscious_ingest=True)
+memori.enable()
+
+# First conversation - establish context
+response1 = completion(
+    model="gpt-4o-mini",
+    messages=[{
+        "role": "user", 
+        "content": "I'm working on a Python FastAPI project"
+    }]
 )
-# ✨ Short-term working memory automatically included once per session
+print("Assistant:", response1.choices[0].message.content)
+
+# Second conversation - memory provides context  
+response2 = completion(
+    model="gpt-4o-mini", 
+    messages=[{
+        "role": "user",
+        "content": "Help me add user authentication"
+    }]
+)
+print("Assistant:", response2.choices[0].message.content)
 ```
 
 ## 🧠 How It Works
