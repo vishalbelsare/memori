@@ -49,16 +49,24 @@ response = completion(
 ### Installation
 
 ```bash
-pip install memorisdk litellm
+pip install memorisdk
 ```
 
-## Basic Usage
+## Basic Usage with LiteLLM
 
-### Set OpenAI API Key
+1. Install litellm:
+
+```bash
+pip install litellm
+```
+
+2. Set OpenAI API Key:
 
 ```bash
 export OPENAI_API_KEY="sk-your-openai-key-here"
 ```
+
+3. Run the following Python script:
 
 ```python
 from memori import Memori
