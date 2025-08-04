@@ -49,7 +49,7 @@ response = completion(
 ### Installation
 
 ```bash
-pip install memorisdk
+pip install memorisdk litellm
 ```
 
 ### Basic Usage
