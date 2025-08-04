@@ -5,7 +5,7 @@ Get Memori running in 5 minutes.
 ## 1. Install
 
 ```bash
-pip install memorisdk
+pip install memorisdk litellm
 ```
 
 ## 2. Set API Key
