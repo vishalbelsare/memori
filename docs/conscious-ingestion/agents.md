@@ -1,6 +1,6 @@
 # Agent System Documentation
 
-Memoriai v1.1 features a sophisticated multi-agent system for intelligent memory processing and conscious ingestion.
+Memori v1.1 features a sophisticated multi-agent system for intelligent memory processing and conscious ingestion.
 
 ## Overview
 
@@ -109,7 +109,7 @@ The Retrieval Agent understands user queries and plans effective memory retrieva
 ### Enabling Conscious Ingestion
 
 ```python
-from memoriai import Memori
+from memori import Memori
 
 memori = Memori(
     database_connect="sqlite:///memory.db",

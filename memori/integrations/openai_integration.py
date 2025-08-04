@@ -5,7 +5,7 @@ RECOMMENDED: Use LiteLLM instead for unified API and native callback support.
 This integration is provided for direct OpenAI SDK usage.
 
 Usage:
-    from memoriai.integrations.openai_integration import MemoriOpenAI
+    from memori.integrations.openai_integration import MemoriOpenAI
 
     # Initialize with your memori instance
     client = MemoriOpenAI(memori_instance, api_key="your-key")

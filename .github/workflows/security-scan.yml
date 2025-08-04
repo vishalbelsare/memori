@@ -90,7 +90,7 @@ jobs:
       - name: Run Bandit security linter
         run: |
           echo "= Running Bandit security scan..."
-          bandit -r memoriai/ \
+          bandit -r memori/ \
             -f json \
             -o bandit-report.json \
             --severity-level medium \
@@ -98,7 +98,7 @@ jobs:
             --exclude tests/ || true
           
           # Generate human-readable report
-          bandit -r memoriai/ \
+          bandit -r memori/ \
             --severity-level medium \
             --confidence-level medium \
             --exclude tests/
@@ -106,14 +106,14 @@ jobs:
       - name: Run Semgrep security scan
         run: |
           echo "= Running Semgrep security scan..."
-          semgrep --config=auto memoriai/ \
+          semgrep --config=auto memori/ \
             --json \
             --output=semgrep-report.json \
             --severity=WARNING \
             --severity=ERROR || true
           
           # Generate human-readable report
-          semgrep --config=auto memoriai/ \
+          semgrep --config=auto memori/ \
             --severity=WARNING \
             --severity=ERROR
 
@@ -192,12 +192,12 @@ jobs:
       - name: Build Docker image
         run: |
           echo "=3 Building Docker image for security scan..."
-          docker build -t memoriai:security-scan .
+          docker build -t memori:security-scan .
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'memoriai:security-scan'
+          image-ref: 'memori:security-scan'
           format: 'sarif'
           output: 'trivy-results.sarif'
 

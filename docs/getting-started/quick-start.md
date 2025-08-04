@@ -1,11 +1,11 @@
 # Quick Start
 
-Get Memoriai running in 5 minutes.
+Get Memori running in 5 minutes.
 
 ## 1. Install
 
 ```bash
-pip install memoriai
+pip install memorisdk
 ```
 
 ## 2. Set API Key
@@ -19,7 +19,7 @@ export OPENAI_API_KEY="sk-your-openai-key-here"
 Create `demo.py`:
 
 ```python
-from memoriai import Memori
+from memori import Memori
 from litellm import completion
 
 # Initialize memory
@@ -73,4 +73,4 @@ python demo.py
 - [Examples](../examples/basic.md) - Real-world use cases
 
 !!! tip "Pro Tip"
-    Try asking the same questions in a new session - Memoriai will remember your project context!
+    Try asking the same questions in a new session - Memori will remember your project context!

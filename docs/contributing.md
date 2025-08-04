@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for your interest in contributing to Memoriai! This guide will help you get started.
+Thank you for your interest in contributing to Memori! This guide will help you get started.
 
 ## Quick Start
 
@@ -20,8 +20,8 @@ Thank you for your interest in contributing to Memoriai! This guide will help yo
 
 ```bash
 # Clone your fork
-git clone https://github.com/GibsonAI/memoriai.git
-cd memoriai
+git clone https://github.com/GibsonAI/memori.git
+cd memori
 
 # Create virtual environment
 python -m venv venv
@@ -43,8 +43,8 @@ The development installation includes:
 ## Project Structure
 
 ```
-memoriai/
-├── memoriai/          # Main package
+memori/
+├── memorisdk/          # Main package
 │   ├── core/         # Main memory interface and database
 │   ├── config/       # Configuration management
 │   ├── agents/       # Memory processing agents
@@ -66,13 +66,13 @@ We use `black` for code formatting and `ruff` for linting:
 
 ```bash
 # Format code
-black memoriai/ tests/
+black memorisdk/ tests/
 
 # Lint code
-ruff check memoriai/ tests/
+ruff check memorisdk/ tests/
 
 # Type checking
-mypy memoriai/
+mypy memorisdk/
 ```
 
 ### 2. Testing
@@ -82,7 +82,7 @@ mypy memoriai/
 pytest
 
 # Run with coverage
-pytest --cov=memoriai
+pytest --cov=memorisdk
 
 # Run specific test file
 pytest tests/test_memory.py
@@ -186,10 +186,10 @@ Test with different databases:
 
 ```bash
 # SQLite (default)
-python -c "from memoriai import Memori; m = Memori(); print('SQLite OK')"
+python -c "from memori import Memori; m = Memori(); print('SQLite OK')"
 
 # PostgreSQL (requires setup)
-python -c "from memoriai import Memori; m = Memori(database_connect='postgresql://...'); print('PostgreSQL OK')"
+python -c "from memori import Memori; m = Memori(database_connect='postgresql://...'); print('PostgreSQL OK')"
 ```
 
 ### Integration Testing
@@ -206,7 +206,7 @@ python examples/basic_usage.py
 Check memory storage during development:
 
 ```python
-from memoriai import Memori
+from memori import Memori
 
 memori = Memori()
 memori.enable()
@@ -258,4 +258,4 @@ Contributors will be:
 - Credited in release notes
 - Invited to join the maintainers team (for significant contributions)
 
-Thank you for helping make Memoriai better! 🚀
+Thank you for helping make Memori better!

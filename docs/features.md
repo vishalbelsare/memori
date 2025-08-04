@@ -42,7 +42,7 @@ graph TD
 === "LiteLLM (Recommended)"
     ```python
     from litellm import completion
-    from memoriai import Memori
+    from memori import Memori
     
     memori = Memori(conscious_ingest=True)
     memori.enable()
@@ -57,7 +57,7 @@ graph TD
 === "OpenAI"
     ```python
     import openai
-    from memoriai import Memori
+    from memori import Memori
     
     memori = Memori(conscious_ingest=True)
     memori.enable()
@@ -70,7 +70,7 @@ graph TD
 === "Anthropic"
     ```python
     import anthropic
-    from memoriai import Memori
+    from memori import Memori
     
     memori = Memori(conscious_ingest=True)
     memori.enable()
@@ -84,7 +84,7 @@ graph TD
 
 ### Modular Design
 ```
-memoriai/
+memori/
 ├── core/              # Main Memori class, database manager
 ├── agents/            # AI-powered memory processing
 ├── database/          # Multi-database support
@@ -155,7 +155,7 @@ memori = Memori(
 
 ### Memory Tools
 ```python
-from memoriai.tools import create_memory_tool
+from memori.tools import create_memory_tool
 
 # Function calling integration
 memory_tool = create_memory_tool(memori)

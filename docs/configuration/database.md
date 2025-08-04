@@ -1,6 +1,6 @@
 # Database Setup
 
-Configure Memoriai with different database backends.
+Configure Memori with different database backends.
 
 ## Supported Databases
 
@@ -12,7 +12,7 @@ Configure Memoriai with different database backends.
 
 ### Basic Setup
 ```python
-from memoriai import Memori
+from memori import Memori
 
 memori = Memori(database_connect="sqlite:///memori.db")
 ```
@@ -44,7 +44,7 @@ pip install psycopg2-binary
 
 ### Setup
 ```python
-from memoriai import Memori
+from memori import Memori
 
 memori = Memori(
     database_connect="postgresql://user:password@localhost:5432/memori"
@@ -104,7 +104,7 @@ pip install PyMySQL
 
 ### Setup
 ```python
-from memoriai import Memori
+from memori import Memori
 
 # With mysqlclient
 memori = Memori(
@@ -152,7 +152,7 @@ memori = Memori(
 
 ### Monitoring
 ```python
-from memoriai import Memori
+from memori import Memori
 
 memori = Memori()
 stats = memori.db_manager.get_connection_stats()
@@ -164,7 +164,7 @@ print(f"Pool size: {stats['pool_size']}")
 
 ### Automatic Migration (Default)
 ```python
-from memoriai import Memori
+from memori import Memori
 
 # Automatically creates/updates schema
 memori = Memori(database_connect="postgresql://...")
@@ -172,7 +172,7 @@ memori = Memori(database_connect="postgresql://...")
 
 ### Manual Migration
 ```python
-from memoriai import DatabaseManager
+from memori import DatabaseManager
 
 db = DatabaseManager("postgresql://...")
 db.create_tables()      # Create initial schema
@@ -192,7 +192,7 @@ migrations = db.get_available_migrations()
 ## Performance Optimization
 
 ### Indexing
-Memoriai automatically creates optimized indexes:
+Memori automatically creates optimized indexes:
 
 ```sql
 -- Automatically created indexes
@@ -256,7 +256,7 @@ psql memori < memori_backup.sql
 
 ### Health Checks
 ```python
-from memoriai import Memori
+from memori import Memori
 
 memori = Memori()
 

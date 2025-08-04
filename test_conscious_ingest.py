@@ -13,11 +13,11 @@ import os
 import sys
 import time
 
-# Add the memoriai package to the path
+# Add the memori package to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "."))
 
 
-from memoriai import Memori
+from memori import Memori
 
 
 def simulate_conversations(memori: Memori):

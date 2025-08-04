@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Memoriai will be documented in this file.
+All notable changes to Memori will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -237,7 +237,7 @@ Complete professional-grade memory system with modular architecture, comprehensi
 
 ### 📁 Project Structure
 ```
-memoriai/
+memori/
 ├── core/              # Main memory interface and database
 ├── config/            # Configuration management system
 ├── agents/            # Pydantic-based memory processing
@@ -255,7 +255,7 @@ memoriai/
 
 ### ⚡ Quick Start
 ```python
-from memoriai import Memori
+from memori import Memori
 
 memori = Memori(
     database_connect="sqlite:///my_memory.db",

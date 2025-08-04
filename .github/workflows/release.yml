@@ -108,9 +108,9 @@ jobs:
       - name: Run quality checks
         run: |
           echo "🔍 Running final quality checks..."
-          python -m black --check memoriai/ tests/
-          python -m ruff check memoriai/ tests/
-          python -m mypy memoriai/ --ignore-missing-imports --show-error-codes
+          python -m black --check memori/ tests/
+          python -m ruff check memori/ tests/
+          python -m mypy memori/ --ignore-missing-imports --show-error-codes
 
       - name: Run tests
         run: |
@@ -130,7 +130,7 @@ jobs:
           # Test installation
           echo "🧪 Testing package installation..."
           pip install dist/*.whl
-          python -c "import memoriai; print(f'✅ Package import successful: {memoriai.__version__}')"
+          python -c "import memori; print(f'✅ Package import successful: {memori.__version__}')"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -169,7 +169,7 @@ jobs:
           echo "🧪 Testing installation from TestPyPI..."
           sleep 60  # Wait for package to be available
           pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ memorisdk
-          python -c "import memoriai; print(f'✅ TestPyPI installation successful: {memoriai.__version__}')"
+          python -c "import memori; print(f'✅ TestPyPI installation successful: {memori.__version__}')"
 
   publish-pypi:
     name: Publish to PyPI
@@ -203,7 +203,7 @@ jobs:
           echo "🧪 Testing installation from PyPI..."
           sleep 60  # Wait for package to be available
           pip install memorisdk
-          python -c "import memoriai; print(f'✅ PyPI installation successful: {memoriai.__version__}')"
+          python -c "import memori; print(f'✅ PyPI installation successful: {memori.__version__}')"
 
   create-github-release:
     name: Create GitHub Release
@@ -239,7 +239,7 @@ jobs:
             if [[ -z "$RELEASE_NOTES" ]]; then
               RELEASE_NOTES="Release $VERSION
 
-              See [CHANGELOG.md](https://github.com/GibsonAI/memoriai/blob/main/CHANGELOG.md) for details."
+              See [CHANGELOG.md](https://github.com/GibsonAI/memori/blob/main/CHANGELOG.md) for details."
             fi
           else
             RELEASE_NOTES="Release $VERSION
@@ -291,8 +291,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/gibsonai/memoriai:latest
-            ghcr.io/gibsonai/memoriai:${{ needs.validate-release.outputs.version }}
+            ghcr.io/gibsonai/memori:latest
+            ghcr.io/gibsonai/memori:${{ needs.validate-release.outputs.version }}
           platforms: linux/amd64,linux/arm64
 
   notify-release:
@@ -307,7 +307,7 @@ jobs:
         run: |
           echo "🎉 Release ${{ needs.validate-release.outputs.version }} published successfully!"
           echo "📦 PyPI: https://pypi.org/project/memorisdk/"
-          echo "🐙 GitHub: https://github.com/GibsonAI/memoriai/releases/tag/${{ needs.validate-release.outputs.version }}"
+          echo "🐙 GitHub: https://github.com/GibsonAI/memori/releases/tag/${{ needs.validate-release.outputs.version }}"
 
       - name: Notify failure
         if: needs.publish-pypi.result == 'failure' || needs.create-github-release.result == 'failure'

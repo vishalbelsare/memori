@@ -1,10 +1,10 @@
-site_name: Memoriai
+site_name: Memori
 site_description: The Open-Source Memory Layer for AI Agents & Multi-Agent Systems
 site_author: Harshal More
-site_url: https://GibsonAI.github.io/memoriai
+site_url: https://GibsonAI.github.io/memori
 
-repo_name: memoriai
-repo_url: https://github.com/GibsonAI/memoriai
+repo_name: memori
+repo_url: https://github.com/GibsonAI/memori
 edit_uri: edit/main/docs/
 
 theme:
@@ -79,9 +79,9 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/yourusername/memoriai
+      link: https://github.com/yourusername/memori
     - icon: fontawesome/brands/python
-      link: https://pypi.org/project/memoriai/
+      link: https://pypi.org/project/memorisdk/
 
 extra_javascript:
   - https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js

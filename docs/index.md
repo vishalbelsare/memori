@@ -1,11 +1,11 @@
-# Memoriai
+# Memori
 
 **The Open-Source Memory Layer for AI Agents & Multi-Agent Systems**
 
 !!! tip "Philosophy"
     **Second-memory for all your LLM work** - Never repeat context again. Simple, reliable architecture that just works out of the box.
 
-## Why Memoriai?
+## Why Memori?
 
 Give your AI agents structured, persistent memory with professional-grade architecture:
 
@@ -21,7 +21,7 @@ response = completion(
 )
 
 # After: Automatic context injection
-from memoriai import Memori
+from memori import Memori
 
 memori = Memori(openai_api_key="your-key")
 memori.enable()  # Auto-records ALL LLM conversations
@@ -49,13 +49,13 @@ response = completion(
 ### Installation
 
 ```bash
-pip install memoriai
+pip install memori
 ```
 
 ### Basic Usage
 
 ```python
-from memoriai import Memori
+from memori import Memori
 
 # Initialize with default SQLite database
 memori = Memori(
@@ -119,7 +119,7 @@ client.messages.create(...)
 
 ### Simple Setup
 ```python
-from memoriai import Memori
+from memori import Memori
 
 memori = Memori(
     database_connect="sqlite:///my_memory.db",
@@ -130,7 +130,7 @@ memori = Memori(
 
 ### Advanced Configuration
 ```python
-from memoriai import ConfigManager
+from memori import ConfigManager
 
 # Load from memori.json or environment
 config = ConfigManager()

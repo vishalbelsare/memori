@@ -5,7 +5,7 @@ RECOMMENDED: Use LiteLLM instead for unified API and native callback support.
 This integration is provided for direct Anthropic SDK usage.
 
 Usage:
-    from memoriai.integrations.anthropic_integration import MemoriAnthropic
+    from memori.integrations.anthropic_integration import MemoriAnthropic
 
     # Initialize with your memori instance
     client = MemoriAnthropic(memori_instance, api_key="your-key")

@@ -96,7 +96,7 @@ jobs:
           
           # Update site_url for PR preview
           PR_NUMBER="${{ github.event.pull_request.number }}"
-          SITE_URL="https://gibsonai.github.io/memoriai/pr-${PR_NUMBER}/"
+          SITE_URL="https://gibsonai.github.io/memori/pr-${PR_NUMBER}/"
           
           # Update the site_url in the preview config
           sed -i "s|site_url:.*|site_url: ${SITE_URL}|" mkdocs-preview.yml
@@ -135,7 +135,7 @@ jobs:
         with:
           script: |
             const prNumber = context.issue.number;
-            const previewUrl = `https://gibsonai.github.io/memoriai/pr-${prNumber}/`;
+            const previewUrl = `https://gibsonai.github.io/memori/pr-${prNumber}/`;
             
             // Check if we already commented
             const comments = await github.rest.issues.listComments({
@@ -277,7 +277,7 @@ jobs:
           
           if [[ "${{ needs.build-docs-preview.result }}" == "success" ]]; then
             PR_NUMBER="${{ github.event.pull_request.number }}"
-            echo "🔗 **Preview URL**: https://gibsonai.github.io/memoriai/pr-${PR_NUMBER}/" >> $GITHUB_STEP_SUMMARY
+            echo "🔗 **Preview URL**: https://gibsonai.github.io/memori/pr-${PR_NUMBER}/" >> $GITHUB_STEP_SUMMARY
           fi
           
           echo "" >> $GITHUB_STEP_SUMMARY

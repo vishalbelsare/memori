@@ -1,12 +1,12 @@
 """
-Personal Assistant with Memoriai v1.1
+Personal Assistant with Memori v1.1
 AI assistant with conscious ingestion and intelligent memory
 """
 
 from dotenv import load_dotenv
 from litellm import completion
 
-from memoriai import Memori
+from memori import Memori
 
 load_dotenv()
 

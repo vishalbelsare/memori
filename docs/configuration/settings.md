@@ -1,12 +1,12 @@
 # Configuration
 
-Comprehensive guide to configuring Memoriai for your needs.
+Comprehensive guide to configuring Memori for your needs.
 
 ## Configuration Methods
 
 ### 1. Direct Configuration
 ```python
-from memoriai import Memori
+from memori import Memori
 
 memori = Memori(
     database_connect="sqlite:///memori.db",
@@ -45,7 +45,7 @@ Create `memori.json`:
 ```
 
 ```python
-from memoriai import ConfigManager
+from memori import ConfigManager
 
 config = ConfigManager()
 config.auto_load()  # Loads memori.json automatically
@@ -62,7 +62,7 @@ export MEMORI_LOGGING__LEVEL="INFO"
 ```
 
 ```python
-from memoriai import ConfigManager
+from memori import ConfigManager
 
 config = ConfigManager()
 config.load_from_env()
@@ -160,7 +160,7 @@ integrations = {
 
 ### Auto-Loading
 ```python
-from memoriai import ConfigManager
+from memori import ConfigManager
 
 config = ConfigManager()
 config.auto_load()  # Loads from multiple sources in priority order

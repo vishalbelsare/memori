@@ -1,20 +1,20 @@
-# Contributing to Memoriai
+# Contributing to Memori
 
-We welcome contributions to Memoriai! This document provides guidelines for contributing to the project.
+We welcome contributions to Memori! This document provides guidelines for contributing to the project.
 
-## <¯ Quick Start
+## <ï¿½ Quick Start
 
 1. **Fork** the repository
-2. **Clone** your fork: `git clone https://github.com/YOUR_USERNAME/memoriai.git`
+2. **Clone** your fork: `git clone https://github.com/YOUR_USERNAME/memori.git`
 3. **Create** a branch: `git checkout -b feature/your-feature-name`
 4. **Install** development dependencies: `pip install -e ".[dev]"`
 5. **Make** your changes
 6. **Test** your changes: `pytest`
-7. **Format** your code: `black memoriai/ tests/` and `ruff check memoriai/ tests/ --fix`
+7. **Format** your code: `black memorisdk/ tests/` and `ruff check memorisdk/ tests/ --fix`
 8. **Commit** and **push** your changes
 9. **Create** a pull request
 
-## =à Development Setup
+## =ï¿½ Development Setup
 
 ### Prerequisites
 - Python 3.8 or higher
@@ -24,8 +24,8 @@ We welcome contributions to Memoriai! This document provides guidelines for cont
 
 ```bash
 # Clone the repository
-git clone https://github.com/GibsonAI/memoriai.git
-cd memoriai
+git clone https://github.com/GibsonAI/memori.git
+cd memori
 
 # Create a virtual environment
 python -m venv venv
@@ -45,7 +45,7 @@ pre-commit install
 pytest
 
 # Run with coverage
-pytest --cov=memoriai --cov-report=html
+pytest --cov=memorisdk --cov-report=html
 
 # Run specific test file
 pytest tests/test_basic_functionality.py
@@ -60,21 +60,21 @@ We use several tools to maintain code quality:
 
 ```bash
 # Format code
-black memoriai/ tests/ examples/ scripts/
-isort memoriai/ tests/ examples/ scripts/
+black memorisdk/ tests/ examples/ scripts/
+isort memorisdk/ tests/ examples/ scripts/
 
 # Lint code
-ruff check memoriai/ tests/ examples/ scripts/
+ruff check memorisdk/ tests/ examples/ scripts/
 
 # Type checking
-mypy memoriai/
+mypy memorisdk/
 
 # Security checks
-bandit -r memoriai/
+bandit -r memorisdk/
 safety check
 ```
 
-## =Ý Contribution Guidelines
+## =ï¿½ Contribution Guidelines
 
 ### Code Style
 
@@ -157,7 +157,7 @@ When reporting bugs, please include:
 4. **Actual behavior**
 5. **Environment details**:
    - Python version
-   - Memoriai version
+   - Memori version
    - Operating system
    - Database type (if applicable)
 6. **Code snippet** or minimal example
@@ -165,7 +165,7 @@ When reporting bugs, please include:
 
 Use the bug report template when creating issues.
 
-## =¡ Feature Requests
+## =ï¿½ Feature Requests
 
 When suggesting new features:
 
@@ -181,7 +181,7 @@ Use the feature request template when creating issues.
 
 ### Architecture Principles
 
-Memoriai follows these architectural principles:
+Memori follows these architectural principles:
 
 1. **Modular Design**: Keep components loosely coupled
 2. **Clean Interfaces**: Use clear, documented APIs
@@ -205,7 +205,7 @@ When adding new features:
 
 When modifying database schemas:
 
-1. **Create migration files** in `memoriai/database/migrations/`
+1. **Create migration files** in `memorisdk/database/migrations/`
 2. **Test migrations** on sample data
 3. **Document migration steps**
 4. **Consider rollback procedures**
@@ -219,7 +219,7 @@ For new integrations:
 3. **Test error conditions** and edge cases
 4. **Document integration setup**
 
-## <÷ Release Process
+## <ï¿½ Release Process
 
 Releases are managed by maintainers:
 
@@ -241,9 +241,9 @@ Releases are managed by maintainers:
 - **GitHub Issues**: For bug reports and feature requests
 - **Documentation**: Check docs for common questions
 
-## =Ü License
+## =ï¿½ License
 
-By contributing to Memoriai, you agree that your contributions will be licensed under the Apache License 2.0.
+By contributing to Memori, you agree that your contributions will be licensed under the Apache License 2.0.
 
 ## =O Recognition
 
@@ -252,4 +252,4 @@ Contributors will be recognized in:
 - GitHub contributors list
 - Release notes for significant contributions
 
-Thank you for contributing to Memoriai! =€
+Thank you for contributing to Memori!
