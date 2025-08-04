@@ -1,12 +1,30 @@
 # Memori
 
-**The Open-Source Memory Layer for AI Agents & Multi-Agent Systems v1.2**
+<p align="center">
+  <strong>The Open-Source Memory Layer for AI Agents & Multi-Agent Systems v1.2</strong>
+</p>
 
-*Give your AI agents structured, persistent memory with intelligent context injection - no more repeating yourself!*
+<p align="center">
+  <i>Give your AI agents structured, persistent memory with intelligent context injection - no more repeating yourself!</i>
+</p>
 
-[![PyPI version](https://badge.fury.io/py/memori.svg)](https://badge.fury.io/py/memori)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+<p align="center">
+  <a href="https://gibsonai.github.io/memori/">Learn more</a>
+  ·
+  <a href="https://www.gibsonai.com/discord">Join Discord</a>
+</p>
+
+<p align="center">
+  <a href="https://badge.fury.io/py/memorisdk">
+    <img src="https://badge.fury.io/py/memori.svg" alt="PyPI version">
+  </a>
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
+  </a>
+  <a href="https://www.python.org/downloads/">
+    <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+">
+  </a>
+</p>
 
 ---
 
@@ -303,7 +321,8 @@ memori/
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
+- See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
+- Community: [Discord](https://www.gibsonai.com/discord)
 
 ## 📄 License
 
