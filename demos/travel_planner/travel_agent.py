@@ -89,7 +89,7 @@ class TravelPlannerAgent:
             # Create personalized travel memory
             self.travel_memory = Memori(
                 database_connect="sqlite:///travel_planner_memory.db",
-                # conscious_ingest=True,  # Enable background analysis
+                conscious_ingest=True,  # Enable background analysis
                 verbose=True,
                 openai_api_key=os.getenv("OPENAI_API_KEY"),
                 namespace="travel_planner",  # Separate namespace for travel planning

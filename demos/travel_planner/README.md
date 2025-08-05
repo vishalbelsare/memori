@@ -2,6 +2,8 @@
 
 An intelligent travel planning assistant built with CrewAI agents and Memori memory integration. This demo showcases how to create AI agents that remember user preferences and provide personalized travel recommendations.
 
+![Personalized Travel Planner Agent Demo](./assets/Memori%20Travel%20Planner%20Agent%20Demo.cmproj.gif)
+
 ## ✨ Features
 
 ### 🤖 AI Agent Capabilities
@@ -78,7 +80,7 @@ streamlit run app.py
 
 ### First Time User
 ```
-Input: "I want to visit Japan for 10 days in April. I love anime, traditional culture, and great food. Budget around $3000."
+Input: "I want to visit Japan for 10 days in April. I love anime, traditional culture, and great food."
 
 The agents will:
 1. Research flights to Japan in April using SerperDevTool

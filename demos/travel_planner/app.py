@@ -53,7 +53,7 @@ def main():
         # Travel request input
         travel_request = st.text_area(
             "Describe your travel plans:",
-            placeholder="I want to visit Japan for 10 days in April. I love anime, traditional culture, and great food. Budget around $3000.",
+            placeholder="I want to visit Japan for 10 days in April. I love anime, traditional culture, and great food.",
             height=100,
         )
 
