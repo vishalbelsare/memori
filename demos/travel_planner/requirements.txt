@@ -1,0 +1,12 @@
+# Travel Planner Demo Requirements
+# Install with: pip install -r requirements.txt
+
+# Memori SDK
+memorisdk==1.0.1
+streamlit
+python-dotenv
+# CrewAI and AI dependencies  
+crewai
+crewai-tools
+openai
+litellm
