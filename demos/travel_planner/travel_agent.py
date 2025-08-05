@@ -7,12 +7,14 @@ import json
 import os
 from datetime import datetime
 from typing import List, Tuple
-from dotenv import load_dotenv
+
+import litellm
 
 # CrewAI imports
-from crewai import Agent, Task, Crew, Process
-from crewai_tools import SerperDevTool
+from crewai import Agent, Crew, Process, Task
 from crewai.tools import tool
+from crewai_tools import SerperDevTool
+from dotenv import load_dotenv
 
 # Memori imports
 from memori import Memori, create_memory_tool
@@ -119,7 +121,7 @@ class TravelPlannerAgent:
             backstory="""You are an expert travel researcher with access to real-time information
             and user memory. You excel at finding the best travel deals, hidden gems, and
             personalized recommendations based on past preferences and current trends.
-            
+
             IMPORTANT: Always start by searching the user's memory with specific queries like:
             - "past trips to [destination]" to find previous experiences
             - "budget preferences" to understand spending patterns
@@ -127,11 +129,13 @@ class TravelPlannerAgent:
             - "activity preferences" to understand what they enjoy
             - "dietary restrictions" for food-related planning
             - "travel style preferences" to understand their travel personality
-            
+
             Use specific, descriptive search terms instead of generic queries.""",
             tools=[search_tool, memory_search_tool],
             verbose=True,
             allow_delegation=False,
+            max_reasoning_attempts=2,
+            max_iter=3,  # Limit iterations to avoid infinite loops
         )
 
         # Travel Planning Agent
@@ -141,18 +145,20 @@ class TravelPlannerAgent:
             backstory="""You are a seasoned travel planner who creates amazing, personalized
             travel experiences. You consider user preferences, budget, time constraints, and
             special interests to craft perfect itineraries.
-            
+
             IMPORTANT: Use memory search to understand the user's preferences:
             - Search for "past itinerary preferences" to understand their travel patterns
             - Look for "pace preferences" (relaxed vs. packed schedules)
             - Check "meal preferences" and "dining habits" from past trips
             - Search for "transportation preferences" (walking, metro, taxi, etc.)
             - Look for "accommodation feedback" from previous stays
-            
+            - Search for "activity preferences" (cultural, adventure, relaxation, etc.)
             Always personalize based on their history and stated preferences.""",
             tools=[memory_search_tool],
             verbose=True,
             allow_delegation=False,
+            max_reasoning_attempts=2,
+            max_iter=3,  # Limit iterations to avoid infinite loops
         )
 
         # Budget Advisor Agent
@@ -165,6 +171,8 @@ class TravelPlannerAgent:
             tools=[search_tool, memory_search_tool],
             verbose=True,
             allow_delegation=False,
+            max_reasoning_attempts=2,
+            max_iter=3,  # Limit iterations to avoid infinite loops
         )
 
         return research_agent, planning_agent, budget_agent
@@ -179,7 +187,7 @@ class TravelPlannerAgent:
         # Research Task
         research_task = Task(
             description=f"""Research travel options for: {travel_request}
-            
+
             STEP 1 - MEMORY SEARCH (CRITICAL): Start by searching the user's memory with specific queries:
             - "trips to [destination]" or "past visits to [destination]"
             - "budget preferences for international trips" or "typical trip spending"
@@ -187,7 +195,7 @@ class TravelPlannerAgent:
             - "activity preferences" (museums, outdoor, nightlife, culture, etc.)
             - "food preferences and restrictions"
             - "travel style" (luxury, budget, mid-range, backpacking, etc.)
-            
+
             STEP 2 - WEB RESEARCH: Based on memory insights, research:
             1. Current flight options and prices from user's likely departure locations
             2. Accommodation options matching their preferred style and budget
@@ -195,7 +203,7 @@ class TravelPlannerAgent:
             4. Weather and seasonal considerations for the travel period
             5. Current travel deals and promotions
             6. Local customs and travel tips
-            
+
             Provide a comprehensive research report that references their past preferences and includes specific recommendations.""",
             agent=research_agent,
             expected_output="Detailed research report with personalized recommendations based on user's memory, flight options, accommodations, activities, and current deals",
@@ -204,7 +212,7 @@ class TravelPlannerAgent:
         # Planning Task
         planning_task = Task(
             description=f"""Create a detailed travel itinerary for: {travel_request}
-            
+
             Based on the research findings and user memory:
             1. Create a day-by-day itinerary
             2. Include transportation between locations
@@ -212,7 +220,7 @@ class TravelPlannerAgent:
             4. Plan activities that match user interests
             5. Include backup options for weather issues
             6. Provide practical travel tips
-            
+
             Make it personal and exciting!""",
             agent=planning_agent,
             expected_output="Complete day-by-day travel itinerary with personalized recommendations",
@@ -222,7 +230,7 @@ class TravelPlannerAgent:
         # Budget Task
         budget_task = Task(
             description=f"""Provide budget analysis for: {travel_request}
-            
+
             Based on the research and itinerary:
             1. Calculate estimated costs for flights
             2. Estimate accommodation costs
@@ -231,7 +239,7 @@ class TravelPlannerAgent:
             5. Add transportation costs
             6. Suggest money-saving tips
             7. Provide budget alternatives
-            
+
             Include both conservative and premium budget options.""",
             agent=budget_agent,
             expected_output="Detailed budget breakdown with cost estimates and money-saving tips",
@@ -301,13 +309,65 @@ class TravelPlannerAgent:
             return error_msg
 
     def search_memory(self, query: str) -> str:
-        """Search the travel memory for past trips and preferences"""
+        """Search the travel memory for past trips and preferences with user-friendly formatting"""
         try:
-            if self.memory_tool:
-                results = self.memory_tool.execute(query=query)
-                return str(results)
-            else:
+            if not self.memory_tool:
                 return "Memory system not initialized"
+
+            if not query or not query.strip():
+                return "Please provide a specific search query"
+
+            # Get raw results from memory
+            raw_results = self.memory_tool.execute(query=query.strip())
+
+            # If no results found
+            if not raw_results or str(raw_results).strip() in [
+                "",
+                "None",
+                "null",
+                "[]",
+                "{}",
+            ]:
+                return f"🔍 I couldn't find any information about '{query}' in your travel memory yet. Try planning some trips to build up your memory!"
+
+            # Use LiteLLM to format the results into user-friendly response
+            conversation_history = [
+                {
+                    "role": "system",
+                    "content": """You are a helpful travel assistant that formats memory search results into friendly, conversational responses.
+
+                    Your job is to take raw memory search results and present them in a clear, user-friendly way.
+
+                    Guidelines:
+                    - Be conversational and friendly
+                    - Use emojis appropriately
+                    - Format information clearly with bullet points or sections when helpful
+                    - If the user asks about "last trip" or "recent trip", focus on the most recent information
+                    - If asking about preferences, summarize the key preferences found
+                    - If asking about specific destinations, highlight relevant trips and experiences
+                    - Keep responses concise but informative
+                    - If the raw results seem technical or unclear, extract the key human-readable information
+                    """,
+                },
+                {
+                    "role": "user",
+                    "content": f"""The user asked: "{query}"
+
+                    Here are the raw memory search results:
+                    {raw_results}
+
+                    Please format this into a friendly, conversational response that directly answers their question. Focus on the most relevant information and present it in an easy-to-read format.""",
+                },
+            ]
+
+            final_response = litellm.completion(
+                model="gpt-4o",
+                messages=conversation_history,
+                api_key=os.getenv("OPENAI_API_KEY"),
+            )
+
+            return final_response.choices[0].message.content
+
         except Exception as e:
             return f"Memory search error: {str(e)}"
 

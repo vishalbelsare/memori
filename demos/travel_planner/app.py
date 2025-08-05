@@ -27,7 +27,7 @@ def main():
             st.error(f"❌ Configuration Error: {str(e)}")
             st.info("""
             **Please set up your environment:**
-            
+
             1. Create a `.env` file in this directory with:
             ```
             OPENAI_API_KEY=sk-your-openai-key-here
@@ -119,7 +119,7 @@ def main():
             # Prepare the full request
             full_request = f"""
             {travel_request}
-            
+
             Additional preferences:
             - Budget: {budget_range}
             - Travel Style: {travel_style}
@@ -159,20 +159,36 @@ def main():
         # Memory search
         st.subheader("🔍 Search Past Trips")
         memory_query = st.text_input(
-            "Search your travel history:",
-            placeholder="Japan trips, beach vacations, budget preferences...",
+            "Ask about your travel history:",
+            placeholder="When was my last trip? What are my budget preferences? Japan trips...",
         )
 
         if st.button("Search Memory"):
             if memory_query and "travel_agent" in st.session_state:
                 try:
-                    results = st.session_state["travel_agent"].search_memory(
-                        memory_query
-                    )
-                    st.write("**Found in your memory:**")
-                    st.write(results)
+                    with st.spinner("🧠 Searching your travel memory..."):
+                        results = st.session_state["travel_agent"].search_memory(
+                            memory_query
+                        )
+                    st.markdown(results)
                 except Exception as e:
-                    st.write(f"Search error: {str(e)}")
+                    st.error(f"Search error: {str(e)}")
+            elif not memory_query:
+                st.warning("Please enter a question about your travel history!")
+
+        # Add example queries for better user experience
+        with st.expander("💡 Example Memory Questions"):
+            st.markdown("""
+            **Try asking questions like:**
+            - "When was my last trip?"
+            - "What are my budget preferences?"
+            - "Where have I traveled recently?"
+            - "What hotels do I prefer?"
+            - "What activities do I enjoy?"
+            - "Any trips to Europe?"
+            - "My dining preferences"
+            - "Transportation preferences"
+            """)
 
         # Memory stats
         st.subheader("📊 Memory Stats")
@@ -193,7 +209,7 @@ def main():
         - Budget ranges
         - Favorite destinations
         - Activity preferences
-        
+
         **The more you use it, the better it gets at planning trips you'll love!**
         """)
 
