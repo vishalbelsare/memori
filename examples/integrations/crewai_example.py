@@ -75,8 +75,8 @@ def search_memory(query: str) -> str:
 assistant_agent = Agent(
     role="AI Assistant with Memory",
     goal="Help users while remembering past conversations and preferences",
-    backstory="""You are a helpful AI assistant with the ability to remember past 
-    conversations and user preferences. Always check your memory first to provide 
+    backstory="""You are a helpful AI assistant with the ability to remember past
+    conversations and user preferences. Always check your memory first to provide
     personalized and contextual responses.""",
     tools=[search_memory],
     verbose=False,
