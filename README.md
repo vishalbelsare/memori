@@ -1,11 +1,11 @@
 # Memori
 
 <p align="center">
-  <strong>The Open-Source Memory Layer for AI Agents & Multi-Agent Systems v1.2</strong>
+  <strong>Open-Source Memory Engine for LLMs, AI Agents & Multi-Agent Systems</strong>
 </p>
 
 <p align="center">
-  <i>Give your AI agents structured, persistent memory with intelligent context injection - no more repeating yourself!</i>
+  <i>Make LLMs context-aware with human-like memory, dual-mode retrieval, and automatic context injection.</i>
 </p>
 
 <p align="center">
