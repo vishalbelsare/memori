@@ -18,6 +18,9 @@
   <a href="https://badge.fury.io/py/memorisdk">
     <img src="https://badge.fury.io/py/memori.svg" alt="PyPI version">
   </a>
+  <a href="https://pepy.tech/projects/memorisdk">
+    <img src="https://static.pepy.tech/badge/memorisdk" alt="Downloads">
+  </a>
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
   </a>
