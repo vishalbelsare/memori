@@ -29,8 +29,7 @@ def init_memori():
         database_connect="sqlite:///research_memori.db",
         conscious_ingest=True,  # Working memory
         auto_ingest=True,  # Dynamic search
-        verbose=True,
-        openai_api_key=os.getenv("OPENAI_API_KEY"),
+        verbose=False,
     )
     memori.enable()
     return memori
@@ -51,7 +50,7 @@ def memory_search(query: str) -> str:
 def save_research_memory(research_topic: str, report_content: str) -> str:
     """Save research information to memory for future reference."""
     try:
-        memori = init_memori()
+        init_memori()
         from litellm import completion
 
         research_conversation = [
