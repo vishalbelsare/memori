@@ -339,6 +339,15 @@ memori/
 - **[Advanced Config](./examples/advanced_config.py)** - Production configuration
 - **[Interactive Demo](./memori_example.py)** - Live conscious ingestion showcase
 
+## 🎮 Interactive Demos
+
+Explore Memori's capabilities through these interactive demonstrations:
+
+| Title | Description | Tools Used | Live Demo |
+|------------|-------------|------------|-----------|
+| 🌟 [Personal Diary Assistant](./demos/personal_diary_assistant/) | A comprehensive diary assistant with mood tracking, pattern analysis, and personalized recommendations. | Streamlit, LiteLLM, OpenAI, SQLite | [Run Demo](https://personal-diary-assistant.streamlit.app/) |
+| 🌍 [Travel Planner Agent](./demos/travel_planner/) | Intelligent travel planning with CrewAI agents, real-time web search, and memory-based personalization. Plans complete itineraries with budget analysis. | CrewAI, Streamlit, OpenAI, SQLite |  |
+
 ## 🤝 Contributing
 
 - See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
