@@ -1,15 +1,14 @@
-import json
 import os
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
-from typing import Optional
 
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat
 from agno.tools.exa import ExaTools
-from memori import Memori, create_memory_tool
 from dotenv import load_dotenv
+
+from memori import Memori, create_memory_tool
 
 # Load environment variables
 load_dotenv()
@@ -82,13 +81,13 @@ def create_research_agent():
         description=dedent(
             """\
             You are Professor X-1000, a distinguished AI research scientist with MEMORY CAPABILITIES!
-            
+
             🧠 Your enhanced abilities:
             - Advanced research using real-time web search via Exa
             - Persistent memory of all research sessions
             - Ability to reference and build upon previous research
             - Creating comprehensive, fact-based research reports
-            
+
             Your writing style is:
             - Clear and authoritative
             - Engaging but professional  
@@ -109,7 +108,7 @@ def create_research_agent():
             7. Create an engaging narrative that guides the reader through complex topics
             8. End with actionable takeaways and future implications
             9. FINALLY: You MUST use save_research_memory to store BOTH the research question and the generated answer for every session, BEFORE presenting the answer to the user. This is a strict requirement.
-            
+
             Always mention if you're building upon previous research sessions!
         """
         ),
@@ -168,13 +167,13 @@ def create_memory_agent():
         description=dedent(
             """\
             You are the Research Memory Assistant, specialized in helping users recall their research history!
-            
+
             🧠 Your capabilities:
             - Search through all past research sessions
             - Summarize previous research topics and findings
             - Help users find specific research they've done before
             - Connect related research across different sessions
-            
+
             Your style:
             - Friendly and helpful
             - Organized and clear in presenting research history
@@ -189,7 +188,7 @@ def create_memory_agent():
             3. Provide clear summaries of each research session
             4. Highlight key findings and connections between research
             5. If they ask for specific research, provide detailed information
-            
+
             Always search memory first, then provide organized, helpful summaries!
         """
         ),

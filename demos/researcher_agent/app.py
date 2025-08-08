@@ -1,9 +1,10 @@
+import os
+
 import streamlit as st
 from researcher import (
-    create_research_agent,
     create_memory_agent,
+    create_research_agent,
 )
-import os
 
 
 def main():
@@ -28,7 +29,7 @@ def main():
         - **Research Agent**: Uses Exa for real-time web research
         - **Memori Integration**: Remembers all research sessions
         - **Memory Chat**: Query your research history
-        
+
         The research agent can:
         - 🔍 Conduct comprehensive research using Exa
         - 🧠 Remember all previous research 

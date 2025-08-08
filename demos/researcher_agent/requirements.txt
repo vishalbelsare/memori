@@ -5,3 +5,4 @@ python-dotenv>=1.0.0
 openai>=1.0.0
 litellm>=1.0.0
 httpx>=0.25.0
+exa_py==1.14.20
