@@ -4,6 +4,7 @@ import streamlit as st
 from researcher import (
     create_memory_agent,
     create_research_agent,
+    init_memori,
 )
 
 
@@ -39,7 +40,7 @@ def main():
         )
 
         st.header("Research History")
-        if st.button("�️ Clear All Memory", type="secondary"):
+        if st.button("🗑️ Clear All Memory", type="secondary"):
             import sqlite3
             db_path = os.path.join(os.path.dirname(__file__), "research_memori.db")
             try:
@@ -56,14 +57,26 @@ def main():
             except Exception as e:
                 st.error(f"Error clearing memory: {e}")
 
+    # Initialize Memori instance
+    if "memori" not in st.session_state:
+        with st.spinner("Initializing Memory System..."):
+            database_path = os.path.join(os.path.dirname(__file__), "research_memori.db")
+            st.session_state.memori = init_memori(database_path)
+
     # Initialize agents
     if "research_agent" not in st.session_state:
         with st.spinner("Initializing Research Agent with Memory..."):
-            st.session_state.research_agent = create_research_agent()
+            st.session_state.research_agent = create_research_agent(
+                memori=st.session_state.memori,
+                database_path=os.path.join(os.path.dirname(__file__), "research_memori.db")
+            )
 
     if "memory_agent" not in st.session_state:
         with st.spinner("Initializing Memory Assistant..."):
-            st.session_state.memory_agent = create_memory_agent()
+            st.session_state.memory_agent = create_memory_agent(
+                memori=st.session_state.memori,
+                database_path=os.path.join(os.path.dirname(__file__), "research_memori.db")
+            )
 
     # Initialize chat histories
     if "research_messages" not in st.session_state:
