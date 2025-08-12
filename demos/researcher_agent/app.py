@@ -1,10 +1,7 @@
 import os
 
 import streamlit as st
-from researcher import (
-    create_memory_agent,
-    create_research_agent,
-)
+from researcher import Researcher
 
 
 def main():
@@ -51,14 +48,18 @@ def main():
                 st.session_state.confirm_clear_research = True
                 st.warning("Click again to confirm")
 
-    # Initialize agents
+    # Initialize researcher
+    if "researcher" not in st.session_state:
+        with st.spinner("Initializing Researcher with Memory..."):
+            st.session_state.researcher = Researcher()
+            st.session_state.researcher.define_agents()
+
+    # Get agents from researcher
     if "research_agent" not in st.session_state:
-        with st.spinner("Initializing Research Agent with Memory..."):
-            st.session_state.research_agent = create_research_agent()
+        st.session_state.research_agent = st.session_state.researcher.get_research_agent()
 
     if "memory_agent" not in st.session_state:
-        with st.spinner("Initializing Memory Assistant..."):
-            st.session_state.memory_agent = create_memory_agent()
+        st.session_state.memory_agent = st.session_state.researcher.get_memory_agent()
 
     # Initialize chat histories
     if "research_messages" not in st.session_state:
@@ -91,12 +92,18 @@ def main():
             with st.chat_message("assistant"):
                 with st.spinner("🔍 Conducting research and searching memory..."):
                     try:
-                        # Get response from research agent
-                        response = st.session_state.research_agent.run(research_prompt)
+                        # Get response from research agent with automatic memory recording
+                        response = st.session_state.researcher.run_agent_with_memory(
+                            st.session_state.research_agent, 
+                            research_prompt
+                        )
 
                         # Display the response
                         st.markdown(response.content)
-
+                        
+                        # Show confirmation that individual conversations were recorded
+                        st.success("✅ All agent conversations recorded to memory!", icon="🧠")
+                        
                         # Add assistant response to chat history
                         st.session_state.research_messages.append(
                             {"role": "assistant", "content": response.content}
@@ -179,12 +186,18 @@ def main():
             with st.chat_message("assistant"):
                 with st.spinner("🧠 Searching through your research history..."):
                     try:
-                        # Get response from memory agent
-                        response = st.session_state.memory_agent.run(memory_prompt)
+                        # Get response from memory agent with automatic memory recording
+                        response = st.session_state.researcher.run_agent_with_memory(
+                            st.session_state.memory_agent, 
+                            memory_prompt
+                        )
 
                         # Display the response
                         st.markdown(response.content)
-
+                        
+                        # Show confirmation that conversations were recorded
+                        st.success("✅ Memory agent conversations recorded!", icon="🧠")
+                        
                         # Add assistant response to chat history
                         st.session_state.memory_messages.append(
                             {"role": "assistant", "content": response.content}
