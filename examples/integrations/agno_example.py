@@ -54,7 +54,7 @@ print("🤖 Creating memory-enhanced Agno agent...")
 
 def create_memory_search_wrapper(memori_tool):
     """Create a memory search tool function that works with Agno agents"""
-    
+
     def search_memory(query: str) -> str:
         """Search the agent's memory for past conversations and information.
 
@@ -109,18 +109,19 @@ def chat_with_memory(user_input: str) -> str:
     try:
         # Run the agent with the user input
         result = assistant_agent.run(user_input)
-        
+
         # Get the content from the result
-        response_content = str(result.content) if hasattr(result, 'content') else str(result)
-        
+        response_content = (
+            str(result.content) if hasattr(result, "content") else str(result)
+        )
+
         # Store the conversation in memory
         memory_system.record_conversation(
-            user_input=user_input, 
-            ai_output=response_content
+            user_input=user_input, ai_output=response_content
         )
-        
+
         return response_content
-        
+
     except Exception as e:
         error_msg = f"Sorry, I encountered an error: {str(e)}"
         return error_msg
