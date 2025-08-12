@@ -25,74 +25,97 @@ class Researcher:
     """A researcher class that manages Memori initialization and agent creation"""
     
     def __init__(self):
-        # Initialize memori directly
         self.memori = Memori(
             database_connect="sqlite:///research_memori.db",
             conscious_ingest=True,  # Working memory
             auto_ingest=True,  # Dynamic search
-            verbose=False,
+            verbose=True,
         )
         self.memori.enable()
         self.memory_tool = create_memory_tool(self.memori)
-        
-        # Create custom memory search function
         self.memory_search_function = self._create_memory_search_function()
         
         self.research_agent = None
         self.memory_agent = None
     
     def _create_memory_search_function(self):
-        """Create memory search function as per Agno documentation"""
-        def memory_search(query: str) -> str:
-            """Search user's memory for research information, past studies, and findings.
-
-            Use this tool to find information about the user's previous research sessions,
-            findings, topics studied, reports generated, and any other research-related 
-            information that has been stored in their memory.
+        """Create memory search function that works with Agno agents"""
+        def search_memory(query: str) -> str:
+            """Search the agent's memory for past conversations and research information.
 
             Args:
-                query: A descriptive search query about what research information you're looking for.
-                      Examples: "past AI research", "findings on quantum computing", "biotech studies",
-                      "machine learning reports", "recent research on climate change"
+                query: What to search for in memory (e.g., "past research on AI", "findings on quantum computing")
             """
             try:
-                if not query or not query.strip():
-                    return "Please provide a specific search query for memory search"
+                if not query.strip():
+                    return "Please provide a search query"
 
-                if self.memory_tool is None:
-                    return "Memory tool not initialized"
+                result = self.memory_tool.execute(query=query.strip())
+                return str(result) if result else "No relevant memories found"
 
-                clean_query = query.strip()
-                result = self.memory_tool.execute(query=clean_query)
-                return str(result) if result else "No relevant research memories found."
             except Exception as e:
                 return f"Memory search error: {str(e)}"
         
-        return memory_search
+        return search_memory
     
-    def save_to_memory(self, user_query: str, agent_response: str) -> bool:
-        """Directly save conversation to Memori memory"""
+    def run_agent_with_memory(self, agent, user_input: str):
+        """Run agent and record each internal conversation step"""
         try:
-            from litellm import completion
+            # Store original model response method
+            original_response = agent.model.response
             
-            # Since Memori is enabled with conscious_ingest=True, any completion() call
-            # will be automatically captured and stored. We just need to simulate a conversation
-            messages = [
-                {"role": "user", "content": user_query},
-                {"role": "assistant", "content": agent_response}
-            ]
+            def memory_recording_response(messages, **kwargs):
+                # Call the original response method
+                result = original_response(messages, **kwargs)
+                
+                # Extract user input and AI output for recording
+                user_msg = ""
+                for msg in reversed(messages):
+                    if isinstance(msg, dict) and msg.get("role") == "user":
+                        user_msg = msg.get("content", "")
+                        break
+                    elif hasattr(msg, "role") and msg.role == "user":
+                        user_msg = msg.content or ""
+                        break
+                
+                ai_output = ""
+                if hasattr(result, "content"):
+                    ai_output = result.content or ""
+                elif hasattr(result, "choices") and result.choices:
+                    choice = result.choices[0]
+                    if hasattr(choice, "message") and hasattr(choice.message, "content"):
+                        ai_output = choice.message.content or ""
+                
+                # Record this conversation step
+                if user_msg or ai_output:
+                    try:
+                        self.memori.record_conversation(
+                            user_input=user_msg,
+                            ai_output=ai_output
+                        )
+                    except Exception as e:
+                        print(f"Memory recording error: {str(e)}")
+                
+                return result
             
-            # This completion call will be automatically monitored by Memori
-            completion(
-                model="gpt-4o-mini",
-                messages=messages,
-                max_tokens=1  # Minimal response since we just want memory storage
-            )
-            return True
+            # Temporarily replace the model's response method
+            agent.model.response = memory_recording_response
+            
+            # Run the agent
+            result = agent.run(user_input)
+            
+            # Restore the original method
+            agent.model.response = original_response
+            
+            return result
             
         except Exception as e:
-            print(f"Memory save error: {str(e)}")
-            return False
+            # Make sure to restore original method even if there's an error
+            if 'original_response' in locals():
+                agent.model.response = original_response
+            print(f"Agent execution error: {str(e)}")
+            raise
+    
     
     def define_agents(self):
         """Define and create research and memory agents"""
@@ -145,7 +168,7 @@ class Researcher:
             instructions=dedent(
                 """\
                 RESEARCH WORKFLOW:
-                1. FIRST: Search your memory for any related previous research on this topic
+                1. FIRST: Use search_memory to find any related previous research on this topic
                 2. Run 3 distinct Exa searches to gather comprehensive current information
                 3. Analyze and cross-reference sources for accuracy and relevance
                 4. If you find relevant previous research, mention how this builds upon it
@@ -226,7 +249,7 @@ class Researcher:
             instructions=dedent(
                 """\
                 When users ask about their research history:
-                1. Use memory_search to find relevant past research
+                1. Use search_memory to find relevant past research
                 2. Organize the results chronologically or by topic
                 3. Provide clear summaries of each research session
                 4. Highlight key findings and connections between research
