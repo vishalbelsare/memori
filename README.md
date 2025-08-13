@@ -86,6 +86,15 @@ response2 = completion(
 print("Assistant:", response2.choices[0].message.content)
 ```
 
+---
+
+**🚀 Ready to explore more?**
+- [📖 Examples](#examples) - Basic usage patterns and code samples
+- [🔌 Framework Integrations](#framework-integrations) - Agno & CrewAI examples  
+- [🎮 Interactive Demos](#interactive-demos) - Live applications & tutorials
+
+---
+
 ## 🧠 How It Works
 
 ### 1. **Universal Recording**
@@ -333,7 +342,7 @@ memori/
 └── tools/          # Memory search tools
 ```
 
-## 🚀 Examples
+## Examples
 
 - **[Basic Usage](./examples/basic_usage.py)** - Simple memory setup with conscious ingestion
 - **[Personal Assistant](./examples/personal_assistant.py)** - AI assistant with intelligent memory
@@ -341,7 +350,16 @@ memori/
 - **[Advanced Config](./examples/advanced_config.py)** - Production configuration
 - **[Interactive Demo](./memori_example.py)** - Live conscious ingestion showcase
 
-## 🎮 Interactive Demos
+## Framework Integrations
+
+Memori works seamlessly with popular AI frameworks:
+
+| Framework | Description | Example | Features |
+|-----------|-------------|---------|----------|
+| 🤖 [Agno](./examples/integrations/agno_example.py) | Memory-enhanced agent framework integration with persistent conversations | Simple chat agent with memory search | Memory tools, conversation persistence, contextual responses |
+| 👥 [CrewAI](./examples/integrations/crewai_example.py) | Multi-agent system with shared memory across agent interactions | Collaborative agents with memory | Agent coordination, shared memory, task-based workflows |
+
+## Interactive Demos
 
 Explore Memori's capabilities through these interactive demonstrations:
 
@@ -349,6 +367,7 @@ Explore Memori's capabilities through these interactive demonstrations:
 |------------|-------------|------------|-----------|
 | 🌟 [Personal Diary Assistant](./demos/personal_diary_assistant/) | A comprehensive diary assistant with mood tracking, pattern analysis, and personalized recommendations. | Streamlit, LiteLLM, OpenAI, SQLite | [Run Demo](https://personal-diary-assistant.streamlit.app/) |
 | 🌍 [Travel Planner Agent](./demos/travel_planner/) | Intelligent travel planning with CrewAI agents, real-time web search, and memory-based personalization. Plans complete itineraries with budget analysis. | CrewAI, Streamlit, OpenAI, SQLite |  |
+| 🧑‍🔬 [Researcher Agent](./demos/researcher_agent/) | Advanced AI research assistant with persistent memory, real-time web search, and comprehensive report generation. Builds upon previous research sessions. | Agno, Streamlit, OpenAI, ExaAI, SQLite | [Run Demo](https://researcher-agent-memori.streamlit.app/) |
 
 ## 🤝 Contributing
 
