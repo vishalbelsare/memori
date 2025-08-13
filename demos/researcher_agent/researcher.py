@@ -142,7 +142,7 @@ class Researcher:
     def _create_research_agent(self):
         """Create a research agent with Memori memory capabilities and Exa search"""
         agent = Agent(
-            model=OpenAIChat(id="gpt-4o"),
+            model=OpenAIChat(id="gpt-5-mini-2025-08-07"),
             tools=[
                 ExaTools(start_published_date=today, type="keyword"),
                 self.memory_search_function,
@@ -228,7 +228,7 @@ class Researcher:
     def _create_memory_agent(self):
         """Create an agent specialized in retrieving research memories"""
         agent = Agent(
-            model=OpenAIChat(id="gpt-4o-mini"),
+            model=OpenAIChat(id="gpt-5-mini-2025-08-07"),
             tools=[self.memory_search_function],
             description=dedent(
                 """\
