@@ -90,7 +90,7 @@ print("Assistant:", response2.choices[0].message.content)
 
 **🚀 Ready to explore more?**
 - [📖 Examples](#examples) - Basic usage patterns and code samples
-- [🔌 Framework Integrations](#framework-integrations) - Agno & CrewAI examples  
+- [🔌 Framework Integrations](#framework-integrations) - LangChain, Agno & CrewAI examples  
 - [🎮 Interactive Demos](#interactive-demos) - Live applications & tutorials
 
 ---
@@ -358,6 +358,7 @@ Memori works seamlessly with popular AI frameworks:
 |-----------|-------------|---------|----------|
 | 🤖 [Agno](./examples/integrations/agno_example.py) | Memory-enhanced agent framework integration with persistent conversations | Simple chat agent with memory search | Memory tools, conversation persistence, contextual responses |
 | 👥 [CrewAI](./examples/integrations/crewai_example.py) | Multi-agent system with shared memory across agent interactions | Collaborative agents with memory | Agent coordination, shared memory, task-based workflows |
+| 🔗 [LangChain](./examples/integrations/langchain_example.py) | Enterprise-grade agent framework with advanced memory integration | AI assistant with LangChain tools and memory | Custom tools, agent executors, memory persistence, error handling |
 
 ## Interactive Demos
 
