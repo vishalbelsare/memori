@@ -358,6 +358,7 @@ Memori works seamlessly with popular AI frameworks:
 |-----------|-------------|---------|----------|
 | 🤖 [Agno](./examples/integrations/agno_example.py) | Memory-enhanced agent framework integration with persistent conversations | Simple chat agent with memory search | Memory tools, conversation persistence, contextual responses |
 | 👥 [CrewAI](./examples/integrations/crewai_example.py) | Multi-agent system with shared memory across agent interactions | Collaborative agents with memory | Agent coordination, shared memory, task-based workflows |
+| 🌊 [Digital Ocean AI](./digital_ocean_example.py) | Memory-enhanced customer support using Digital Ocean's AI platform | Customer support assistant with conversation history | Context injection, session continuity, support analytics |
 
 ## Interactive Demos
 
