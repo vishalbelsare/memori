@@ -12,11 +12,11 @@ from typing import Any, Dict, List, Optional
 from loguru import logger
 
 from ..utils.exceptions import DatabaseError
-from ..utils.pydantic_models import MemoryCategoryType, ProcessedMemory, RetentionType
+from ..utils.pydantic_models import ProcessedLongTermMemory, ProcessedMemory, MemoryCategoryType, RetentionType
 
 
 class DatabaseManager:
-    """Manages Pydantic-based memory storage with entity indexing and FTS search"""
+    """Manages Pydantic-based memory storage with streamlined schema and FTS search"""
 
     def __init__(self, database_connect: str, template: str = "basic"):
         self.database_connect = database_connect
@@ -209,21 +209,6 @@ class DatabaseManager:
             """
             )
 
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS memory_entities (
-                    entity_id TEXT PRIMARY KEY,
-                    memory_id TEXT NOT NULL,
-                    memory_type TEXT NOT NULL,
-                    entity_type TEXT NOT NULL,
-                    entity_value TEXT NOT NULL,
-                    relevance_score REAL NOT NULL DEFAULT 0.5,
-                    entity_context TEXT,
-                    namespace TEXT NOT NULL DEFAULT 'default',
-                    created_at TIMESTAMP NOT NULL
-                )
-            """
-            )
 
             conn.commit()
             logger.info("Basic database schema created")
@@ -312,46 +297,75 @@ class DatabaseManager:
 
             return result
 
-    def store_processed_memory(
-        self, memory: ProcessedMemory, chat_id: str, namespace: str = "default"
+
+    def store_long_term_memory_enhanced(
+        self, memory: ProcessedLongTermMemory, chat_id: str, namespace: str = "default"
     ) -> str:
-        """Store a processed memory with entity indexing"""
-
-        if not memory.should_store:
-            logger.debug(f"Memory not stored: {memory.storage_reasoning}")
-            return ""
-
+        """Store a ProcessedLongTermMemory with enhanced schema"""
         memory_id = str(uuid.uuid4())
-        storage_location = self._determine_storage_location(memory)
-
+        
         with self._get_connection() as conn:
-            cursor = conn.cursor()
-
             try:
-                if storage_location == "short_term_memory":
-                    self._store_short_term_memory(
-                        cursor, memory_id, memory, chat_id, namespace
+                # Create correct SQL query that matches the actual schema
+                conn.execute(
+                    """
+                    INSERT INTO long_term_memory (
+                        memory_id, original_chat_id, processed_data, importance_score, category_primary,
+                        retention_type, namespace, created_at, searchable_content, summary,
+                        novelty_score, relevance_score, actionability_score, classification, memory_importance,
+                        topic, entities_json, keywords_json, is_user_context, is_preference, is_skill_knowledge,
+                        is_current_project, promotion_eligible, duplicate_of, supersedes_json, related_memories_json,
+                        confidence_score, extraction_timestamp, classification_reason, processed_for_duplicates, conscious_processed
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        memory_id,
+                        chat_id,
+                        json.dumps(memory.model_dump(mode='json')),  # JSON-serializable format
+                        memory.importance_score,  # Use property method
+                        memory.classification.value,
+                        'long_term',
+                        namespace,
+                        datetime.now().isoformat(),
+                        memory.content,  # searchable_content
+                        memory.summary,
+                        0.5, 0.5, 0.5,  # novelty, relevance, actionability scores
+                        memory.classification.value,
+                        memory.importance.value,  # Use .value for enum string
+                        memory.topic,
+                        json.dumps(memory.entities),
+                        json.dumps(memory.keywords),
+                        1 if memory.is_user_context else 0,
+                        1 if memory.is_preference else 0,
+                        1 if memory.is_skill_knowledge else 0,
+                        1 if memory.is_current_project else 0,
+                        1 if memory.promotion_eligible else 0,
+                        memory.duplicate_of,
+                        json.dumps(memory.supersedes),
+                        json.dumps(memory.related_memories),
+                        memory.confidence_score,
+                        memory.extraction_timestamp.isoformat(),
+                        memory.classification_reason,
+                        0,  # processed_for_duplicates
+                        0   # conscious_processed
                     )
-                elif storage_location == "long_term_memory":
-                    self._store_long_term_memory(
-                        cursor, memory_id, memory, chat_id, namespace
-                    )
-                elif storage_location == "rules_memory":
-                    self._store_rules_memory(cursor, memory_id, memory, namespace)
-
-                # Store entities for indexing
-                self._store_entities(
-                    cursor, memory_id, memory, storage_location, namespace
                 )
-
                 conn.commit()
-                logger.debug(f"Stored memory {memory_id} in {storage_location}")
+                logger.debug(f"Stored enhanced long-term memory {memory_id}")
                 return memory_id
-
+                
+            except sqlite3.IntegrityError as e:
+                conn.rollback()
+                logger.error(f"Database constraint violation: {e}")
+                raise DatabaseError(f"Memory storage constraint violation: {e}")
+            except sqlite3.OperationalError as e:
+                conn.rollback() 
+                logger.error(f"Database operational error: {e}")
+                raise DatabaseError(f"Memory storage operational error: {e}")
             except Exception as e:
                 conn.rollback()
-                logger.error(f"Failed to store memory: {e}")
-                raise DatabaseError(f"Failed to store memory: {e}")
+                logger.error(f"Failed to store enhanced long-term memory: {e}")
+                raise DatabaseError(f"Failed to store enhanced long-term memory: {e}")
 
     def _store_short_term_memory(
         self,
@@ -439,107 +453,7 @@ class DatabaseManager:
             ),
         )
 
-    def _store_rules_memory(
-        self,
-        cursor: sqlite3.Cursor,
-        memory_id: str,
-        memory: ProcessedMemory,
-        namespace: str,
-    ):
-        """Store rule-type memory in rules table"""
-        # Ensure we have a valid timestamp (timezone-naive for SQLite compatibility)
-        created_at = memory.timestamp
-        if created_at is None:
-            created_at = datetime.now()
-        elif hasattr(created_at, "replace"):
-            # Make timezone-naive if timezone-aware
-            created_at = created_at.replace(tzinfo=None)
 
-        cursor.execute(
-            """
-            INSERT INTO rules_memory
-            (rule_id, rule_text, rule_type, priority, active, namespace,
-             created_at, updated_at, processed_data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-            (
-                memory_id,
-                memory.summary,
-                "rule",
-                5,
-                True,
-                namespace,
-                created_at,
-                created_at,
-                memory.model_dump_json(),
-            ),
-        )
-
-    def _store_entities(
-        self,
-        cursor: sqlite3.Cursor,
-        memory_id: str,
-        memory: ProcessedMemory,
-        memory_type: str,
-        namespace: str,
-    ):
-        """Store extracted entities for indexing"""
-
-        # Simple entities (lists), In future we can make it to dynamically handle more entity types
-
-        entity_mappings = [
-            (memory.entities.people, "person"),
-            (memory.entities.technologies, "technology"),
-            (memory.entities.topics, "topic"),
-            (memory.entities.skills, "skill"),
-            (memory.entities.projects, "project"),
-            (memory.entities.keywords, "keyword"),
-        ]
-
-        for entity_list, entity_type in entity_mappings:
-            for entity_value in entity_list:
-                entity_id = str(uuid.uuid4())
-                cursor.execute(
-                    """
-                    INSERT INTO memory_entities
-                    (entity_id, memory_id, memory_type, entity_type, entity_value,
-                     relevance_score, namespace, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                    (
-                        entity_id,
-                        memory_id,
-                        memory_type.replace("_memory", ""),
-                        entity_type,
-                        entity_value,
-                        0.8,
-                        namespace,
-                        datetime.now(),
-                    ),
-                )
-
-        # Structured entities (with metadata)
-        for structured_entity in memory.entities.structured_entities:
-            entity_id = str(uuid.uuid4())
-            cursor.execute(
-                """
-                INSERT INTO memory_entities
-                (entity_id, memory_id, memory_type, entity_type, entity_value,
-                 relevance_score, entity_context, namespace, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-                (
-                    entity_id,
-                    memory_id,
-                    memory_type.replace("_memory", ""),
-                    structured_entity.entity_type.value,
-                    structured_entity.value,
-                    structured_entity.relevance_score,
-                    structured_entity.context,
-                    namespace,
-                    datetime.now(),
-                ),
-            )
 
     def search_memories(
         self,
@@ -564,14 +478,7 @@ class DatabaseManager:
                     result["search_score"] = 1.0
                     all_results.append(result)
 
-            # 2. Entity-based search for better context matching
-            entity_results = self._execute_entity_search(
-                cursor, query, namespace, category_filter, limit
-            )
-            for result in entity_results:
-                result["search_strategy"] = "entity_search"
-                result["search_score"] = 0.8
-                all_results.append(result)
+            # Note: Entity-based search removed in streamlined schema
 
             # 3. Category-based search if specified
             if category_filter:
@@ -627,28 +534,30 @@ class DatabaseManager:
     ):
         """Execute FTS5 search"""
         try:
-            # Build FTS query with category filter
-            fts_query = f'"{query}"' if query else "*"
+            # Build FTS query with category filter - handle empty queries
+            if query and query.strip():
+                fts_query = f'"{query.strip()}"'
+            else:
+                # Use a simple match-all query for empty searches
+                fts_query = "*"
             category_clause = ""
             params = [fts_query, namespace]
 
             if category_filter:
                 category_placeholders = ",".join("?" * len(category_filter))
                 category_clause = (
-                    f"AND fts.category_primary IN ({category_placeholders})"
+                    "AND fts.category_primary IN (" + category_placeholders + ")"
                 )
                 params.extend(category_filter)
 
             params.append(limit)
 
-            cursor.execute(
-                f"""
+            base_query = """
                 SELECT
                     fts.memory_id, fts.memory_type, fts.category_primary,
                     CASE
                         WHEN fts.memory_type = 'short_term' THEN st.processed_data
                         WHEN fts.memory_type = 'long_term' THEN lt.processed_data
-                        WHEN fts.memory_type = 'rules' THEN r.processed_data
                     END as processed_data,
                     CASE
                         WHEN fts.memory_type = 'short_term' THEN st.importance_score
@@ -658,20 +567,24 @@ class DatabaseManager:
                     CASE
                         WHEN fts.memory_type = 'short_term' THEN st.created_at
                         WHEN fts.memory_type = 'long_term' THEN lt.created_at
-                        WHEN fts.memory_type = 'rules' THEN r.created_at
                     END as created_at,
                     fts.summary,
                     rank
                 FROM memory_search_fts fts
                 LEFT JOIN short_term_memory st ON fts.memory_id = st.memory_id AND fts.memory_type = 'short_term'
                 LEFT JOIN long_term_memory lt ON fts.memory_id = lt.memory_id AND fts.memory_type = 'long_term'
-                LEFT JOIN rules_memory r ON fts.memory_id = r.rule_id AND fts.memory_type = 'rules'
-                WHERE memory_search_fts MATCH ? AND fts.namespace = ? {category_clause}
+                WHERE memory_search_fts MATCH ? AND fts.namespace = ?"""
+            
+            if category_clause:
+                sql_query = base_query + " " + category_clause + """
                 ORDER BY rank, importance_score DESC
-                LIMIT ?
-                """,
-                params,
-            )
+                LIMIT ?"""
+            else:
+                sql_query = base_query + """
+                ORDER BY rank, importance_score DESC
+                LIMIT ?"""
+            
+            cursor.execute(sql_query, params)
 
             return [dict(row) for row in cursor.fetchall()]
 
@@ -679,40 +592,6 @@ class DatabaseManager:
             logger.debug(f"FTS not available: {e}")
             return []
 
-    def _execute_entity_search(
-        self,
-        cursor,
-        query: str,
-        namespace: str,
-        category_filter: Optional[List[str]],
-        limit: int,
-    ):
-        """Execute entity-based search"""
-        category_clause = ""
-        params = [f"%{query}%", namespace]
-
-        if category_filter:
-            category_placeholders = ",".join("?" * len(category_filter))
-            category_clause = f"AND m.category_primary IN ({category_placeholders})"
-            params.extend(category_filter)
-
-        params.append(limit)
-
-        cursor.execute(
-            f"""
-            SELECT DISTINCT m.memory_id, m.processed_data, m.importance_score, m.created_at,
-                   m.summary, m.category_primary, 'long_term' as memory_type,
-                   e.entity_type, e.entity_value, e.relevance_score
-            FROM long_term_memory m
-            JOIN memory_entities e ON m.memory_id = e.memory_id
-            WHERE e.entity_value LIKE ? AND m.namespace = ? {category_clause}
-            ORDER BY e.relevance_score DESC, m.importance_score DESC
-            LIMIT ?
-            """,
-            params,
-        )
-
-        return [dict(row) for row in cursor.fetchall()]
 
     def _execute_category_search(
         self, cursor, query: str, namespace: str, category_filter: List[str], limit: int
@@ -721,18 +600,16 @@ class DatabaseManager:
         category_placeholders = ",".join("?" * len(category_filter))
         params = [namespace] + category_filter + [f"%{query}%", f"%{query}%", limit]
 
-        cursor.execute(
-            f"""
+        sql_query = """
             SELECT memory_id, processed_data, importance_score, created_at, summary,
                    category_primary, 'long_term' as memory_type
             FROM long_term_memory
-            WHERE namespace = ? AND category_primary IN ({category_placeholders})
+            WHERE namespace = ? AND category_primary IN (""" + category_placeholders + """)
               AND (searchable_content LIKE ? OR summary LIKE ?)
             ORDER BY importance_score DESC, created_at DESC
             LIMIT ?
-            """,
-            params,
-        )
+            """
+        cursor.execute(sql_query, params)
 
         return [dict(row) for row in cursor.fetchall()]
 
@@ -753,21 +630,19 @@ class DatabaseManager:
 
         if category_filter:
             category_placeholders = ",".join("?" * len(category_filter))
-            category_clause = f"AND category_primary IN ({category_placeholders})"
+            category_clause = "AND category_primary IN (" + category_placeholders + ")"
             params.extend(category_filter)
 
         params.append(limit)
 
-        cursor.execute(
-            f"""
+        sql_query = """
             SELECT *, 'short_term' as memory_type FROM short_term_memory
             WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?)
-            AND (expires_at IS NULL OR expires_at > ?) {category_clause}
+            AND (expires_at IS NULL OR expires_at > ?) """ + category_clause + """
             ORDER BY importance_score DESC, created_at DESC
             LIMIT ?
-            """,
-            params,
-        )
+            """
+        cursor.execute(sql_query, params)
         results.extend([dict(row) for row in cursor.fetchall()])
 
         # Search long-term memory
@@ -776,15 +651,13 @@ class DatabaseManager:
             params.extend(category_filter)
         params.append(limit)
 
-        cursor.execute(
-            f"""
+        sql_query = """
             SELECT *, 'long_term' as memory_type FROM long_term_memory
-            WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?) {category_clause}
+            WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?) """ + category_clause + """
             ORDER BY importance_score DESC, created_at DESC
             LIMIT ?
-            """,
-            params,
-        )
+            """
+        cursor.execute(sql_query, params)
         results.extend([dict(row) for row in cursor.fetchall()])
 
         return results
@@ -801,47 +674,11 @@ class DatabaseManager:
         except:
             return 0.0
 
-    def _search_by_entities(
-        self, cursor: sqlite3.Cursor, query: str, namespace: str, limit: int
-    ) -> List[Dict[str, Any]]:
-        """Search memories by entity matching"""
-        cursor.execute(
-            """
-            SELECT
-                e.memory_id, e.memory_type, e.relevance_score,
-                CASE
-                    WHEN e.memory_type = 'short_term' THEN st.processed_data
-                    WHEN e.memory_type = 'long_term' THEN lt.processed_data
-                END as processed_data,
-                CASE
-                    WHEN e.memory_type = 'short_term' THEN st.importance_score
-                    WHEN e.memory_type = 'long_term' THEN lt.importance_score
-                END as importance_score,
-                CASE
-                    WHEN e.memory_type = 'short_term' THEN st.category_primary
-                    WHEN e.memory_type = 'long_term' THEN lt.category_primary
-                END as category_primary,
-                CASE
-                    WHEN e.memory_type = 'short_term' THEN st.created_at
-                    WHEN e.memory_type = 'long_term' THEN lt.created_at
-                END as created_at
-            FROM memory_entities e
-            LEFT JOIN short_term_memory st ON e.memory_id = st.memory_id AND e.memory_type = 'short_term'
-            LEFT JOIN long_term_memory lt ON e.memory_id = lt.memory_id AND e.memory_type = 'long_term'
-            WHERE e.namespace = ? AND e.entity_value LIKE ?
-            ORDER BY e.relevance_score DESC, importance_score DESC
-            LIMIT ?
-        """,
-            (namespace, f"%{query}%", limit),
-        )
-
-        return [dict(row) for row in cursor.fetchall()]
 
     def _determine_storage_location(self, memory: ProcessedMemory) -> str:
         """Determine where to store the memory based on its properties"""
-        if memory.category.primary_category == MemoryCategoryType.rule:
-            return "rules_memory"
-        elif memory.importance.retention_type in [
+        # Note: rules_memory removed in streamlined schema - rules stored as long_term
+        if memory.importance.retention_type in [
             RetentionType.long_term,
             RetentionType.permanent,
         ]:
@@ -874,15 +711,9 @@ class DatabaseManager:
             )
             stats["long_term_count"] = cursor.fetchone()[0]
 
-            cursor.execute(
-                "SELECT COUNT(*) FROM rules_memory WHERE namespace = ?", (namespace,)
-            )
-            stats["rules_count"] = cursor.fetchone()[0]
-
-            cursor.execute(
-                "SELECT COUNT(*) FROM memory_entities WHERE namespace = ?", (namespace,)
-            )
-            stats["total_entities"] = cursor.fetchone()[0]
+            # Note: rules_memory and memory_entities tables removed in v2.0 streamlined schema
+            stats["rules_count"] = 0
+            stats["total_entities"] = 0
 
             # Category breakdown
             cursor.execute(
@@ -928,17 +759,9 @@ class DatabaseManager:
 
             if memory_type == "short_term":
                 cursor.execute(
-                    "DELETE FROM memory_entities WHERE namespace = ? AND memory_type = 'short_term'",
-                    (namespace,),
-                )
-                cursor.execute(
                     "DELETE FROM short_term_memory WHERE namespace = ?", (namespace,)
                 )
             elif memory_type == "long_term":
-                cursor.execute(
-                    "DELETE FROM memory_entities WHERE namespace = ? AND memory_type = 'long_term'",
-                    (namespace,),
-                )
                 cursor.execute(
                     "DELETE FROM long_term_memory WHERE namespace = ?", (namespace,)
                 )
@@ -948,16 +771,10 @@ class DatabaseManager:
                 )
             else:  # Clear all
                 cursor.execute(
-                    "DELETE FROM memory_entities WHERE namespace = ?", (namespace,)
-                )
-                cursor.execute(
                     "DELETE FROM short_term_memory WHERE namespace = ?", (namespace,)
                 )
                 cursor.execute(
                     "DELETE FROM long_term_memory WHERE namespace = ?", (namespace,)
-                )
-                cursor.execute(
-                    "DELETE FROM rules_memory WHERE namespace = ?", (namespace,)
                 )
                 cursor.execute(
                     "DELETE FROM chat_history WHERE namespace = ?", (namespace,)

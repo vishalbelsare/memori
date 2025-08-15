@@ -97,9 +97,7 @@ class Memori:
                 self.search_engine = MemorySearchEngine(
                     api_key=openai_api_key, model="gpt-4o"
                 )
-                self.conscious_agent = ConsciouscAgent(
-                    api_key=openai_api_key, model="gpt-4o"
-                )
+                self.conscious_agent = ConsciouscAgent()
                 logger.info(
                     "Pydantic-based memory, search, and conscious agents initialized"
                 )
@@ -170,10 +168,16 @@ class Memori:
 
             # Run conscious agent analysis in background
             if self._background_task is None or self._background_task.done():
-                self._background_task = asyncio.create_task(
-                    self._run_conscious_initialization()
-                )
-                logger.debug("Conscious-ingest: Background initialization task started")
+                try:
+                    loop = asyncio.get_running_loop()
+                    self._background_task = loop.create_task(
+                        self._run_conscious_initialization()
+                    )
+                    logger.debug("Conscious-ingest: Background initialization task started")
+                except RuntimeError:
+                    # No event loop running, run synchronously
+                    logger.debug("No event loop running, conscious initialization will run synchronously")
+                    asyncio.run(self._run_conscious_initialization())
 
         except Exception as e:
             logger.error(f"Failed to initialize conscious memory: {e}")
@@ -184,11 +188,16 @@ class Memori:
             if not self.conscious_agent:
                 return
 
-            logger.debug("Conscious-ingest: Running background analysis")
-            await self.conscious_agent.run_background_analysis(
+            logger.debug("Conscious-ingest: Running conscious context extraction")
+            user_profile = await self.conscious_agent.run_conscious_ingest(
                 self.db_manager, self.namespace
             )
-            logger.info("Conscious-ingest: Background analysis completed")
+            
+            if user_profile:
+                logger.info(f"Conscious-ingest: User context extracted for {user_profile.name or 'user'}")
+                self._conscious_context_injected = True
+            else:
+                logger.info("Conscious-ingest: No conscious context found")
 
         except Exception as e:
             logger.error(f"Conscious agent initialization failed: {e}")
@@ -923,9 +932,22 @@ class Memori:
                 metadata=metadata or {},
             )
 
-            # Process for memory categorization
+            # Process for memory categorization (async)
             if self.conscious_ingest:
-                self._process_memory_ingestion(chat_id, user_input, ai_output, model)
+                try:
+                    loop = asyncio.get_running_loop()
+                    task = loop.create_task(
+                        self._process_memory_async(chat_id, user_input, ai_output, model)
+                    )
+                    # Store task reference to prevent garbage collection
+                    if not hasattr(self, '_memory_tasks'):
+                        self._memory_tasks = set()
+                    self._memory_tasks.add(task)
+                    task.add_done_callback(self._memory_tasks.discard)
+                except RuntimeError:
+                    # No event loop running, process memory synchronously
+                    logger.debug("No event loop running, processing memory synchronously")
+                    self._process_memory_sync(chat_id, user_input, ai_output, model)
 
             logger.debug(f"Conversation recorded: {chat_id}")
             return chat_id
@@ -933,10 +955,42 @@ class Memori:
         except Exception as e:
             raise MemoriError(f"Failed to record conversation: {e}")
 
-    def _process_memory_ingestion(
+    def _process_memory_sync(
         self, chat_id: str, user_input: str, ai_output: str, model: str = "unknown"
     ):
-        """Process conversation for Pydantic-based memory categorization"""
+        """Synchronous memory processing fallback"""
+        if not self.memory_agent:
+            logger.warning("Memory agent not available, skipping memory ingestion")
+            return
+
+        try:
+            # Run async processing in new event loop
+            import threading
+            
+            def run_memory_processing():
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                try:
+                    new_loop.run_until_complete(
+                        self._process_memory_async(chat_id, user_input, ai_output, model)
+                    )
+                except Exception as e:
+                    logger.error(f"Synchronous memory processing failed: {e}")
+                finally:
+                    new_loop.close()
+            
+            # Run in background thread to avoid blocking
+            thread = threading.Thread(target=run_memory_processing, daemon=True)
+            thread.start()
+            logger.debug(f"Memory processing started in background thread for {chat_id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to start synchronous memory processing: {e}")
+
+    async def _process_memory_async(
+        self, chat_id: str, user_input: str, ai_output: str, model: str = "unknown"
+    ):
+        """Process conversation with enhanced async memory categorization"""
         if not self.memory_agent:
             logger.warning("Memory agent not available, skipping memory ingestion")
             return
@@ -953,37 +1007,85 @@ class Memori:
                 relevant_skills=self._user_context.get("relevant_skills", []),
             )
 
-            # Process conversation using Pydantic-based memory agent
-            processed_memory = self.memory_agent.process_conversation_sync(
+            # Get recent memories for deduplication
+            existing_memories = await self._get_recent_memories_for_dedup()
+
+            # Process conversation using async Pydantic-based memory agent
+            processed_memory = await self.memory_agent.process_conversation_async(
                 chat_id=chat_id,
                 user_input=user_input,
                 ai_output=ai_output,
                 context=context,
-                mem_prompt=self.mem_prompt,
-                filters=self.memory_filters,
+                existing_memories=[mem.summary for mem in existing_memories[:10]]
             )
 
-            # Store processed memory with entity indexing
-            if processed_memory.should_store:
-                memory_id = self.db_manager.store_processed_memory(
-                    memory=processed_memory, chat_id=chat_id, namespace=self.namespace
-                )
+            # Check for duplicates
+            duplicate_id = await self.memory_agent.detect_duplicates(
+                processed_memory, existing_memories
+            )
 
-                if memory_id:
-                    logger.debug(
-                        f"Stored processed memory {memory_id} for chat {chat_id}"
-                    )
-                else:
-                    logger.debug(
-                        f"Memory not stored for chat {chat_id}: {processed_memory.storage_reasoning}"
+            if duplicate_id:
+                processed_memory.duplicate_of = duplicate_id
+                logger.info(f"Memory marked as duplicate of {duplicate_id}")
+
+            # Apply filters
+            if self.memory_agent.should_filter_memory(processed_memory, self.memory_filters):
+                logger.debug(f"Memory filtered out for chat {chat_id}")
+                return
+
+            # Store processed memory with new schema
+            memory_id = self.db_manager.store_long_term_memory_enhanced(
+                processed_memory, chat_id, self.namespace
+            )
+
+            if memory_id:
+                logger.debug(f"Stored processed memory {memory_id} for chat {chat_id}")
+                
+                # Check for conscious context updates if promotion eligible
+                if processed_memory.promotion_eligible and self.conscious_agent:
+                    await self.conscious_agent.check_for_context_updates(
+                        self.db_manager, self.namespace
                     )
             else:
-                logger.debug(
-                    f"Memory not stored for chat {chat_id}: {processed_memory.storage_reasoning}"
-                )
+                logger.warning(f"Failed to store memory for chat {chat_id}")
 
         except Exception as e:
             logger.error(f"Memory ingestion failed for {chat_id}: {e}")
+
+    async def _get_recent_memories_for_dedup(self) -> List:
+        """Get recent memories for deduplication check"""
+        try:
+            from ..database.queries.memory_queries import MemoryQueries
+            from ..utils.pydantic_models import ProcessedLongTermMemory
+            
+            with self.db_manager._get_connection() as connection:
+                cursor = connection.execute(
+                    MemoryQueries.SELECT_MEMORIES_FOR_DEDUPLICATION,
+                    (self.namespace, 20)  # Get last 20 memories
+                )
+                
+                memories = []
+                for row in cursor.fetchall():
+                    try:
+                        # Create simplified memory objects for comparison
+                        memory = type('SimpleMemory', (), {
+                            'conversation_id': row[0],
+                            'summary': row[1],
+                            'content': row[2],
+                            'classification': row[3]
+                        })()
+                        memories.append(memory)
+                    except Exception as e:
+                        logger.warning(f"Failed to parse memory for dedup: {e}")
+                        continue
+                        
+                return memories
+                
+        except Exception as e:
+            logger.error(f"Failed to get recent memories for dedup: {e}")
+            return []
+
+
 
     def retrieve_context(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
         """
@@ -1234,11 +1336,23 @@ class Memori:
 
             # If we have a running loop, schedule the task
             self._background_task = loop.create_task(self._background_analysis_loop())
+            # Add proper error handling callback
+            self._background_task.add_done_callback(self._handle_background_task_completion)
             logger.info("Background analysis task started")
 
         except Exception as e:
             logger.error(f"Failed to start background analysis: {e}")
 
+    def _handle_background_task_completion(self, task):
+        """Handle background task completion and cleanup"""
+        try:
+            if task.exception():
+                logger.error(f"Background task failed: {task.exception()}")
+        except asyncio.CancelledError:
+            logger.debug("Background task was cancelled")
+        except Exception as e:
+            logger.error(f"Error handling background task completion: {e}")
+    
     def _stop_background_analysis(self):
         """Stop the background analysis task"""
         try:
@@ -1247,33 +1361,68 @@ class Memori:
                 logger.info("Background analysis task stopped")
         except Exception as e:
             logger.error(f"Failed to stop background analysis: {e}")
+    
+    def cleanup(self):
+        """Clean up all async tasks and resources"""
+        try:
+            # Cancel background tasks
+            self._stop_background_analysis()
+            
+            # Clean up memory processing tasks
+            if hasattr(self, '_memory_tasks'):
+                for task in self._memory_tasks.copy():
+                    if not task.done():
+                        task.cancel()
+                self._memory_tasks.clear()
+            
+            logger.debug("Memori cleanup completed")
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
+    
+    def __del__(self):
+        """Destructor to ensure cleanup"""
+        try:
+            self.cleanup()
+        except:
+            pass  # Ignore errors during destruction
+
 
     async def _background_analysis_loop(self):
-        """Main background analysis loop"""
-        logger.info("ConsciouscAgent: Background analysis loop started")
-
-        while self._enabled and self.conscious_ingest:
-            try:
-                if self.conscious_agent and self.conscious_agent.should_run_analysis():
-                    await self.conscious_agent.run_background_analysis(
-                        self.db_manager, self.namespace
-                    )
-
-                # Wait 30 minutes before next check
-                await asyncio.sleep(1800)  # 30 minutes
-
-            except asyncio.CancelledError:
-                logger.info("ConsciouscAgent: Background analysis cancelled")
-                break
-            except Exception as e:
-                logger.error(f"ConsciouscAgent: Background analysis error: {e}")
-                # Wait 5 minutes before retrying on error
-                await asyncio.sleep(300)
-
-        logger.info("ConsciouscAgent: Background analysis loop ended")
+        """Background analysis loop for memory processing"""
+        try:
+            logger.debug("Background analysis loop started")
+            
+            # For now, just run periodic conscious ingestion if enabled
+            if self.conscious_ingest and self.conscious_agent:
+                while True:
+                    try:
+                        await asyncio.sleep(300)  # Check every 5 minutes
+                        
+                        # Run conscious ingestion to check for new promotable memories
+                        await self.conscious_agent.run_conscious_ingest(
+                            self.db_manager, self.namespace
+                        )
+                        
+                        logger.debug("Periodic conscious analysis completed")
+                        
+                    except asyncio.CancelledError:
+                        logger.debug("Background analysis loop cancelled")
+                        break
+                    except Exception as e:
+                        logger.error(f"Background analysis error: {e}")
+                        await asyncio.sleep(60)  # Wait 1 minute before retry
+            else:
+                # If not using conscious ingest, just sleep
+                while True:
+                    await asyncio.sleep(3600)  # Sleep for 1 hour
+                    
+        except asyncio.CancelledError:
+            logger.debug("Background analysis loop cancelled")
+        except Exception as e:
+            logger.error(f"Background analysis loop failed: {e}")
 
     def trigger_conscious_analysis(self):
-        """Manually trigger conscious agent analysis (for testing/immediate analysis)"""
+        """Manually trigger conscious context ingestion (for testing/immediate analysis)"""
         if not self.conscious_ingest or not self.conscious_agent:
             logger.warning("Conscious ingestion not enabled or agent not available")
             return
@@ -1283,11 +1432,11 @@ class Memori:
             try:
                 loop = asyncio.get_running_loop()
                 task = loop.create_task(
-                    self.conscious_agent.run_background_analysis(
+                    self.conscious_agent.run_conscious_ingest(
                         self.db_manager, self.namespace
                     )
                 )
-                logger.info("Conscious analysis triggered")
+                logger.info("Conscious context ingestion triggered")
                 return task
             except RuntimeError:
                 # No event loop, run synchronously in thread
@@ -1298,7 +1447,7 @@ class Memori:
                     asyncio.set_event_loop(new_loop)
                     try:
                         new_loop.run_until_complete(
-                            self.conscious_agent.run_background_analysis(
+                            self.conscious_agent.run_conscious_ingest(
                                 self.db_manager, self.namespace
                             )
                         )
@@ -1307,10 +1456,10 @@ class Memori:
 
                 thread = threading.Thread(target=run_analysis)
                 thread.start()
-                logger.info("Conscious analysis triggered in separate thread")
+                logger.info("Conscious context ingestion triggered in separate thread")
 
         except Exception as e:
-            logger.error(f"Failed to trigger conscious analysis: {e}")
+            logger.error(f"Failed to trigger conscious context ingestion: {e}")
 
     def get_essential_conversations(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get essential conversations from short-term memory"""

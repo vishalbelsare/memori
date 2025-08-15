@@ -48,8 +48,13 @@ class MemoryQueries(BaseQueries):
         INSERT INTO long_term_memory (
             memory_id, original_chat_id, processed_data, importance_score, category_primary,
             retention_type, namespace, created_at, searchable_content, summary,
-            novelty_score, relevance_score, actionability_score
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            novelty_score, relevance_score, actionability_score,
+            classification, memory_importance, topic, entities_json, keywords_json,
+            is_user_context, is_preference, is_skill_knowledge, is_current_project, promotion_eligible,
+            duplicate_of, supersedes_json, related_memories_json,
+            confidence_score, extraction_timestamp, classification_reason,
+            processed_for_duplicates, conscious_processed
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
     INSERT_RULES_MEMORY = """
@@ -174,5 +179,89 @@ class MemoryQueries(BaseQueries):
         FROM {table}
         WHERE namespace = ? AND created_at >= ?
         ORDER BY created_at DESC
+        LIMIT ?
+    """
+
+    # Conscious Context Queries
+    SELECT_CONSCIOUS_MEMORIES = """
+        SELECT memory_id, processed_data, summary, classification, importance_score, 
+               is_user_context, is_preference, is_skill_knowledge, is_current_project,
+               promotion_eligible, created_at
+        FROM long_term_memory 
+        WHERE namespace = ? 
+        AND (
+            classification = 'conscious-info' 
+            OR promotion_eligible = 1
+            OR is_user_context = 1
+        )
+        ORDER BY importance_score DESC, extraction_timestamp DESC
+    """
+
+    SELECT_UNPROCESSED_CONSCIOUS = """
+        SELECT memory_id, processed_data, classification, is_user_context, promotion_eligible
+        FROM long_term_memory
+        WHERE namespace = ? AND conscious_processed = 0
+        AND (classification = 'conscious-info' OR promotion_eligible = 1 OR is_user_context = 1)
+    """
+
+    SELECT_USER_CONTEXT_PROFILE = """
+        SELECT processed_data FROM short_term_memory
+        WHERE namespace = ? AND is_permanent_context = 1
+        AND category_primary = 'user_context'
+    """
+
+    INSERT_USER_CONTEXT_PROFILE = """
+        INSERT OR REPLACE INTO short_term_memory (
+            memory_id, processed_data, importance_score, category_primary,
+            retention_type, namespace, created_at, expires_at, 
+            searchable_content, summary, is_permanent_context
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """
+
+    MARK_CONSCIOUS_PROCESSED = """
+        UPDATE long_term_memory 
+        SET conscious_processed = 1
+        WHERE memory_id = ? AND namespace = ?
+    """
+
+    # Classification and Filtering Queries
+    SELECT_MEMORIES_BY_CLASSIFICATION = """
+        SELECT memory_id, processed_data, importance_score, classification, created_at, summary
+        FROM long_term_memory
+        WHERE namespace = ? AND classification = ?
+        ORDER BY importance_score DESC, created_at DESC
+        LIMIT ?
+    """
+
+    SELECT_MEMORIES_FOR_DEDUPLICATION = """
+        SELECT memory_id, summary, searchable_content, classification, created_at
+        FROM long_term_memory
+        WHERE namespace = ? AND processed_for_duplicates = 0
+        ORDER BY created_at DESC
+        LIMIT ?
+    """
+
+    UPDATE_DUPLICATE_STATUS = """
+        UPDATE long_term_memory
+        SET duplicate_of = ?, processed_for_duplicates = 1
+        WHERE memory_id = ? AND namespace = ?
+    """
+
+    SELECT_PROMOTION_ELIGIBLE_MEMORIES = """
+        SELECT memory_id, processed_data, summary, classification
+        FROM long_term_memory
+        WHERE namespace = ? AND promotion_eligible = 1 
+        AND conscious_processed = 0
+    """
+
+    # Performance Queries
+    SELECT_MEMORIES_WITH_CONTEXT_FLAGS = """
+        SELECT memory_id, processed_data, classification, 
+               is_user_context, is_preference, is_skill_knowledge, is_current_project,
+               confidence_score, created_at
+        FROM long_term_memory
+        WHERE namespace = ? 
+        AND (is_user_context = 1 OR is_preference = 1 OR is_skill_knowledge = 1 OR is_current_project = 1)
+        ORDER BY importance_score DESC, created_at DESC
         LIMIT ?
     """

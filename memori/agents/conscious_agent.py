@@ -1,506 +1,439 @@
 """
-Conscious Agent for Background Memory Processing
+Conscious Agent for User Context Management
 
-This agent analyzes long-term memory patterns to extract essential personal facts
-and promote them to short-term memory for immediate context injection.
+This agent extracts user context information from memory_agent labels
+and manages permanent user context in short-term memory.
 """
 
 import json
-import os
-import uuid
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import List, Optional
 
 from loguru import logger
-from openai import AsyncOpenAI
-from pydantic import BaseModel, Field
 
-
-class EssentialMemory(BaseModel):
-    """Essential conversation memory identified for short-term storage"""
-
-    memory_id: str = Field(description="Original memory ID from long-term storage")
-    summary: str = Field(description="Summary of the conversation")
-    category: str = Field(description="Memory category")
-    importance_score: float = Field(ge=0.0, le=1.0, description="Importance score")
-    frequency_score: float = Field(
-        ge=0.0, le=1.0, description="How frequently this is referenced"
-    )
-    recency_score: float = Field(
-        ge=0.0, le=1.0, description="How recent this information is"
-    )
-    relevance_reasoning: str = Field(description="Why this memory is essential")
-
-
-class EssentialMemoriesAnalysis(BaseModel):
-    """Analysis result containing essential memories to promote to short-term"""
-
-    essential_memories: List[EssentialMemory] = Field(
-        default_factory=list,
-        description="Conversations that should be promoted to short-term memory",
-    )
-    analysis_reasoning: str = Field(
-        description="Overall reasoning for memory selection"
-    )
-    total_analyzed: int = Field(description="Total memories analyzed")
-    promoted_count: int = Field(
-        description="Number of memories recommended for promotion"
-    )
+from ..utils.pydantic_models import (
+    ProcessedLongTermMemory,
+    UserContextProfile,
+    MemoryClassification,
+)
 
 
 class ConsciouscAgent:
     """
-    Background agent that analyzes long-term memory to extract essential personal facts.
-
-    This agent mimics the conscious mind's ability to keep essential information
-    readily accessible in short-term memory.
+    Agent that manages user context by extracting conscious-info labeled memories
+    and maintaining permanent user context in short-term memory.
+    
+    Runs once at program startup when conscious_ingest=True.
     """
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o"):
-        """
-        Initialize the conscious agent
+    def __init__(self):
+        """Initialize the conscious agent"""
+        self.context_initialized = False
 
+    async def run_conscious_ingest(
+        self, 
+        db_manager, 
+        namespace: str = "default"
+    ) -> Optional[UserContextProfile]:
+        """
+        Run conscious context ingestion once at program startup
+        
+        Extracts user context from conscious-info labeled memories
+        and stores it permanently in short-term memory
+        
         Args:
-            api_key: OpenAI API key (if None, uses environment variable)
-            model: OpenAI model to use for analysis (gpt-4o recommended)
-        """
-        self.api_key = api_key
-        self.model = model
-
-        # Check if API key is available (either provided or in environment)
-        effective_api_key = api_key or os.getenv("OPENAI_API_KEY")
-
-        if effective_api_key:
-            self.client = AsyncOpenAI(
-                api_key=api_key
-            )  # AsyncOpenAI handles None api_key automatically
-        else:
-            self.client = None
-            logger.warning(
-                "ConsciouscAgent: No OpenAI API key found. Set OPENAI_API_KEY environment variable or provide api_key parameter."
-            )
-
-        self.last_analysis = None
-        self.analysis_interval = timedelta(hours=6)  # Analyze every 6 hours
-
-        # System prompt for memory selection
-        self.system_prompt = """You are a Conscious Agent responsible for selecting essential conversations from long-term memory to promote to short-term memory.
-
-Your role is to identify the most important conversations that should be readily available for immediate context injection.
-
-SELECTION CRITERIA:
-
-1. PERSONAL IDENTITY: Conversations where the user shares their name, occupation, location, or basic info
-2. PREFERENCES & HABITS: Conversations revealing likes, dislikes, routines, sleep schedule, work patterns
-3. SKILLS & EXPERTISE: Conversations about their technical skills, programming languages, tools they use
-4. CURRENT PROJECTS: Conversations about ongoing work, projects, or learning goals
-5. RELATIONSHIPS: Conversations mentioning important people, colleagues, or connections
-6. REPEATED REFERENCES: Conversations that get referenced or built upon in later discussions
-
-SCORING GUIDELINES:
-- **Frequency Score**: How often this information is referenced or mentioned again
-- **Recency Score**: How recent and relevant this information remains
-- **Importance Score**: How critical this information is for understanding the person
-
-SELECT conversations that:
-- Contain foundational information about the person (name, role, preferences)
-- Are frequently referenced or built upon in later conversations
-- Provide essential context for understanding future conversations
-- Represent stable, long-term characteristics rather than temporary states
-
-AVOID conversations that:
-- Are purely transactional or generic
-- Contain outdated or superseded information
-- Are highly specific to a single context that hasn't been revisited"""
-
-    async def analyze_memory_patterns(
-        self, db_manager, namespace: str = "default", min_memories: int = 10
-    ) -> Optional[EssentialMemoriesAnalysis]:
-        """
-        Analyze long-term memory patterns to select essential conversations
-
-        Args:
-            db_manager: Database manager instance
-            namespace: Memory namespace to analyze
-            min_memories: Minimum number of memories needed for analysis
-
-        Returns:
-            EssentialMemoriesAnalysis with selected conversations or None if insufficient data
-        """
-        if not self.client:
-            logger.debug("ConsciouscAgent: No API client available, skipping analysis")
-            return None
-
-        try:
-            # Get all long-term memories for analysis
-            memories = await self._get_long_term_memories(db_manager, namespace)
-
-            if len(memories) < min_memories:
-                logger.info(
-                    f"ConsciouscAgent: Insufficient memories ({len(memories)}) for analysis"
-                )
-                return None
-
-            # Prepare memory data for analysis
-            memory_summaries = []
-            for memory in memories:
-                try:
-                    processed_data = json.loads(memory.get("processed_data", "{}"))
-                    memory_summaries.append(
-                        {
-                            "memory_id": memory.get("memory_id", ""),
-                            "summary": memory.get("summary", ""),
-                            "category": memory.get("category_primary", ""),
-                            "created_at": memory.get("created_at", ""),
-                            "entities": processed_data.get("entities", {}),
-                            "importance": memory.get("importance_score", 0.0),
-                            "access_count": memory.get("access_count", 0),
-                        }
-                    )
-                except json.JSONDecodeError:
-                    continue
-
-            if not memory_summaries:
-                logger.warning("ConsciouscAgent: No valid memories found for analysis")
-                return None
-
-            # Perform AI analysis to select essential conversations
-            analysis = await self._perform_memory_selection(memory_summaries)
-
-            if analysis:
-                self.last_analysis = datetime.now()
-                logger.info(
-                    f"ConsciouscAgent: Selected {len(analysis.essential_memories)} essential conversations"
-                )
-
-            return analysis
-
-        except Exception as e:
-            logger.error(f"ConsciouscAgent: Memory analysis failed: {e}")
-            return None
-
-    async def _get_long_term_memories(
-        self, db_manager, namespace: str
-    ) -> List[Dict[str, Any]]:
-        """Get long-term memories for analysis"""
-        try:
-            # Get memories from the last 30 days for pattern analysis
-            cutoff_date = datetime.now() - timedelta(days=30)
-
-            query = """
-            SELECT memory_id, summary, category_primary, processed_data,
-                   importance_score, created_at, access_count
-            FROM long_term_memory
-            WHERE namespace = ? AND created_at >= ?
-            ORDER BY importance_score DESC, access_count DESC
-            LIMIT 100
-            """
-
-            # Execute query through database manager
-            with db_manager._get_connection() as connection:
-                cursor = connection.execute(query, (namespace, cutoff_date.isoformat()))
-
-                memories = []
-                for row in cursor.fetchall():
-                    memories.append(
-                        {
-                            "memory_id": row[0],
-                            "summary": row[1],
-                            "category_primary": row[2],
-                            "processed_data": row[3],
-                            "importance_score": row[4],
-                            "created_at": row[5],
-                            "access_count": row[6],
-                        }
-                    )
-
-                return memories
-
-        except Exception as e:
-            logger.error(f"ConsciouscAgent: Failed to get long-term memories: {e}")
-            return []
-
-    async def _perform_memory_selection(
-        self, memory_summaries: List[Dict]
-    ) -> Optional[EssentialMemoriesAnalysis]:
-        """Use AI to select essential conversations from memory patterns"""
-        try:
-            # Prepare context for AI analysis
-            memory_context = self._prepare_memory_context(memory_summaries)
-
-            # Create the analysis prompt
-            user_prompt = f"""Analyze the following conversations from long-term memory and select the most essential ones to promote to short-term memory:
-
-AVAILABLE CONVERSATIONS:
-{memory_context}
-
-Select conversations that should be promoted to short-term memory for immediate context. Focus on conversations that:
-1. Contain foundational personal information (name, occupation, preferences)
-2. Are frequently referenced or built upon in later conversations
-3. Provide essential context for understanding the person
-4. Represent stable, long-term characteristics
-
-For each selected conversation, provide:
-- The memory_id
-- Frequency score (how often this info is referenced)
-- Recency score (how current/relevant this remains)
-- Importance score (how critical for understanding the person)
-- Clear reasoning for why this conversation is essential
-
-Limit selection to the top 5-10 most essential conversations."""
-
-            # Make API call with structured output
-            response = await self.client.beta.chat.completions.parse(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                response_format=EssentialMemoriesAnalysis,
-                temperature=0.1,
-            )
-
-            analysis = response.choices[0].message.parsed
-            return analysis
-
-        except Exception as e:
-            logger.error(f"ConsciouscAgent: Memory selection failed: {e}")
-            return None
-
-    def _prepare_memory_context(self, memory_summaries: List[Dict]) -> str:
-        """Prepare memory data for AI analysis"""
-        context_lines = []
-
-        for i, memory in enumerate(
-            memory_summaries[:50], 1
-        ):  # Limit to 50 most important
-            line = f"{i}. ID: {memory['memory_id']} | [{memory['category']}] {memory['summary']}"
-            line += f" | Importance: {memory['importance']:.2f} | Access: {memory.get('access_count', 0)}"
-
-            if memory.get("entities"):
-                entities = []
-                for _entity_type, values in memory["entities"].items():
-                    if values and isinstance(values, list):
-                        # Handle both string entities and structured entities
-                        for value in values:
-                            if isinstance(value, str):
-                                entities.append(value)
-                            elif isinstance(value, dict) and "value" in value:
-                                # Handle structured entities
-                                entities.append(value["value"])
-                            elif hasattr(value, "value"):
-                                # Handle Pydantic model entities
-                                entities.append(value.value)
-                            else:
-                                # Convert any other type to string
-                                entities.append(str(value))
-
-                if entities:
-                    line += f" | Entities: {', '.join(entities[:5])}"
-
-            context_lines.append(line)
-
-        return "\n".join(context_lines)
-
-    async def update_short_term_memories(
-        self,
-        db_manager,
-        analysis: EssentialMemoriesAnalysis,
-        namespace: str = "default",
-    ) -> int:
-        """
-        Update short-term memory with selected essential conversations
-
-        Args:
-            db_manager: Database manager instance
-            analysis: Analysis containing selected essential memories
+            db_manager: Database manager instance  
             namespace: Memory namespace
-
+            
         Returns:
-            Number of conversations copied to short-term memory
+            UserContextProfile if context was extracted, None otherwise
         """
         try:
-            updated_count = 0
-
-            # Clear existing essential conversations from short-term memory
-            await self._clear_essential_conversations(db_manager, namespace)
-
-            # Copy each essential conversation to short-term memory
-            for essential_memory in analysis.essential_memories:
-                success = await self._copy_conversation_to_short_term(
-                    db_manager, essential_memory, namespace
-                )
-                if success:
-                    updated_count += 1
-
-            logger.info(
-                f"ConsciouscAgent: Copied {updated_count} essential conversations to short-term memory"
-            )
-            return updated_count
-
+            # Check if context already exists
+            existing_context = await self._get_existing_user_context(db_manager, namespace)
+            if existing_context:
+                logger.info("ConsciouscAgent: User context already exists")
+                return existing_context
+            
+            # Get all conscious-info labeled memories
+            conscious_memories = await self._get_conscious_memories(db_manager, namespace)
+            
+            if not conscious_memories:
+                logger.info("ConsciouscAgent: No conscious-info memories found")
+                return None
+            
+            # Extract user context profile
+            user_profile = await self._extract_user_context_profile(conscious_memories)
+            
+            # Store permanently in short-term memory
+            await self._store_permanent_context(db_manager, namespace, user_profile)
+            
+            # Mark memories as processed
+            await self._mark_memories_processed(db_manager, conscious_memories)
+            
+            self.context_initialized = True
+            logger.info(f"ConsciouscAgent: User context initialized for {user_profile.name or 'user'}")
+            
+            return user_profile
+            
         except Exception as e:
-            logger.error(f"ConsciouscAgent: Failed to update short-term memories: {e}")
-            return 0
+            logger.error(f"ConsciouscAgent: Conscious ingest failed: {e}")
+            return None
 
-    async def _clear_essential_conversations(self, db_manager, namespace: str):
-        """Clear existing essential conversations from short-term memory"""
-        try:
-            with db_manager._get_connection() as connection:
-                # Delete conversations marked as essential
-                query = """
-                DELETE FROM short_term_memory
-                WHERE namespace = ? AND category_primary LIKE 'essential_%'
-                """
-
-                connection.execute(query, (namespace,))
-                connection.commit()
-
-        except Exception as e:
-            logger.error(
-                f"ConsciouscAgent: Failed to clear essential conversations: {e}"
-            )
-
-    async def _copy_conversation_to_short_term(
-        self, db_manager, essential_memory: EssentialMemory, namespace: str
+    async def check_for_context_updates(
+        self, 
+        db_manager, 
+        namespace: str = "default"
     ) -> bool:
-        """Copy an essential conversation from long-term to short-term memory"""
+        """
+        Check for new conscious-info memories and update context if needed
+        
+        Args:
+            db_manager: Database manager instance
+            namespace: Memory namespace
+            
+        Returns:
+            True if context was updated, False otherwise
+        """
         try:
-            # First, get the original conversation from long-term memory
-            original_memory = await self._get_original_memory(
-                db_manager, essential_memory.memory_id
-            )
-
-            if not original_memory:
-                logger.warning(
-                    f"ConsciouscAgent: Could not find original memory {essential_memory.memory_id}"
-                )
+            # Get unprocessed conscious memories
+            new_memories = await self._get_unprocessed_conscious_memories(db_manager, namespace)
+            
+            if not new_memories:
                 return False
-
-            # Create new memory ID for short-term storage
-            new_memory_id = str(uuid.uuid4())
-            now = datetime.now()
-
-            # Create enhanced processed data
-            try:
-                original_processed_data = json.loads(
-                    original_memory.get("processed_data", "{}")
-                )
-            except json.JSONDecodeError:
-                original_processed_data = {}
-
-            enhanced_processed_data = original_processed_data.copy()
-            enhanced_processed_data.update(
-                {
-                    "promoted_by": "conscious_agent",
-                    "promoted_at": now.isoformat(),
-                    "original_memory_id": essential_memory.memory_id,
-                    "frequency_score": essential_memory.frequency_score,
-                    "recency_score": essential_memory.recency_score,
-                    "promotion_reasoning": essential_memory.relevance_reasoning,
-                }
-            )
-
-            # Store in short-term memory
-            with db_manager._get_connection() as connection:
-                query = """
-                INSERT INTO short_term_memory (
-                    memory_id, chat_id, processed_data, importance_score,
-                    category_primary, retention_type, namespace, created_at,
-                    expires_at, searchable_content, summary
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """
-
-                # Essential conversations expire after 30 days (refreshed by re-analysis)
-                expires_at = now + timedelta(days=30)
-
-                connection.execute(
-                    query,
-                    (
-                        new_memory_id,
-                        original_memory.get(
-                            "original_chat_id"
-                        ),  # Preserve original chat_id link
-                        json.dumps(enhanced_processed_data),
-                        essential_memory.importance_score,
-                        f"essential_{original_memory.get('category_primary', 'conversation')}",  # Mark as essential
-                        "short_term",
-                        namespace,
-                        now.isoformat(),
-                        expires_at.isoformat(),
-                        original_memory.get(
-                            "searchable_content", essential_memory.summary
-                        ),
-                        essential_memory.summary,
-                    ),
-                )
-
-                connection.commit()
-                return True
-
+            
+            # Get existing context
+            existing_context = await self._get_existing_user_context(db_manager, namespace)
+            if not existing_context:
+                # No existing context, run full ingest
+                return await self.run_conscious_ingest(db_manager, namespace) is not None
+            
+            # Extract additional context from new memories
+            additional_context = await self._extract_user_context_profile(new_memories)
+            
+            # Merge with existing context  
+            updated_context = self._merge_user_contexts(existing_context, additional_context)
+            
+            # Update stored context
+            await self._store_permanent_context(db_manager, namespace, updated_context)
+            
+            # Mark new memories as processed
+            await self._mark_memories_processed(db_manager, new_memories)
+            
+            logger.info(f"ConsciouscAgent: Updated context with {len(new_memories)} new memories")
+            return True
+            
         except Exception as e:
-            logger.error(
-                f"ConsciouscAgent: Failed to copy conversation to short-term: {e}"
-            )
+            logger.error(f"ConsciouscAgent: Context update failed: {e}")
             return False
 
-    async def _get_original_memory(self, db_manager, memory_id: str) -> Optional[Dict]:
-        """Get original memory from long-term storage"""
+    async def _get_existing_user_context(
+        self, 
+        db_manager, 
+        namespace: str
+    ) -> Optional[UserContextProfile]:
+        """Get existing user context from short-term memory"""
         try:
+            from ..database.queries.memory_queries import MemoryQueries
+            
             with db_manager._get_connection() as connection:
-                query = """
-                SELECT memory_id, original_chat_id, processed_data, importance_score,
-                       category_primary, searchable_content, summary
-                FROM long_term_memory
-                WHERE memory_id = ?
-                """
-
-                cursor = connection.execute(query, (memory_id,))
+                cursor = connection.execute(
+                    MemoryQueries.SELECT_USER_CONTEXT_PROFILE,
+                    (namespace,)
+                )
                 row = cursor.fetchone()
-
+                
                 if row:
-                    return {
-                        "memory_id": row[0],
-                        "original_chat_id": row[1],
-                        "processed_data": row[2],
-                        "importance_score": row[3],
-                        "category_primary": row[4],
-                        "searchable_content": row[5],
-                        "summary": row[6],
-                    }
+                    context_data = json.loads(row[0])
+                    return UserContextProfile(**context_data.get('profile', {}))
+                    
                 return None
-
+                
         except Exception as e:
-            logger.error(f"ConsciouscAgent: Failed to get original memory: {e}")
+            logger.error(f"ConsciouscAgent: Failed to get existing context: {e}")
             return None
 
-    def should_run_analysis(self) -> bool:
-        """Check if it's time to run memory analysis"""
-        if self.last_analysis is None:
-            return True
-
-        return datetime.now() - self.last_analysis >= self.analysis_interval
-
-    async def run_background_analysis(self, db_manager, namespace: str = "default"):
-        """Run the complete background analysis workflow"""
+    async def _get_conscious_memories(
+        self, 
+        db_manager, 
+        namespace: str
+    ) -> List[ProcessedLongTermMemory]:
+        """Get all conscious-info labeled memories"""
         try:
-            if not self.should_run_analysis():
-                return
-
-            logger.info("ConsciouscAgent: Starting background memory analysis")
-
-            # Analyze memory patterns
-            analysis = await self.analyze_memory_patterns(db_manager, namespace)
-
-            if analysis:
-                # Update short-term memory with selected conversations
-                await self.update_short_term_memories(db_manager, analysis, namespace)
-                logger.info(
-                    "ConsciouscAgent: Background analysis completed successfully"
+            from ..database.queries.memory_queries import MemoryQueries
+            
+            with db_manager._get_connection() as connection:
+                cursor = connection.execute(
+                    MemoryQueries.SELECT_CONSCIOUS_MEMORIES,
+                    (namespace,)
                 )
-            else:
-                logger.info(
-                    "ConsciouscAgent: No analysis performed (insufficient data)"
-                )
-
+                
+                memories = []
+                for row in cursor.fetchall():
+                    try:
+                        processed_data = json.loads(row[1])  # processed_data column
+                        memory = ProcessedLongTermMemory(**processed_data)
+                        memories.append(memory)
+                    except (json.JSONDecodeError, Exception) as e:
+                        logger.warning(f"Failed to parse memory {row[0]}: {e}")
+                        continue
+                        
+                return memories
+                
         except Exception as e:
-            logger.error(f"ConsciouscAgent: Background analysis failed: {e}")
+            logger.error(f"ConsciouscAgent: Failed to get conscious memories: {e}")
+            return []
+
+    async def _get_unprocessed_conscious_memories(
+        self, 
+        db_manager, 
+        namespace: str
+    ) -> List[ProcessedLongTermMemory]:
+        """Get unprocessed conscious-info labeled memories"""
+        try:
+            from ..database.queries.memory_queries import MemoryQueries
+            
+            with db_manager._get_connection() as connection:
+                cursor = connection.execute(
+                    MemoryQueries.SELECT_UNPROCESSED_CONSCIOUS,
+                    (namespace,)
+                )
+                
+                memories = []
+                for row in cursor.fetchall():
+                    try:
+                        processed_data = json.loads(row[1])  # processed_data column  
+                        memory = ProcessedLongTermMemory(**processed_data)
+                        memories.append(memory)
+                    except (json.JSONDecodeError, Exception) as e:
+                        logger.warning(f"Failed to parse memory {row[0]}: {e}")
+                        continue
+                        
+                return memories
+                
+        except Exception as e:
+            logger.error(f"ConsciouscAgent: Failed to get unprocessed memories: {e}")
+            return []
+
+    async def _extract_user_context_profile(
+        self, 
+        conscious_memories: List[ProcessedLongTermMemory]
+    ) -> UserContextProfile:
+        """Extract user context profile from conscious memories"""
+        # Consolidate memories by context categories
+        context_data = {
+            'personal': [],
+            'professional': [], 
+            'technical': [],
+            'behavioral': [],
+            'current': []
+        }
+        
+        for memory in conscious_memories:
+            category = self._classify_context_category(memory)
+            context_data[category].append(memory.content)
+        
+        # Extract structured profile
+        profile = UserContextProfile(
+            name=self._extract_name(context_data['personal']),
+            location=self._extract_location(context_data['personal']),
+            job_title=self._extract_job_title(context_data['professional']),
+            company=self._extract_company(context_data['professional']),
+            primary_languages=self._extract_languages(context_data['technical']),
+            tools=self._extract_tools(context_data['technical']),
+            communication_style=self._extract_comm_style(context_data['behavioral']),
+            active_projects=self._extract_projects(context_data['current']),
+            learning_goals=self._extract_goals(context_data['current']),
+            last_updated=datetime.now(),
+        )
+        
+        return profile
+
+    def _classify_context_category(self, memory: ProcessedLongTermMemory) -> str:
+        """Classify memory into context categories"""  
+        content_lower = memory.content.lower()
+        
+        if any(keyword in content_lower for keyword in ['name', 'called', 'location', 'from', 'live']):
+            return 'personal'
+        elif any(keyword in content_lower for keyword in ['job', 'work', 'company', 'role', 'title']):
+            return 'professional'
+        elif any(keyword in content_lower for keyword in ['language', 'framework', 'tool', 'technology']):
+            return 'technical'
+        elif any(keyword in content_lower for keyword in ['prefer', 'like', 'style', 'approach']):
+            return 'behavioral'
+        elif any(keyword in content_lower for keyword in ['project', 'working on', 'building', 'learning']):
+            return 'current'
+        else:
+            return 'personal'  # Default
+
+    async def _store_permanent_context(
+        self, 
+        db_manager, 
+        namespace: str, 
+        user_profile: UserContextProfile
+    ):
+        """Store user context permanently in short-term memory"""
+        try:
+            from ..database.queries.memory_queries import MemoryQueries
+            
+            # Create memory content
+            memory_content = {
+                'type': 'user_context_profile',
+                'profile': user_profile.model_dump(mode='json'),  # JSON-serializable format
+                'permanent': True,
+                'category': 'user_context',
+                'importance': 'critical'
+            }
+            
+            memory_id = f"user_context_{namespace}_{int(datetime.now().timestamp())}"
+            
+            with db_manager._get_connection() as connection:
+                connection.execute(
+                    MemoryQueries.INSERT_USER_CONTEXT_PROFILE,
+                    (
+                        memory_id,
+                        json.dumps(memory_content),
+                        1.0,  # importance_score
+                        'user_context',  # category_primary
+                        'permanent',  # retention_type
+                        namespace,
+                        datetime.now().isoformat(),
+                        None,  # expires_at (permanent)
+                        f"User context: {user_profile.name or 'user'}",  # searchable_content
+                        f"Permanent user context profile",  # summary
+                        1  # is_permanent_context
+                    )
+                )
+                connection.commit()
+                
+        except Exception as e:
+            logger.error(f"ConsciouscAgent: Failed to store permanent context: {e}")
+
+    async def _mark_memories_processed(
+        self, 
+        db_manager, 
+        memories: List[ProcessedLongTermMemory]
+    ):
+        """Mark memories as processed for conscious context"""
+        try:
+            from ..database.queries.memory_queries import MemoryQueries
+            
+            with db_manager._get_connection() as connection:
+                for memory in memories:
+                    connection.execute(
+                        MemoryQueries.MARK_CONSCIOUS_PROCESSED,
+                        (memory.conversation_id, 'default')  # Using conversation_id as memory_id
+                    )
+                connection.commit()
+                
+        except Exception as e:
+            logger.error(f"ConsciouscAgent: Failed to mark memories processed: {e}")
+
+    def _merge_user_contexts(
+        self, 
+        existing: UserContextProfile, 
+        additional: UserContextProfile
+    ) -> UserContextProfile:
+        """Merge additional context into existing context"""
+        # Simple merge - could be enhanced with conflict resolution
+        merged = existing.model_copy()
+        
+        # Update non-None fields from additional context
+        if additional.name and not existing.name:
+            merged.name = additional.name
+        if additional.location and not existing.location:  
+            merged.location = additional.location
+        if additional.job_title and not existing.job_title:
+            merged.job_title = additional.job_title
+            
+        # Merge lists
+        merged.primary_languages = list(set(existing.primary_languages + additional.primary_languages))
+        merged.tools = list(set(existing.tools + additional.tools))
+        merged.active_projects = list(set(existing.active_projects + additional.active_projects))
+        merged.learning_goals = list(set(existing.learning_goals + additional.learning_goals))
+        
+        merged.last_updated = datetime.now()
+        merged.version += 1
+        
+        return merged
+
+    # Simple extraction methods (can be enhanced with NLP)
+    def _extract_name(self, personal_memories: List[str]) -> Optional[str]:
+        """Extract user name from personal memories"""
+        for memory in personal_memories:
+            if 'name is' in memory.lower() or 'called' in memory.lower():
+                words = memory.split()
+                for i, word in enumerate(words):
+                    if word.lower() in ['name', 'called'] and i + 1 < len(words):
+                        return words[i + 1].strip('.,!?')
+        return None
+
+    def _extract_location(self, personal_memories: List[str]) -> Optional[str]:
+        """Extract user location from personal memories"""
+        for memory in personal_memories:
+            if any(keyword in memory.lower() for keyword in ['from', 'live', 'location', 'based']):
+                return memory.split()[-1] if memory.split() else None
+        return None
+
+    def _extract_job_title(self, professional_memories: List[str]) -> Optional[str]:
+        """Extract job title from professional memories"""
+        for memory in professional_memories:
+            if any(keyword in memory.lower() for keyword in ['job', 'role', 'title', 'work as']):
+                return memory
+        return None
+
+    def _extract_company(self, professional_memories: List[str]) -> Optional[str]:
+        """Extract company from professional memories"""
+        for memory in professional_memories:
+            if any(keyword in memory.lower() for keyword in ['company', 'work at', 'employed']):
+                return memory
+        return None
+
+    def _extract_languages(self, technical_memories: List[str]) -> List[str]:
+        """Extract programming languages from technical memories"""
+        languages = []
+        common_languages = ['python', 'javascript', 'java', 'c++', 'go', 'rust', 'typescript', 'php']
+        
+        for memory in technical_memories:
+            memory_lower = memory.lower()
+            for lang in common_languages:
+                if lang in memory_lower and lang not in languages:
+                    languages.append(lang.title())
+        
+        return languages
+
+    def _extract_tools(self, technical_memories: List[str]) -> List[str]:
+        """Extract tools from technical memories"""
+        tools = []
+        common_tools = ['docker', 'kubernetes', 'git', 'vscode', 'pycharm', 'react', 'fastapi', 'flask']
+        
+        for memory in technical_memories:
+            memory_lower = memory.lower()
+            for tool in common_tools:
+                if tool in memory_lower and tool not in tools:
+                    tools.append(tool.title())
+        
+        return tools
+
+    def _extract_comm_style(self, behavioral_memories: List[str]) -> Optional[str]:
+        """Extract communication style from behavioral memories"""
+        for memory in behavioral_memories:
+            if 'style' in memory.lower() or 'prefer' in memory.lower():
+                return memory
+        return None
+
+    def _extract_projects(self, current_memories: List[str]) -> List[str]:
+        """Extract active projects from current memories"""
+        projects = []
+        for memory in current_memories:
+            if any(keyword in memory.lower() for keyword in ['project', 'working on', 'building']):
+                projects.append(memory)
+        return projects
+
+    def _extract_goals(self, current_memories: List[str]) -> List[str]:
+        """Extract learning goals from current memories"""
+        goals = []
+        for memory in current_memories:
+            if any(keyword in memory.lower() for keyword in ['learning', 'goal', 'want to']):
+                goals.append(memory)
+        return goals

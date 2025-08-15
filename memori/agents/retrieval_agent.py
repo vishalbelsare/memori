@@ -171,7 +171,7 @@ Be strategic and comprehensive in your search planning."""
                     search_plan, db_manager, namespace, limit
                 )
                 for result in keyword_results:
-                    if result.get("memory_id") not in seen_memory_ids:
+                    if isinstance(result, dict) and result.get("memory_id") not in seen_memory_ids:
                         seen_memory_ids.add(result["memory_id"])
                         result["search_strategy"] = "keyword_search"
                         result["search_reasoning"] = (
@@ -188,7 +188,7 @@ Be strategic and comprehensive in your search planning."""
                     search_plan, db_manager, namespace, limit - len(all_results)
                 )
                 for result in category_results:
-                    if result.get("memory_id") not in seen_memory_ids:
+                    if isinstance(result, dict) and result.get("memory_id") not in seen_memory_ids:
                         seen_memory_ids.add(result["memory_id"])
                         result["search_strategy"] = "category_filter"
                         result["search_reasoning"] = (
@@ -205,7 +205,7 @@ Be strategic and comprehensive in your search planning."""
                     search_plan, db_manager, namespace, limit - len(all_results)
                 )
                 for result in importance_results:
-                    if result.get("memory_id") not in seen_memory_ids:
+                    if isinstance(result, dict) and result.get("memory_id") not in seen_memory_ids:
                         seen_memory_ids.add(result["memory_id"])
                         result["search_strategy"] = "importance_filter"
                         result["search_reasoning"] = (
@@ -219,32 +219,44 @@ Be strategic and comprehensive in your search planning."""
                     query=search_plan.query_text, namespace=namespace, limit=limit
                 )
                 for result in general_results:
-                    result["search_strategy"] = "general_search"
-                    result["search_reasoning"] = "General content search"
-                    all_results.append(result)
+                    if isinstance(result, dict):
+                        result["search_strategy"] = "general_search"
+                        result["search_reasoning"] = "General content search"
+                        all_results.append(result)
+
+            # Filter out any non-dictionary results before processing
+            valid_results = []
+            for result in all_results:
+                if isinstance(result, dict):
+                    valid_results.append(result)
+                else:
+                    logger.warning(f"Filtering out non-dict search result: {type(result)}")
+            
+            all_results = valid_results
 
             # Sort by relevance (importance score + recency)
-            all_results.sort(
-                key=lambda x: (
-                    x.get("importance_score", 0) * 0.7  # Importance weight
-                    + (
-                        datetime.now().replace(tzinfo=None)  # Ensure timezone-naive
-                        - datetime.fromisoformat(
-                            x.get("created_at", "2000-01-01")
-                        ).replace(tzinfo=None)
-                    ).days
-                    * -0.001  # Recency weight
-                ),
-                reverse=True,
-            )
+            if all_results:
+                all_results.sort(
+                    key=lambda x: (
+                        x.get("importance_score", 0) * 0.7  # Importance weight
+                        + (
+                            datetime.now().replace(tzinfo=None)  # Ensure timezone-naive
+                            - datetime.fromisoformat(
+                                x.get("created_at", "2000-01-01")
+                            ).replace(tzinfo=None)
+                        ).days
+                        * -0.001  # Recency weight
+                    ),
+                    reverse=True,
+                )
 
-            # Add search metadata
-            for result in all_results:
-                result["search_metadata"] = {
-                    "original_query": query,
-                    "interpreted_intent": search_plan.intent,
-                    "search_timestamp": datetime.now().isoformat(),
-                }
+                # Add search metadata
+                for result in all_results:
+                    result["search_metadata"] = {
+                        "original_query": query,
+                        "interpreted_intent": search_plan.intent,
+                        "search_timestamp": datetime.now().isoformat(),
+                    }
 
             logger.debug(
                 f"Search executed for '{query}': {len(all_results)} results found"
@@ -269,9 +281,27 @@ Be strategic and comprehensive in your search planning."""
             ]
 
         search_terms = " ".join(keywords)
-        return db_manager.search_memories(
-            query=search_terms, namespace=namespace, limit=limit
-        )
+        try:
+            results = db_manager.search_memories(
+                query=search_terms, namespace=namespace, limit=limit
+            )
+            # Ensure results is a list of dictionaries
+            if not isinstance(results, list):
+                logger.warning(f"Search returned non-list result: {type(results)}")
+                return []
+            
+            # Filter out any non-dictionary items
+            valid_results = []
+            for result in results:
+                if isinstance(result, dict):
+                    valid_results.append(result)
+                else:
+                    logger.warning(f"Search returned non-dict item: {type(result)}")
+            
+            return valid_results
+        except Exception as e:
+            logger.error(f"Keyword search failed: {e}")
+            return []
 
     def _execute_category_search(
         self, search_plan: MemorySearchQuery, db_manager, namespace: str, limit: int
@@ -414,7 +444,7 @@ Be strategic and comprehensive in your search planning."""
                         continue
 
                     for result in results:
-                        if result.get("memory_id") not in seen_memory_ids:
+                        if isinstance(result, dict) and result.get("memory_id") not in seen_memory_ids:
                             seen_memory_ids.add(result["memory_id"])
                             all_results.append(result)
 
