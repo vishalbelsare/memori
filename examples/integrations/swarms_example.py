@@ -6,7 +6,7 @@ swarms_memory = Memori(
     database_connect="sqlite:///swarms_memory.db",
     auto_ingest=True,  # Enable automatic ingestion
     conscious_ingest=True,  # Enable conscious ingestion
-    verbose=False,  # Enable verbose logging
+    verbose=False,  # Disable verbose logging
 )
 
 swarms_memory.enable()
