@@ -49,13 +49,21 @@ Install Memori:
 pip install memorisdk
 ```
 
-Set OpenAI API Key:
+### Example with LiteLLM
+
+1. Install LiteLLM:
+
+```bash
+pip install litellm
+```
+
+2. Set OpenAI API Key:
 
 ```bash
 export OPENAI_API_KEY="sk-your-openai-key-here"
 ```
 
-Example with LiteLLM:
+3. Run this Python script:
 
 ```python
 from memori import Memori
@@ -65,7 +73,7 @@ from litellm import completion
 memori = Memori(conscious_ingest=True)
 memori.enable()
 
-# First conversation - establish context
+print("=== First Conversation - Establishing Context ===")
 response1 = completion(
     model="gpt-4o-mini",
     messages=[{
@@ -73,9 +81,11 @@ response1 = completion(
         "content": "I'm working on a Python FastAPI project"
     }]
 )
-print("Assistant:", response1.choices[0].message.content)
 
-# Second conversation - memory provides context  
+print("Assistant:", response1.choices[0].message.content)
+print("\n" + "="*50)
+print("=== Second Conversation - Memory Provides Context ===")
+
 response2 = completion(
     model="gpt-4o-mini", 
     messages=[{
@@ -84,6 +94,7 @@ response2 = completion(
     }]
 )
 print("Assistant:", response2.choices[0].message.content)
+print("\n💡 Notice: Memori automatically knows about your FastAPI Python project!")
 ```
 
 ---
