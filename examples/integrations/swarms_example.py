@@ -1,20 +1,21 @@
 from swarms import Agent
-from memori import Memori, create_memory_tool
+
+from memori import Memori
 
 swarms_memory = Memori(
     database_connect="sqlite:///swarms_memory.db",
     auto_ingest=True,  # Enable automatic ingestion
     conscious_ingest=True,  # Enable conscious ingestion
-    verbose=False,  # Enable verbose logging
+    verbose=False,  # Disable verbose logging
 )
 
 swarms_memory.enable()
 
 agent = Agent(
-    model_name="gpt-4o", # Specify the LLM
+    model_name="gpt-4o",  # Specify the LLM
     system_prompt="You are an AI assistant with memory capabilities.",
-    max_loops="auto",              # Set the number of interactions
-    interactive=True,         # Enable interactive mode for real-time feedback
+    max_loops="auto",  # Set the number of interactions
+    interactive=True,  # Enable interactive mode for real-time feedback
 )
 
 agent.run("What is my name ?")
