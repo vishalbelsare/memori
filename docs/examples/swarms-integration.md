@@ -109,55 +109,6 @@ research_result = research_agent.run("Research the latest AI trends")
 writing_result = writing_agent.run("Write a summary based on recent research")
 ```
 
-### Memory-Enhanced Interactive Agent
-
-```python
-from swarms import Agent
-from memori import Memori
-
-class MemoryEnhancedAgent:
-    def __init__(self, agent_name: str, model: str = "gpt-4o"):
-        # Initialize memory with agent-specific namespace
-        self.memory = Memori(
-            database_connect=f"sqlite:///{agent_name}_memory.db",
-            conscious_ingest=True,
-            auto_ingest=True,
-            namespace=agent_name,
-            verbose=True
-        )
-        self.memory.enable()
-        
-        # Create Swarms agent
-        self.agent = Agent(
-            model_name=model,
-            system_prompt=f"""You are {agent_name}, an AI assistant with persistent memory.
-            
-            You can remember:
-            - Previous conversations and context
-            - User preferences and patterns
-            - Important information and facts
-            - Ongoing projects and tasks
-            
-            Always use your memory to provide personalized, contextual responses.""",
-            max_loops="auto",
-            interactive=True
-        )
-    
-    def chat(self, message: str) -> str:
-        """Chat with memory-enhanced agent"""
-        response = self.agent.run(message)
-        return response
-    
-    def get_memory_stats(self):
-        """Get memory statistics"""
-        return self.memory.get_memory_stats()
-
-# Usage
-assistant = MemoryEnhancedAgent("PersonalAssistant")
-response = assistant.chat("I'm working on a Python project using FastAPI")
-print(response)
-```
-
 ### Custom Memory Tools Integration
 
 ```python
@@ -194,14 +145,6 @@ agent = Agent(
     tools=[memory_tool]  # Add memory tool to agent's toolkit
 )
 
-# Interactive conversation loop
-while True:
-    user_input = input("You: ")
-    if user_input.lower() in ['quit', 'exit']:
-        break
-    
-    response = agent.run(user_input)
-    print(f"Assistant: {response}")
 ```
 
 ## Memory Modes
@@ -346,45 +289,6 @@ memory_system = Memori(
     auto_ingest=True
 )
 ```
-
-## Integration Patterns
-
-### 1. **Single Agent with Memory**
-Perfect for personal assistants and chatbots.
-
-### 2. **Multi-Agent Shared Memory**
-Ideal for collaborative agent systems where agents need to share context.
-
-### 3. **Hierarchical Memory**
-Use different namespaces for different agent roles or responsibilities.
-
-### 4. **Contextual Memory**
-Enable conscious ingestion for frequently accessed information and auto ingestion for dynamic retrieval.
-
-## Migration and Deployment
-
-### Development to Production
-
-1. **Database Migration**
-   ```python
-   # Development
-   memory = Memori(database_connect="sqlite:///dev_memory.db")
-   
-   # Production
-   memory = Memori(database_connect="postgresql://prod-db-url")
-   ```
-
-2. **Configuration Management**
-   ```python
-   import os
-   
-   memory = Memori(
-       database_connect=os.getenv("MEMORY_DB_URL", "sqlite:///memory.db"),
-       conscious_ingest=os.getenv("CONSCIOUS_INGEST", "true").lower() == "true",
-       auto_ingest=os.getenv("AUTO_INGEST", "true").lower() == "true",
-       namespace=os.getenv("MEMORY_NAMESPACE", "default")
-   )
-   ```
 
 ## Next Steps
 
