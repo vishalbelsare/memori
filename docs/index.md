@@ -1,6 +1,6 @@
 # Memori
 
-**The Open-Source Memory Layer for AI Agents & Multi-Agent Systems**
+## Open-Source Memory Engine for LLMs, AI Agents & Multi-Agent Systems
 
 !!! tip "Philosophy"
     **Second-memory for all your LLM work** - Never repeat context again. Simple, reliable architecture that just works out of the box.
@@ -54,19 +54,19 @@ pip install memorisdk
 
 ### Basic Usage with LiteLLM
 
-1. Install LiteLLM:
+Install LiteLLM:
 
 ```bash
 pip install litellm
 ```
 
-2. Set OpenAI API Key:
+Set OpenAI API Key:
 
 ```bash
 export OPENAI_API_KEY="sk-your-openai-key-here"
 ```
 
-3. Run the following Python script:
+Run the following Python script:
 
 ```python
 from memori import Memori
@@ -164,7 +164,7 @@ memori.enable()
 - [Quick Start](getting-started/quick-start.md) - Get running in 5 minutes  
 - [Basic Usage](getting-started/basic-usage.md) - Core concepts and examples
 - [Configuration](configuration/settings.md) - Production setup
-- [Examples](examples/basic.md) - Real-world use cases
+- [Examples](https://github.com/GibsonAI/memori/tree/main/examples) - Real-world use cases
 
 ---
 
