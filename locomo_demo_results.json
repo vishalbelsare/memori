@@ -1,0 +1,4888 @@
+{
+  "benchmark_metadata": {
+    "benchmark_id": "locomo_benchmark_20250818_225439",
+    "evaluation_date": "2025-08-18T23:15:03.421673",
+    "memori_version": "1.0",
+    "locomo_dataset": "locomo-10",
+    "processing_mode": "real_ai"
+  },
+  "executive_summary": [
+    "LOCOMO Benchmark Results for Memori v1.0",
+    "Evaluation completed: 2025-08-18 23:15:03",
+    "",
+    "\ud83c\udfaf Performance Assessment:",
+    "   J-Score: 38.0% (Target: \u226570%)",
+    "   \ud83d\udd27 Below target - improvement areas identified",
+    "",
+    "\u26a1 Efficiency Metrics:",
+    "   Average latency: 244.68s (Target: \u22642s)",
+    "   Token efficiency: 49.3% improvement",
+    "",
+    "\ud83d\udcca Accuracy Metrics:",
+    "   Exact Match: 0.0%",
+    "   F1 Score: 3.8%",
+    "   LLM Judge Score: 38.0%"
+  ],
+  "detailed_scores": {
+    "benchmark_summary": {
+      "total_questions": 20,
+      "evaluation_date": "2025-08-18",
+      "dataset": "LOCOMO-10"
+    },
+    "overall_performance": {
+      "total_questions": 20,
+      "exact_match_accuracy": 0.0,
+      "partial_match_accuracy": 0.15,
+      "macro_avg_f1": 0.03827862338773764,
+      "macro_avg_precision": 0.02680598555211558,
+      "macro_avg_recall": 0.09523809523809523,
+      "avg_semantic_similarity": 0.03827862338773764,
+      "llm_judge_score": 0.38,
+      "llm_judge_percentage": 38.0,
+      "judge_accuracy": 0.23500000000000001,
+      "judge_completeness": 0.215,
+      "judge_relevance": 0.5,
+      "judge_clarity": 0.71,
+      "composite_f1_accuracy": 0.01913931169386882,
+      "comprehensive_score": 0.16348358701632132,
+      "high_performance": false
+    },
+    "category_performance": {
+      "single_hop": {
+        "count": 8,
+        "exact_match_score": 0.0,
+        "partial_match_score": 0.375,
+        "avg_f1_score": 0.08959899749373434,
+        "avg_precision": 0.06372549019607843,
+        "avg_recall": 0.19642857142857142,
+        "semantic_similarity": 0.08959899749373434
+      },
+      "temporal": {
+        "count": 10,
+        "exact_match_score": 0.0,
+        "partial_match_score": 0.0,
+        "avg_f1_score": 0.0,
+        "avg_precision": 0.0,
+        "avg_recall": 0.0,
+        "semantic_similarity": 0.0
+      },
+      "multi_hop": {
+        "count": 2,
+        "exact_match_score": 0.0,
+        "partial_match_score": 0.0,
+        "avg_f1_score": 0.024390243902439022,
+        "avg_precision": 0.013157894736842105,
+        "avg_recall": 0.16666666666666666,
+        "semantic_similarity": 0.024390243902439022
+      },
+      "open_domain": {
+        "count": 0,
+        "exact_match_score": 0.0,
+        "partial_match_score": 0.0,
+        "avg_f1_score": 0.0,
+        "avg_precision": 0.0,
+        "avg_recall": 0.0,
+        "semantic_similarity": 0.0
+      },
+      "adversarial": {
+        "count": 0,
+        "exact_match_score": 0.0,
+        "partial_match_score": 0.0,
+        "avg_f1_score": 0.0,
+        "avg_precision": 0.0,
+        "avg_recall": 0.0,
+        "semantic_similarity": 0.0
+      }
+    },
+    "detailed_results": [
+      {
+        "question": "When did Caroline go to the LGBTQ support group?",
+        "correct_answer": "7 May 2023",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories.",
+        "category": 2,
+        "category_name": "temporal",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D1:3"
+        ],
+        "memories_retrieved": 8,
+        "total_evaluation_time": 4.122701644897461,
+        "metadata": {
+          "category": "temporal",
+          "memories_used": 8,
+          "generation_time": 1.117682933807373,
+          "token_usage": {
+            "prompt_tokens": 562,
+            "completion_tokens": 6,
+            "total_tokens": 568
+          },
+          "context_length": 2298
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "When did Melanie paint a sunrise?",
+        "correct_answer": 2022,
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories",
+        "category": 2,
+        "category_name": "temporal",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D1:12"
+        ],
+        "memories_retrieved": 4,
+        "total_evaluation_time": 3.303588628768921,
+        "metadata": {
+          "category": "temporal",
+          "memories_used": 4,
+          "generation_time": 1.0462894439697266,
+          "token_usage": {
+            "prompt_tokens": 406,
+            "completion_tokens": 5,
+            "total_tokens": 411
+          },
+          "context_length": 1502
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "What fields would Caroline be likely to pursue in her educaton?",
+        "correct_answer": "Psychology, counseling certification",
+        "adversarial_answer": null,
+        "generated_answer": "Caroline would likely pursue fields related to art and mental health in her education. She finds painting a powerful form of self-expression and uses art to explore identity and teach about trans experiences (Memory 1, Memory 5). Additionally, she is interested in a career in counseling or mental health, valuing empathy and understanding (Memory 2).",
+        "category": 3,
+        "category_name": "multi_hop",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D1:9",
+          "D1:11"
+        ],
+        "memories_retrieved": 5,
+        "total_evaluation_time": 5.333970069885254,
+        "metadata": {
+          "category": "multi_hop",
+          "memories_used": 5,
+          "generation_time": 1.5089924335479736,
+          "token_usage": {
+            "prompt_tokens": 486,
+            "completion_tokens": 69,
+            "total_tokens": 555
+          },
+          "context_length": 1884
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.048780487804878044,
+          "precision": 0.02631578947368421,
+          "recall": 0.3333333333333333,
+          "semantic_similarity": 0.048780487804878044,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "What did Caroline research?",
+        "correct_answer": "Adoption agencies",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories.",
+        "category": 1,
+        "category_name": "single_hop",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D2:8"
+        ],
+        "memories_retrieved": 7,
+        "total_evaluation_time": 3.6660683155059814,
+        "metadata": {
+          "category": "single_hop",
+          "memories_used": 7,
+          "generation_time": 1.5407435894012451,
+          "token_usage": {
+            "prompt_tokens": 559,
+            "completion_tokens": 6,
+            "total_tokens": 565
+          },
+          "context_length": 2298
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "What is Caroline's identity?",
+        "correct_answer": "Transgender woman",
+        "adversarial_answer": null,
+        "generated_answer": "Caroline is a trans woman who uses art to explore her gender identity and find self-acceptance during her transition.",
+        "category": 1,
+        "category_name": "single_hop",
+        "exact_match": false,
+        "partial_match": true,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D1:5"
+        ],
+        "memories_retrieved": 7,
+        "total_evaluation_time": 5.356781482696533,
+        "metadata": {
+          "category": "single_hop",
+          "memories_used": 7,
+          "generation_time": 3.0358917713165283,
+          "token_usage": {
+            "prompt_tokens": 560,
+            "completion_tokens": 24,
+            "total_tokens": 584
+          },
+          "context_length": 2298
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": true,
+          "f1_score": 0.10526315789473684,
+          "precision": 0.058823529411764705,
+          "recall": 0.5,
+          "semantic_similarity": 0.10526315789473684,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "When did Melanie run a charity race?",
+        "correct_answer": "The sunday before 25 May 2023",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories.",
+        "category": 2,
+        "category_name": "temporal",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D2:1"
+        ],
+        "memories_retrieved": 8,
+        "total_evaluation_time": 2.904714822769165,
+        "metadata": {
+          "category": "temporal",
+          "memories_used": 8,
+          "generation_time": 0.8847832679748535,
+          "token_usage": {
+            "prompt_tokens": 570,
+            "completion_tokens": 6,
+            "total_tokens": 576
+          },
+          "context_length": 2343
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "When is Melanie planning on going camping?",
+        "correct_answer": "June 2023",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories.",
+        "category": 2,
+        "category_name": "temporal",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D2:7"
+        ],
+        "memories_retrieved": 9,
+        "total_evaluation_time": 3.105194091796875,
+        "metadata": {
+          "category": "temporal",
+          "memories_used": 9,
+          "generation_time": 1.2252178192138672,
+          "token_usage": {
+            "prompt_tokens": 570,
+            "completion_tokens": 6,
+            "total_tokens": 576
+          },
+          "context_length": 2343
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "What is Caroline's relationship status?",
+        "correct_answer": "Single",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories.",
+        "category": 1,
+        "category_name": "single_hop",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D3:13",
+          "D2:14"
+        ],
+        "memories_retrieved": 3,
+        "total_evaluation_time": 3.0945444107055664,
+        "metadata": {
+          "category": "single_hop",
+          "memories_used": 3,
+          "generation_time": 0.7697820663452148,
+          "token_usage": {
+            "prompt_tokens": 350,
+            "completion_tokens": 6,
+            "total_tokens": 356
+          },
+          "context_length": 1111
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "When did Caroline give a speech at a school?",
+        "correct_answer": "The week before 9 June 2023",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories.",
+        "category": 2,
+        "category_name": "temporal",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D3:1"
+        ],
+        "memories_retrieved": 7,
+        "total_evaluation_time": 3.8237740993499756,
+        "metadata": {
+          "category": "temporal",
+          "memories_used": 7,
+          "generation_time": 1.4749677181243896,
+          "token_usage": {
+            "prompt_tokens": 562,
+            "completion_tokens": 6,
+            "total_tokens": 568
+          },
+          "context_length": 2298
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "When did Caroline meet up with her friends, family, and mentors?",
+        "correct_answer": "The week before 9 June 2023",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories.",
+        "category": 2,
+        "category_name": "temporal",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D3:11"
+        ],
+        "memories_retrieved": 10,
+        "total_evaluation_time": 3.289917469024658,
+        "metadata": {
+          "category": "temporal",
+          "memories_used": 10,
+          "generation_time": 1.1144466400146484,
+          "token_usage": {
+            "prompt_tokens": 566,
+            "completion_tokens": 6,
+            "total_tokens": 572
+          },
+          "context_length": 2298
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "How long has Caroline had her current group of friends for?",
+        "correct_answer": "4 years",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories",
+        "category": 2,
+        "category_name": "temporal",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D3:13"
+        ],
+        "memories_retrieved": 7,
+        "total_evaluation_time": 3.2815983295440674,
+        "metadata": {
+          "category": "temporal",
+          "memories_used": 7,
+          "generation_time": 1.1319382190704346,
+          "token_usage": {
+            "prompt_tokens": 564,
+            "completion_tokens": 5,
+            "total_tokens": 569
+          },
+          "context_length": 2298
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "Where did Caroline move from 4 years ago?",
+        "correct_answer": "Sweden",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories",
+        "category": 1,
+        "category_name": "single_hop",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D3:13",
+          "D4:3"
+        ],
+        "memories_retrieved": 7,
+        "total_evaluation_time": 3.78650164604187,
+        "metadata": {
+          "category": "single_hop",
+          "memories_used": 7,
+          "generation_time": 1.4639992713928223,
+          "token_usage": {
+            "prompt_tokens": 564,
+            "completion_tokens": 5,
+            "total_tokens": 569
+          },
+          "context_length": 2298
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "How long ago was Caroline's 18th birthday?",
+        "correct_answer": "10 years ago",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories.",
+        "category": 2,
+        "category_name": "temporal",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D4:5"
+        ],
+        "memories_retrieved": 3,
+        "total_evaluation_time": 2.3911118507385254,
+        "metadata": {
+          "category": "temporal",
+          "memories_used": 3,
+          "generation_time": 0.8253166675567627,
+          "token_usage": {
+            "prompt_tokens": 352,
+            "completion_tokens": 6,
+            "total_tokens": 358
+          },
+          "context_length": 1111
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "What career path has Caroline decided to persue?",
+        "correct_answer": "counseling or mental health for Transgender people",
+        "adversarial_answer": null,
+        "generated_answer": "Caroline has decided to pursue a career in counseling or mental health. (Memory 2)",
+        "category": 1,
+        "category_name": "single_hop",
+        "exact_match": false,
+        "partial_match": true,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D4:13",
+          "D1:11"
+        ],
+        "memories_retrieved": 5,
+        "total_evaluation_time": 4.938734769821167,
+        "metadata": {
+          "category": "single_hop",
+          "memories_used": 5,
+          "generation_time": 1.8172006607055664,
+          "token_usage": {
+            "prompt_tokens": 484,
+            "completion_tokens": 19,
+            "total_tokens": 503
+          },
+          "context_length": 1884
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": true,
+          "f1_score": 0.4210526315789474,
+          "precision": 0.3333333333333333,
+          "recall": 0.5714285714285714,
+          "semantic_similarity": 0.4210526315789474,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "Would Caroline still want to pursue counseling as a career if she hadn't received support growing up?",
+        "correct_answer": "Likely no",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories",
+        "category": 3,
+        "category_name": "multi_hop",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D4:15",
+          "D3:5"
+        ],
+        "memories_retrieved": 9,
+        "total_evaluation_time": 3.585113286972046,
+        "metadata": {
+          "category": "multi_hop",
+          "memories_used": 9,
+          "generation_time": 1.0547409057617188,
+          "token_usage": {
+            "prompt_tokens": 524,
+            "completion_tokens": 5,
+            "total_tokens": 529
+          },
+          "context_length": 2067
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "What activities does Melanie partake in?",
+        "correct_answer": "pottery, camping, painting, swimming",
+        "adversarial_answer": null,
+        "generated_answer": "Melanie partakes in painting, pottery, and enjoys live music. She finds painting and pottery calming and satisfying, and she recently attended a live band show.",
+        "category": 1,
+        "category_name": "single_hop",
+        "exact_match": false,
+        "partial_match": true,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D5:4",
+          "D9:1",
+          "D1:12",
+          "D1:18"
+        ],
+        "memories_retrieved": 9,
+        "total_evaluation_time": 3.9362006187438965,
+        "metadata": {
+          "category": "single_hop",
+          "memories_used": 9,
+          "generation_time": 1.4387307167053223,
+          "token_usage": {
+            "prompt_tokens": 561,
+            "completion_tokens": 32,
+            "total_tokens": 593
+          },
+          "context_length": 2310
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": true,
+          "f1_score": 0.19047619047619047,
+          "precision": 0.11764705882352941,
+          "recall": 0.5,
+          "semantic_similarity": 0.19047619047619047,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "When did Melanie sign up for a pottery class?",
+        "correct_answer": "2 July 2023",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories.",
+        "category": 2,
+        "category_name": "temporal",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D5:4"
+        ],
+        "memories_retrieved": 3,
+        "total_evaluation_time": 2.311363458633423,
+        "metadata": {
+          "category": "temporal",
+          "memories_used": 3,
+          "generation_time": 0.7388420104980469,
+          "token_usage": {
+            "prompt_tokens": 345,
+            "completion_tokens": 6,
+            "total_tokens": 351
+          },
+          "context_length": 1141
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "When is Caroline going to the transgender conference?",
+        "correct_answer": "July 2023",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories.",
+        "category": 2,
+        "category_name": "temporal",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D5:13"
+        ],
+        "memories_retrieved": 8,
+        "total_evaluation_time": 2.9737889766693115,
+        "metadata": {
+          "category": "temporal",
+          "memories_used": 8,
+          "generation_time": 0.7596297264099121,
+          "token_usage": {
+            "prompt_tokens": 561,
+            "completion_tokens": 6,
+            "total_tokens": 567
+          },
+          "context_length": 2298
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "Where has Melanie camped?",
+        "correct_answer": "beach, mountains, forest",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories.",
+        "category": 1,
+        "category_name": "single_hop",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D6:16",
+          "D4:6",
+          "D8:32"
+        ],
+        "memories_retrieved": 9,
+        "total_evaluation_time": 4.242737770080566,
+        "metadata": {
+          "category": "single_hop",
+          "memories_used": 9,
+          "generation_time": 0.8462855815887451,
+          "token_usage": {
+            "prompt_tokens": 570,
+            "completion_tokens": 6,
+            "total_tokens": 576
+          },
+          "context_length": 2343
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      },
+      {
+        "question": "What do Melanie's kids like?",
+        "correct_answer": "dinosaurs, nature",
+        "adversarial_answer": null,
+        "generated_answer": "Information not found in memories",
+        "category": 1,
+        "category_name": "single_hop",
+        "exact_match": false,
+        "partial_match": false,
+        "adversarial_match": false,
+        "evidence_ids": [
+          "D6:6",
+          "D4:8"
+        ],
+        "memories_retrieved": 2,
+        "total_evaluation_time": 2.695838689804077,
+        "metadata": {
+          "category": "single_hop",
+          "memories_used": 2,
+          "generation_time": 0.8773782253265381,
+          "token_usage": {
+            "prompt_tokens": 272,
+            "completion_tokens": 5,
+            "total_tokens": 277
+          },
+          "context_length": 771
+        },
+        "evaluation_metrics": {
+          "exact_match": false,
+          "partial_match": false,
+          "f1_score": 0.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "semantic_similarity": 0.0,
+          "is_adversarial": false
+        }
+      }
+    ],
+    "performance_metrics": {
+      "session_id": "locomo_benchmark_20250818_225439",
+      "session_start": "2025-08-18T22:54:39.973151",
+      "session_end": "2025-08-18T23:15:03.410636",
+      "session_duration": 1223.437485,
+      "total_operations": 5,
+      "operations_per_second": 0.004086845516262729,
+      "overall_statistics": {
+        "count": 5,
+        "total_time": 1223.412990900004,
+        "avg_time": 244.68259818000078,
+        "min_time": 0.11286070001369808,
+        "max_time": 1083.5287853999907,
+        "avg_latency_ms": 244682.5981800008,
+        "min_latency_ms": 112.86070001369808,
+        "max_latency_ms": 1083528.7853999906,
+        "total_tokens": 25329,
+        "avg_tokens_per_operation": 5065.8,
+        "total_prompt_tokens": 0,
+        "total_completion_tokens": 0,
+        "avg_prompt_tokens": 0.0,
+        "avg_completion_tokens": 0.0
+      },
+      "operation_statistics": {
+        "dataset": {
+          "count": 1,
+          "total_time": 0.11286070001369808,
+          "avg_time": 0.11286070001369808,
+          "min_time": 0.11286070001369808,
+          "max_time": 0.11286070001369808,
+          "avg_latency_ms": 112.86070001369808,
+          "min_latency_ms": 112.86070001369808,
+          "max_latency_ms": 112.86070001369808,
+          "total_tokens": 0,
+          "avg_tokens_per_operation": 0.0,
+          "total_prompt_tokens": 0,
+          "total_completion_tokens": 0,
+          "avg_prompt_tokens": 0.0,
+          "avg_completion_tokens": 0.0
+        },
+        "memory": {
+          "count": 1,
+          "total_time": 1083.5287853999907,
+          "avg_time": 1083.5287853999907,
+          "min_time": 1083.5287853999907,
+          "max_time": 1083.5287853999907,
+          "avg_latency_ms": 1083528.7853999906,
+          "min_latency_ms": 1083528.7853999906,
+          "max_latency_ms": 1083528.7853999906,
+          "total_tokens": 0,
+          "avg_tokens_per_operation": 0.0,
+          "total_prompt_tokens": 0,
+          "total_completion_tokens": 0,
+          "avg_prompt_tokens": 0.0,
+          "avg_completion_tokens": 0.0
+        },
+        "qa": {
+          "count": 1,
+          "total_time": 72.16878870000073,
+          "avg_time": 72.16878870000073,
+          "min_time": 72.16878870000073,
+          "max_time": 72.16878870000073,
+          "avg_latency_ms": 72168.78870000073,
+          "min_latency_ms": 72168.78870000073,
+          "max_latency_ms": 72168.78870000073,
+          "total_tokens": 10223,
+          "avg_tokens_per_operation": 10223.0,
+          "total_prompt_tokens": 0,
+          "total_completion_tokens": 0,
+          "avg_prompt_tokens": 0.0,
+          "avg_completion_tokens": 0.0
+        },
+        "llm": {
+          "count": 1,
+          "total_time": 48.234686900003,
+          "avg_time": 48.234686900003,
+          "min_time": 48.234686900003,
+          "max_time": 48.234686900003,
+          "avg_latency_ms": 48234.686900003,
+          "min_latency_ms": 48234.686900003,
+          "max_latency_ms": 48234.686900003,
+          "total_tokens": 13556,
+          "avg_tokens_per_operation": 13556.0,
+          "total_prompt_tokens": 0,
+          "total_completion_tokens": 0,
+          "avg_prompt_tokens": 0.0,
+          "avg_completion_tokens": 0.0
+        },
+        "event": {
+          "count": 1,
+          "total_time": 19.367869199995766,
+          "avg_time": 19.367869199995766,
+          "min_time": 19.367869199995766,
+          "max_time": 19.367869199995766,
+          "avg_latency_ms": 19367.869199995766,
+          "min_latency_ms": 19367.869199995766,
+          "max_latency_ms": 19367.869199995766,
+          "total_tokens": 1550,
+          "avg_tokens_per_operation": 1550.0,
+          "total_prompt_tokens": 0,
+          "total_completion_tokens": 0,
+          "avg_prompt_tokens": 0.0,
+          "avg_completion_tokens": 0.0
+        }
+      }
+    },
+    "judge_evaluation": {
+      "total_evaluations": 20,
+      "evaluation_start": 1755539035.8057053,
+      "individual_judgments": [
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer states that the information is not found, which is incorrect as the ground truth provides a specific date. This indicates a failure to retrieve or recognize the relevant information.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 1.0,
+          "question": "When did Caroline go to the LGBTQ support group?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "7 May 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 2.194079875946045,
+          "token_usage": {
+            "prompt_tokens": 566,
+            "completion_tokens": 92,
+            "total_tokens": 658
+          },
+          "original_qa_result": {
+            "question": "When did Caroline go to the LGBTQ support group?",
+            "correct_answer": "7 May 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D1:3"
+            ],
+            "memories_retrieved": 8,
+            "total_evaluation_time": 4.122701644897461,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 8,
+              "generation_time": 1.117682933807373,
+              "token_usage": {
+                "prompt_tokens": 562,
+                "completion_tokens": 6,
+                "total_tokens": 568
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer states 'Information not found in memories,' which is incorrect as the ground truth provides a specific year, 2022. This indicates a failure to retrieve the available information.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 1.0,
+          "question": "When did Melanie paint a sunrise?",
+          "generated_answer": "Information not found in memories",
+          "ground_truth_answer": 2022,
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 2.517000436782837,
+          "token_usage": {
+            "prompt_tokens": 560,
+            "completion_tokens": 94,
+            "total_tokens": 654
+          },
+          "original_qa_result": {
+            "question": "When did Melanie paint a sunrise?",
+            "correct_answer": 2022,
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D1:12"
+            ],
+            "memories_retrieved": 4,
+            "total_evaluation_time": 3.303588628768921,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 4,
+              "generation_time": 1.0462894439697266,
+              "token_usage": {
+                "prompt_tokens": 406,
+                "completion_tokens": 5,
+                "total_tokens": 411
+              },
+              "context_length": 1502
+            }
+          }
+        },
+        {
+          "score": 0.8,
+          "reasoning": "The generated answer accurately identifies mental health as a field Caroline is interested in, which aligns with the ground truth of psychology and counseling. However, it introduces art as a field of interest, which is not mentioned in the ground truth. This addition is relevant based on the context but not directly aligned with the ground truth answer.",
+          "accuracy": 0.8,
+          "completeness": 0.8,
+          "relevance": 0.8,
+          "clarity": 1.0,
+          "question": "What fields would Caroline be likely to pursue in her educaton?",
+          "generated_answer": "Caroline would likely pursue fields related to art and mental health in her education. She finds painting a powerful form of self-expression and uses art to explore identity and teach about trans experiences (Memory 1, Memory 5). Additionally, she is interested in a career in counseling or mental health, valuing empathy and understanding (Memory 2).",
+          "ground_truth_answer": "Psychology, counseling certification",
+          "category": "multi_hop",
+          "category_id": 3,
+          "evaluation_time": 2.538712739944458,
+          "token_usage": {
+            "prompt_tokens": 636,
+            "completion_tokens": 121,
+            "total_tokens": 757
+          },
+          "original_qa_result": {
+            "question": "What fields would Caroline be likely to pursue in her educaton?",
+            "correct_answer": "Psychology, counseling certification",
+            "adversarial_answer": null,
+            "generated_answer": "Caroline would likely pursue fields related to art and mental health in her education. She finds painting a powerful form of self-expression and uses art to explore identity and teach about trans experiences (Memory 1, Memory 5). Additionally, she is interested in a career in counseling or mental health, valuing empathy and understanding (Memory 2).",
+            "category": 3,
+            "category_name": "multi_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D1:9",
+              "D1:11"
+            ],
+            "memories_retrieved": 5,
+            "total_evaluation_time": 5.333970069885254,
+            "metadata": {
+              "category": "multi_hop",
+              "memories_used": 5,
+              "generation_time": 1.5089924335479736,
+              "token_usage": {
+                "prompt_tokens": 486,
+                "completion_tokens": 69,
+                "total_tokens": 555
+              },
+              "context_length": 1884
+            }
+          }
+        },
+        {
+          "score": 0.0,
+          "reasoning": "The generated answer 'Information not found in memories' is incorrect as the ground truth clearly states that Caroline researched 'Adoption agencies'. The generated answer fails to provide any factual information, completeness, or relevance to the question.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.0,
+          "clarity": 0.0,
+          "question": "What did Caroline research?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "Adoption agencies",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 2.3194007873535156,
+          "token_usage": {
+            "prompt_tokens": 559,
+            "completion_tokens": 101,
+            "total_tokens": 660
+          },
+          "original_qa_result": {
+            "question": "What did Caroline research?",
+            "correct_answer": "Adoption agencies",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D2:8"
+            ],
+            "memories_retrieved": 7,
+            "total_evaluation_time": 3.6660683155059814,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 7,
+              "generation_time": 1.5407435894012451,
+              "token_usage": {
+                "prompt_tokens": 559,
+                "completion_tokens": 6,
+                "total_tokens": 565
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.8,
+          "reasoning": "The generated answer accurately identifies Caroline as a trans woman, which matches the ground truth. However, it includes additional information about her using art to explore her gender identity, which is not present in the ground truth. This extra detail does not detract from the factual accuracy but affects completeness as it introduces elements not required by the question.",
+          "accuracy": 1.0,
+          "completeness": 0.7,
+          "relevance": 0.8,
+          "clarity": 1.0,
+          "question": "What is Caroline's identity?",
+          "generated_answer": "Caroline is a trans woman who uses art to explore her gender identity and find self-acceptance during her transition.",
+          "ground_truth_answer": "Transgender woman",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 2.555816411972046,
+          "token_usage": {
+            "prompt_tokens": 578,
+            "completion_tokens": 123,
+            "total_tokens": 701
+          },
+          "original_qa_result": {
+            "question": "What is Caroline's identity?",
+            "correct_answer": "Transgender woman",
+            "adversarial_answer": null,
+            "generated_answer": "Caroline is a trans woman who uses art to explore her gender identity and find self-acceptance during her transition.",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": true,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D1:5"
+            ],
+            "memories_retrieved": 7,
+            "total_evaluation_time": 5.356781482696533,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 7,
+              "generation_time": 3.0358917713165283,
+              "token_usage": {
+                "prompt_tokens": 560,
+                "completion_tokens": 24,
+                "total_tokens": 584
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer 'Information not found in memories' is incorrect as the ground truth provides a specific date. The system failed to retrieve the available information.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 0.5,
+          "question": "When did Melanie run a charity race?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "The sunday before 25 May 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 2.126967191696167,
+          "token_usage": {
+            "prompt_tokens": 567,
+            "completion_tokens": 87,
+            "total_tokens": 654
+          },
+          "original_qa_result": {
+            "question": "When did Melanie run a charity race?",
+            "correct_answer": "The sunday before 25 May 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D2:1"
+            ],
+            "memories_retrieved": 8,
+            "total_evaluation_time": 2.904714822769165,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 8,
+              "generation_time": 0.8847832679748535,
+              "token_usage": {
+                "prompt_tokens": 570,
+                "completion_tokens": 6,
+                "total_tokens": 576
+              },
+              "context_length": 2343
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer states 'Information not found in memories,' which is incorrect as the ground truth specifies 'June 2023.' The generated answer fails to provide any factual information or completeness regarding the question.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 0.5,
+          "question": "When is Melanie planning on going camping?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "June 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 2.1647591590881348,
+          "token_usage": {
+            "prompt_tokens": 562,
+            "completion_tokens": 97,
+            "total_tokens": 659
+          },
+          "original_qa_result": {
+            "question": "When is Melanie planning on going camping?",
+            "correct_answer": "June 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D2:7"
+            ],
+            "memories_retrieved": 9,
+            "total_evaluation_time": 3.105194091796875,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 9,
+              "generation_time": 1.2252178192138672,
+              "token_usage": {
+                "prompt_tokens": 570,
+                "completion_tokens": 6,
+                "total_tokens": 576
+              },
+              "context_length": 2343
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer 'Information not found in memories' is incorrect as the ground truth clearly states that Caroline is 'Single'. The generated answer fails to provide the factual information available in the evidence context.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 0.5,
+          "question": "What is Caroline's relationship status?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "Single",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 2.2850756645202637,
+          "token_usage": {
+            "prompt_tokens": 565,
+            "completion_tokens": 96,
+            "total_tokens": 661
+          },
+          "original_qa_result": {
+            "question": "What is Caroline's relationship status?",
+            "correct_answer": "Single",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D3:13",
+              "D2:14"
+            ],
+            "memories_retrieved": 3,
+            "total_evaluation_time": 3.0945444107055664,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 3,
+              "generation_time": 0.7697820663452148,
+              "token_usage": {
+                "prompt_tokens": 350,
+                "completion_tokens": 6,
+                "total_tokens": 356
+              },
+              "context_length": 1111
+            }
+          }
+        },
+        {
+          "score": 0.4,
+          "reasoning": "The generated answer 'Information not found in memories' is incorrect as the ground truth provides a specific temporal detail. The generated answer fails to capture any factual information or key elements from the ground truth, which indicates a major omission. However, the answer is clear in its statement.",
+          "accuracy": 0.3,
+          "completeness": 0.3,
+          "relevance": 0.5,
+          "clarity": 1.0,
+          "question": "When did Caroline give a speech at a school?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "The week before 9 June 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 4.036327362060547,
+          "token_usage": {
+            "prompt_tokens": 569,
+            "completion_tokens": 112,
+            "total_tokens": 681
+          },
+          "original_qa_result": {
+            "question": "When did Caroline give a speech at a school?",
+            "correct_answer": "The week before 9 June 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D3:1"
+            ],
+            "memories_retrieved": 7,
+            "total_evaluation_time": 3.8237740993499756,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 7,
+              "generation_time": 1.4749677181243896,
+              "token_usage": {
+                "prompt_tokens": 562,
+                "completion_tokens": 6,
+                "total_tokens": 568
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer states that the information is not found, which is incorrect as the ground truth provides a specific time frame. The generated answer fails to capture any factual information, lacks completeness, and does not address the question directly.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.3,
+          "clarity": 1.0,
+          "question": "When did Caroline meet up with her friends, family, and mentors?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "The week before 9 June 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 3.0518527030944824,
+          "token_usage": {
+            "prompt_tokens": 573,
+            "completion_tokens": 102,
+            "total_tokens": 675
+          },
+          "original_qa_result": {
+            "question": "When did Caroline meet up with her friends, family, and mentors?",
+            "correct_answer": "The week before 9 June 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D3:11"
+            ],
+            "memories_retrieved": 10,
+            "total_evaluation_time": 3.289917469024658,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 10,
+              "generation_time": 1.1144466400146484,
+              "token_usage": {
+                "prompt_tokens": 566,
+                "completion_tokens": 6,
+                "total_tokens": 572
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "Parse error: Expecting value: line 1 column 1 (char 0)",
+          "accuracy": 0.3,
+          "completeness": 0.3,
+          "relevance": 0.3,
+          "clarity": 0.3,
+          "question": "How long has Caroline had her current group of friends for?",
+          "generated_answer": "Information not found in memories",
+          "ground_truth_answer": "4 years",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 1.741013765335083,
+          "token_usage": {
+            "prompt_tokens": 565,
+            "completion_tokens": 95,
+            "total_tokens": 660
+          },
+          "original_qa_result": {
+            "question": "How long has Caroline had her current group of friends for?",
+            "correct_answer": "4 years",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D3:13"
+            ],
+            "memories_retrieved": 7,
+            "total_evaluation_time": 3.2815983295440674,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 7,
+              "generation_time": 1.1319382190704346,
+              "token_usage": {
+                "prompt_tokens": 564,
+                "completion_tokens": 5,
+                "total_tokens": 569
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer 'Information not found in memories' is incorrect as the ground truth answer 'Sweden' is available in the evidence context. The system failed to retrieve the correct information from the provided context.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 1.0,
+          "question": "Where did Caroline move from 4 years ago?",
+          "generated_answer": "Information not found in memories",
+          "ground_truth_answer": "Sweden",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 1.8594779968261719,
+          "token_usage": {
+            "prompt_tokens": 568,
+            "completion_tokens": 98,
+            "total_tokens": 666
+          },
+          "original_qa_result": {
+            "question": "Where did Caroline move from 4 years ago?",
+            "correct_answer": "Sweden",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D3:13",
+              "D4:3"
+            ],
+            "memories_retrieved": 7,
+            "total_evaluation_time": 3.78650164604187,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 7,
+              "generation_time": 1.4639992713928223,
+              "token_usage": {
+                "prompt_tokens": 564,
+                "completion_tokens": 5,
+                "total_tokens": 569
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer 'Information not found in memories.' does not provide the factual information that Caroline's 18th birthday was 10 years ago. It fails to address the temporal aspect of the question and does not include any key elements from the ground truth.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 0.5,
+          "question": "How long ago was Caroline's 18th birthday?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "10 years ago",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 1.9541723728179932,
+          "token_usage": {
+            "prompt_tokens": 565,
+            "completion_tokens": 108,
+            "total_tokens": 673
+          },
+          "original_qa_result": {
+            "question": "How long ago was Caroline's 18th birthday?",
+            "correct_answer": "10 years ago",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D4:5"
+            ],
+            "memories_retrieved": 3,
+            "total_evaluation_time": 2.3911118507385254,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 3,
+              "generation_time": 0.8253166675567627,
+              "token_usage": {
+                "prompt_tokens": 352,
+                "completion_tokens": 6,
+                "total_tokens": 358
+              },
+              "context_length": 1111
+            }
+          }
+        },
+        {
+          "score": 0.8,
+          "reasoning": "The generated answer accurately identifies the career path as counseling or mental health, which aligns with the ground truth. However, it omits the specific focus on Transgender people, which is a key detail.",
+          "accuracy": 0.8,
+          "completeness": 0.7,
+          "relevance": 1.0,
+          "clarity": 1.0,
+          "question": "What career path has Caroline decided to persue?",
+          "generated_answer": "Caroline has decided to pursue a career in counseling or mental health. (Memory 2)",
+          "ground_truth_answer": "counseling or mental health for Transgender people",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 1.8646068572998047,
+          "token_usage": {
+            "prompt_tokens": 587,
+            "completion_tokens": 97,
+            "total_tokens": 684
+          },
+          "original_qa_result": {
+            "question": "What career path has Caroline decided to persue?",
+            "correct_answer": "counseling or mental health for Transgender people",
+            "adversarial_answer": null,
+            "generated_answer": "Caroline has decided to pursue a career in counseling or mental health. (Memory 2)",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": true,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D4:13",
+              "D1:11"
+            ],
+            "memories_retrieved": 5,
+            "total_evaluation_time": 4.938734769821167,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 5,
+              "generation_time": 1.8172006607055664,
+              "token_usage": {
+                "prompt_tokens": 484,
+                "completion_tokens": 19,
+                "total_tokens": 503
+              },
+              "context_length": 1884
+            }
+          }
+        },
+        {
+          "score": 0.5,
+          "reasoning": "The generated answer 'Information not found in memories' indicates that the system could not find relevant information to answer the question. The ground truth suggests a likely 'no', implying that there is some information in the context that could lead to this conclusion. The generated answer lacks factual accuracy and completeness but is relevant in acknowledging the lack of information. Clarity is maintained as the response is straightforward.",
+          "accuracy": 0.4,
+          "completeness": 0.4,
+          "relevance": 0.6,
+          "clarity": 0.8,
+          "question": "Would Caroline still want to pursue counseling as a career if she hadn't received support growing up?",
+          "generated_answer": "Information not found in memories",
+          "ground_truth_answer": "Likely no",
+          "category": "multi_hop",
+          "category_id": 3,
+          "evaluation_time": 2.862372875213623,
+          "token_usage": {
+            "prompt_tokens": 578,
+            "completion_tokens": 134,
+            "total_tokens": 712
+          },
+          "original_qa_result": {
+            "question": "Would Caroline still want to pursue counseling as a career if she hadn't received support growing up?",
+            "correct_answer": "Likely no",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories",
+            "category": 3,
+            "category_name": "multi_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D4:15",
+              "D3:5"
+            ],
+            "memories_retrieved": 9,
+            "total_evaluation_time": 3.585113286972046,
+            "metadata": {
+              "category": "multi_hop",
+              "memories_used": 9,
+              "generation_time": 1.0547409057617188,
+              "token_usage": {
+                "prompt_tokens": 524,
+                "completion_tokens": 5,
+                "total_tokens": 529
+              },
+              "context_length": 2067
+            }
+          }
+        },
+        {
+          "score": 0.5,
+          "reasoning": "The generated answer includes painting and pottery, which are correct, but it incorrectly adds live music and omits camping and swimming. The factual accuracy is compromised by the inclusion of an incorrect activity and the omission of two correct ones. The answer is relevant and clear but lacks completeness.",
+          "accuracy": 0.5,
+          "completeness": 0.5,
+          "relevance": 0.8,
+          "clarity": 1.0,
+          "question": "What activities does Melanie partake in?",
+          "generated_answer": "Melanie partakes in painting, pottery, and enjoys live music. She finds painting and pottery calming and satisfying, and she recently attended a live band show.",
+          "ground_truth_answer": "pottery, camping, painting, swimming",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 2.624316930770874,
+          "token_usage": {
+            "prompt_tokens": 606,
+            "completion_tokens": 112,
+            "total_tokens": 718
+          },
+          "original_qa_result": {
+            "question": "What activities does Melanie partake in?",
+            "correct_answer": "pottery, camping, painting, swimming",
+            "adversarial_answer": null,
+            "generated_answer": "Melanie partakes in painting, pottery, and enjoys live music. She finds painting and pottery calming and satisfying, and she recently attended a live band show.",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": true,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D5:4",
+              "D9:1",
+              "D1:12",
+              "D1:18"
+            ],
+            "memories_retrieved": 9,
+            "total_evaluation_time": 3.9362006187438965,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 9,
+              "generation_time": 1.4387307167053223,
+              "token_usage": {
+                "prompt_tokens": 561,
+                "completion_tokens": 32,
+                "total_tokens": 593
+              },
+              "context_length": 2310
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer states that the information is not found, which is incorrect as the ground truth provides a specific date. This indicates a failure to retrieve the relevant information from the memory.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 1.0,
+          "question": "When did Melanie sign up for a pottery class?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "2 July 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 2.8726768493652344,
+          "token_usage": {
+            "prompt_tokens": 566,
+            "completion_tokens": 93,
+            "total_tokens": 659
+          },
+          "original_qa_result": {
+            "question": "When did Melanie sign up for a pottery class?",
+            "correct_answer": "2 July 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D5:4"
+            ],
+            "memories_retrieved": 3,
+            "total_evaluation_time": 2.311363458633423,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 3,
+              "generation_time": 0.7388420104980469,
+              "token_usage": {
+                "prompt_tokens": 345,
+                "completion_tokens": 6,
+                "total_tokens": 351
+              },
+              "context_length": 1141
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "Parse error: Expecting value: line 1 column 1 (char 0)",
+          "accuracy": 0.3,
+          "completeness": 0.3,
+          "relevance": 0.3,
+          "clarity": 0.3,
+          "question": "When is Caroline going to the transgender conference?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "July 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 2.013782501220703,
+          "token_usage": {
+            "prompt_tokens": 563,
+            "completion_tokens": 110,
+            "total_tokens": 673
+          },
+          "original_qa_result": {
+            "question": "When is Caroline going to the transgender conference?",
+            "correct_answer": "July 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D5:13"
+            ],
+            "memories_retrieved": 8,
+            "total_evaluation_time": 2.9737889766693115,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 8,
+              "generation_time": 0.7596297264099121,
+              "token_usage": {
+                "prompt_tokens": 561,
+                "completion_tokens": 6,
+                "total_tokens": 567
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.2,
+          "reasoning": "The generated answer 'Information not found in memories.' is incorrect as the ground truth clearly states that Melanie has camped at the beach, mountains, and forest. The generated answer fails to provide any of this information.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.3,
+          "clarity": 0.5,
+          "question": "Where has Melanie camped?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "beach, mountains, forest",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 2.2614543437957764,
+          "token_usage": {
+            "prompt_tokens": 573,
+            "completion_tokens": 100,
+            "total_tokens": 673
+          },
+          "original_qa_result": {
+            "question": "Where has Melanie camped?",
+            "correct_answer": "beach, mountains, forest",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D6:16",
+              "D4:6",
+              "D8:32"
+            ],
+            "memories_retrieved": 9,
+            "total_evaluation_time": 4.242737770080566,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 9,
+              "generation_time": 0.8462855815887451,
+              "token_usage": {
+                "prompt_tokens": 570,
+                "completion_tokens": 6,
+                "total_tokens": 576
+              },
+              "context_length": 2343
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "Parse error: Expecting value: line 1 column 1 (char 0)",
+          "accuracy": 0.3,
+          "completeness": 0.3,
+          "relevance": 0.3,
+          "clarity": 0.3,
+          "question": "What do Melanie's kids like?",
+          "generated_answer": "Information not found in memories",
+          "ground_truth_answer": "dinosaurs, nature",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 2.3829398155212402,
+          "token_usage": {
+            "prompt_tokens": 567,
+            "completion_tokens": 111,
+            "total_tokens": 678
+          },
+          "original_qa_result": {
+            "question": "What do Melanie's kids like?",
+            "correct_answer": "dinosaurs, nature",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D6:6",
+              "D4:8"
+            ],
+            "memories_retrieved": 2,
+            "total_evaluation_time": 2.695838689804077,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 2,
+              "generation_time": 0.8773782253265381,
+              "token_usage": {
+                "prompt_tokens": 272,
+                "completion_tokens": 5,
+                "total_tokens": 277
+              },
+              "context_length": 771
+            }
+          }
+        }
+      ],
+      "category_scores": {
+        "single_hop": {
+          "j_score": 0.4,
+          "j_score_percentage": 40.0,
+          "count": 8,
+          "accuracy": 0.325,
+          "completeness": 0.27499999999999997,
+          "relevance": 0.525,
+          "clarity": 0.6625
+        },
+        "temporal": {
+          "j_score": 0.31,
+          "j_score_percentage": 31.0,
+          "count": 10,
+          "accuracy": 0.09,
+          "completeness": 0.09,
+          "relevance": 0.44000000000000006,
+          "clarity": 0.71
+        },
+        "multi_hop": {
+          "j_score": 0.65,
+          "j_score_percentage": 65.0,
+          "count": 2,
+          "accuracy": 0.6000000000000001,
+          "completeness": 0.6000000000000001,
+          "relevance": 0.7,
+          "clarity": 0.9
+        }
+      },
+      "overall_scores": {
+        "j_score": 0.38,
+        "j_score_percentage": 38.0,
+        "accuracy": 0.23500000000000001,
+        "completeness": 0.215,
+        "relevance": 0.5,
+        "clarity": 0.71,
+        "total_evaluations": 20,
+        "failed_evaluations": 0,
+        "success_rate": 1.0,
+        "total_tokens": 13556,
+        "avg_tokens_per_evaluation": 677.8,
+        "avg_evaluation_time": 2.41134033203125
+      },
+      "evaluation_end": 1755539084.0355499,
+      "total_evaluation_time": 48.22984457015991
+    },
+    "performance_summary": [
+      "Overall Performance: 0.0% exact match, 3.8% F1 score",
+      "LLM Judge Score: 38.0% (Target: \u226570% for high performance)",
+      "\ud83d\udd27 Performance below target - areas for improvement identified",
+      "\nPerformance by Question Type:",
+      "  single_hop: 0.0% exact match, 9.0% F1 (8 questions)",
+      "  temporal: 0.0% exact match, 0.0% F1 (10 questions)",
+      "  multi_hop: 0.0% exact match, 2.4% F1 (2 questions)"
+    ],
+    "benchmark_metadata": {
+      "benchmark_id": "locomo_benchmark_20250818_225439",
+      "namespace": "benchmark_db9d5147",
+      "processing_type": "real_ai",
+      "total_conversations_processed": 1,
+      "total_memories_stored": 90,
+      "total_evaluation_time": 1223.437485,
+      "database_path": "C:\\Users\\harsh\\AppData\\Local\\Temp\\tmps2jcwh_g.db"
+    },
+    "baseline_comparison": {
+      "baseline_latency": 5.0,
+      "current_latency": 244.68259818000078,
+      "latency_reduction_percentage": -4793.651963600016,
+      "latency_improvement_achieved": false,
+      "baseline_tokens": 10000,
+      "current_tokens": 5065.8,
+      "token_reduction_percentage": 49.342,
+      "token_improvement_achieved": true,
+      "speed_improvement_factor": 0.02043463669746448,
+      "meets_latency_target": false,
+      "meets_efficiency_target": true,
+      "overall_efficiency_score": -2372.154981800008
+    }
+  },
+  "performance_tracking": {
+    "session_id": "locomo_benchmark_20250818_225439",
+    "session_start": "2025-08-18T22:54:39.973151",
+    "session_end": "2025-08-18T23:15:03.422670",
+    "session_duration": 1223.449519,
+    "total_operations": 5,
+    "operations_per_second": 0.004086805317547393,
+    "overall_statistics": {
+      "count": 5,
+      "total_time": 1223.412990900004,
+      "avg_time": 244.68259818000078,
+      "min_time": 0.11286070001369808,
+      "max_time": 1083.5287853999907,
+      "avg_latency_ms": 244682.5981800008,
+      "min_latency_ms": 112.86070001369808,
+      "max_latency_ms": 1083528.7853999906,
+      "total_tokens": 25329,
+      "avg_tokens_per_operation": 5065.8,
+      "total_prompt_tokens": 0,
+      "total_completion_tokens": 0,
+      "avg_prompt_tokens": 0.0,
+      "avg_completion_tokens": 0.0
+    },
+    "operation_statistics": {
+      "dataset": {
+        "count": 1,
+        "total_time": 0.11286070001369808,
+        "avg_time": 0.11286070001369808,
+        "min_time": 0.11286070001369808,
+        "max_time": 0.11286070001369808,
+        "avg_latency_ms": 112.86070001369808,
+        "min_latency_ms": 112.86070001369808,
+        "max_latency_ms": 112.86070001369808,
+        "total_tokens": 0,
+        "avg_tokens_per_operation": 0.0,
+        "total_prompt_tokens": 0,
+        "total_completion_tokens": 0,
+        "avg_prompt_tokens": 0.0,
+        "avg_completion_tokens": 0.0
+      },
+      "memory": {
+        "count": 1,
+        "total_time": 1083.5287853999907,
+        "avg_time": 1083.5287853999907,
+        "min_time": 1083.5287853999907,
+        "max_time": 1083.5287853999907,
+        "avg_latency_ms": 1083528.7853999906,
+        "min_latency_ms": 1083528.7853999906,
+        "max_latency_ms": 1083528.7853999906,
+        "total_tokens": 0,
+        "avg_tokens_per_operation": 0.0,
+        "total_prompt_tokens": 0,
+        "total_completion_tokens": 0,
+        "avg_prompt_tokens": 0.0,
+        "avg_completion_tokens": 0.0
+      },
+      "qa": {
+        "count": 1,
+        "total_time": 72.16878870000073,
+        "avg_time": 72.16878870000073,
+        "min_time": 72.16878870000073,
+        "max_time": 72.16878870000073,
+        "avg_latency_ms": 72168.78870000073,
+        "min_latency_ms": 72168.78870000073,
+        "max_latency_ms": 72168.78870000073,
+        "total_tokens": 10223,
+        "avg_tokens_per_operation": 10223.0,
+        "total_prompt_tokens": 0,
+        "total_completion_tokens": 0,
+        "avg_prompt_tokens": 0.0,
+        "avg_completion_tokens": 0.0
+      },
+      "llm": {
+        "count": 1,
+        "total_time": 48.234686900003,
+        "avg_time": 48.234686900003,
+        "min_time": 48.234686900003,
+        "max_time": 48.234686900003,
+        "avg_latency_ms": 48234.686900003,
+        "min_latency_ms": 48234.686900003,
+        "max_latency_ms": 48234.686900003,
+        "total_tokens": 13556,
+        "avg_tokens_per_operation": 13556.0,
+        "total_prompt_tokens": 0,
+        "total_completion_tokens": 0,
+        "avg_prompt_tokens": 0.0,
+        "avg_completion_tokens": 0.0
+      },
+      "event": {
+        "count": 1,
+        "total_time": 19.367869199995766,
+        "avg_time": 19.367869199995766,
+        "min_time": 19.367869199995766,
+        "max_time": 19.367869199995766,
+        "avg_latency_ms": 19367.869199995766,
+        "min_latency_ms": 19367.869199995766,
+        "max_latency_ms": 19367.869199995766,
+        "total_tokens": 1550,
+        "avg_tokens_per_operation": 1550.0,
+        "total_prompt_tokens": 0,
+        "total_completion_tokens": 0,
+        "avg_prompt_tokens": 0.0,
+        "avg_completion_tokens": 0.0
+      }
+    }
+  },
+  "conversation_processing": [
+    {
+      "conversation_id": "conv_01_Caroline_Melanie",
+      "speakers": [
+        "Caroline",
+        "Melanie"
+      ],
+      "total_sessions": 19,
+      "total_turns": 419,
+      "processing_start": "2025-08-18 22:54:40.087491",
+      "session_results": [
+        {
+          "chat_ids": [
+            "81d9dec6-7304-4945-8ec1-7b617dd68836",
+            "c018bd42-8a20-426b-a06e-0056dcd70e26",
+            "973bed70-53cf-4418-8099-90cc83eb6081",
+            "698006f6-61ef-43fc-a99a-41268ad94a19",
+            "49ace925-f3fe-4b24-a103-200ee54dea35",
+            "5c64f449-2714-44a8-b2fb-0f1da72071ae",
+            "6a951b13-40af-42e0-8cdb-9108566db6bd",
+            "bd900779-8874-41f5-a6c2-a249321c46c0",
+            "cf8723fe-6bf3-49d3-8906-0b10bef097c4",
+            "ca52e560-5686-4b46-bda6-597b7815d375",
+            "f3b9fdb2-3772-4356-8d90-bdad5d71abd9",
+            "19c3363b-0e1e-4499-9320-325edea7b1b4",
+            "54af44e9-579b-4d00-b4a3-04dc35164124",
+            "64023e5d-60df-43a0-b686-121374085773",
+            "60e12fe6-673b-4e90-8000-c24f0dc1ff02",
+            "a9c69225-0654-4e5b-96f7-ac46658ac4e5",
+            "384d08c8-1a5f-4df2-a0a9-56e8e315e713",
+            "0473f9fd-e14c-47d8-8e95-14d93c783e22"
+          ],
+          "memory_ids": [
+            "3b202045-6476-4510-9633-32b29ae2718c",
+            "235d63ec-51d1-448f-8f2f-f17af01162e3",
+            "28325d27-e930-4a43-b002-e85296396692",
+            "788b3a96-7fbf-4db8-ab26-fefd68529b6e"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_1"
+        },
+        {
+          "chat_ids": [
+            "1678a8c2-c906-45fc-a7ee-619213dd82ab",
+            "637f12dc-d29f-4e4a-821c-2ebfd1b9051a",
+            "5ffb3a45-7506-46d3-bbb0-9ecfcef51fb7",
+            "c31413ba-6417-4b98-9583-fc5350a32c58",
+            "6918fc43-9741-478c-b69e-89573f310067",
+            "dfab9695-b58b-4239-bb17-b47785e6af6b",
+            "1211025d-e246-414d-b726-6c50d5d9b79e",
+            "54064474-57f3-4d0c-aa74-07b79c518a90",
+            "260e5374-5b23-480a-8a66-119b879a662b",
+            "ffa3aeb3-8ba9-496b-91b1-27ca233595f1",
+            "8d891d3e-0aa9-434a-a105-6788ba40d439",
+            "62481878-7929-43d3-8b04-0587f376b5ad",
+            "0870fbc6-c322-4df0-b393-d3da422be14f",
+            "c6652935-7ca7-4911-93ea-53d77554aa11",
+            "5ea23f8e-30e1-4c5f-9887-d48c054334f9",
+            "4ef88df9-d46e-47df-9ffc-80329d21073d",
+            "33dbf7ae-4a88-4621-822a-f3c6605d6324",
+            "4ecb12cd-9abc-4cd7-87cc-92febb38b708",
+            "26cd8395-26a3-4b7a-beaa-f1f6c2fee0b4",
+            "b87643e5-fe77-4eda-b4a7-8a9a95c3ab43",
+            "c4c29807-3cb9-4cd4-b06a-d61086790076",
+            "bfa78bba-1382-41f7-8b45-d8ebd7bbde8d",
+            "da583def-e69d-4891-87c4-5b85fa76c080",
+            "602b29b8-1054-42bb-86b8-e47faf57d0e4"
+          ],
+          "memory_ids": [
+            "bbaebbdd-2f5a-4b51-baa7-94e7bdba1dfd",
+            "1b6b1370-6417-43e7-b275-4eb8b2cd93c5",
+            "700d1dd3-1c0e-40b1-a24f-15537d09170b",
+            "3e1c9e79-66b1-47d4-90a7-528e8ed279b6",
+            "bb3f2a68-38fb-4572-88a7-f6d2338a1ef0"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_10"
+        },
+        {
+          "chat_ids": [
+            "2407d1f7-135d-4efb-919b-ecc9fe6fade7",
+            "45114c0a-32e4-4423-87b4-3552c0797c5b",
+            "617454e7-26e0-4306-b5a9-291ed46cac26",
+            "dcaef1c1-ea4d-4aae-ab19-8efb18427e69",
+            "047fcf4c-480e-4347-ac14-049d91cbda19",
+            "3d9f6c93-59a5-4320-aa7c-337899dafbf3",
+            "0c2f7913-9b24-4442-8f3e-d27ee7504ba1",
+            "73fa478a-26e5-470a-9137-d35f01524c2a",
+            "460822c2-5c63-44e8-b075-0232f28d6f1b",
+            "847cfc7e-70fa-4c81-bb77-cae86b9cf192",
+            "9c466998-839b-4f9a-bc18-2b575f48b15b",
+            "242f4325-ed76-4c7a-9c0f-1091cf96a5dd",
+            "ae727615-fdbe-4a98-966b-e01d2c32c8de",
+            "391c92c6-a765-4e4f-858e-481ffcbab9db",
+            "6a22848a-5504-43ee-9612-5dd7b18127d0",
+            "82a15cb1-1a6c-4f01-86d5-95cdb339d43d",
+            "a9ba84da-787b-4fa4-bd00-6c35c18cef3b"
+          ],
+          "memory_ids": [
+            "9008dcdf-6cfa-44fb-b9b2-48f376c745bc",
+            "893808dc-5b1f-439d-bf87-a3becd0af98b",
+            "d73e8b0b-200f-4003-8620-3d5e2ad8aab1",
+            "2006b904-777c-4ba1-9aeb-0c5e64d8c6b9"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_11"
+        },
+        {
+          "chat_ids": [
+            "6b3211e6-d670-4d0a-ad40-4d32d52f59b4",
+            "0c5b7d5f-4dc1-4574-bc32-42ad7b8f5cc1",
+            "653161e2-9ea2-406f-9a4c-c0008fff38f7",
+            "28fa437e-b704-47bc-b2ef-d5af60197193",
+            "b69c2939-6437-4dc2-9166-d856fbe56b5b",
+            "dc1301a3-19d0-4fa3-8308-e26112843a0f",
+            "83c199c6-8d52-4df8-b5af-e7aeaabcd05d",
+            "d257da14-b7d6-46f0-9d19-8c6cfc723ad1",
+            "97a3c202-114d-4b42-9025-00dbf6894294",
+            "d2177675-3803-4b73-be2b-f83105774f47",
+            "eb3e4482-3ba6-4fad-b14f-914b5310172b",
+            "1092221f-5a92-42d9-9cd4-6a4621705562",
+            "7066d164-5a9a-42e7-83c3-3f340d44b574",
+            "983c309a-5525-408d-a604-dec3324a4e07",
+            "369366d9-6a5b-4621-a093-21f05d9a67a3",
+            "a363b600-a0ab-49d3-8ef2-d7aa669c5394",
+            "8496fbb9-12ea-4d83-b3af-24a8608d30e1",
+            "73a12913-c710-4b60-afc7-8e04dc6f9a91",
+            "e427b7b7-30fb-47e8-b759-4ac90725beba",
+            "8546f64e-52e3-47b9-8bd7-b4276868f2fb",
+            "36cbeff6-d5cb-4ec0-bca7-20d1bbad05b7"
+          ],
+          "memory_ids": [
+            "dcb57ca5-4243-49b8-9106-e7a520b14570",
+            "3c41fc82-8bfb-4513-8f16-c5abaf801fe4",
+            "eb7e74cc-c65f-45bc-b3ba-4e9a92c82c4f",
+            "8b66221f-a894-4630-b928-e0f09a4d2626"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_12"
+        },
+        {
+          "chat_ids": [
+            "4d802826-cec0-4934-8906-474bd45d1c10",
+            "79832439-afa2-4b25-884f-ca3dcd4bdff6",
+            "6250f978-0a22-4bcc-8d40-826bec535fee",
+            "abe89eae-1d8f-4d66-9c0c-e914cc2ecb65",
+            "54d687d9-48b2-41bd-9909-c5edcecc1a0d",
+            "609a3fbf-894d-418d-abc5-836edac18181",
+            "5cae691f-5511-4560-958f-4b5d820f57b5",
+            "14c4b7e0-7355-4e16-9a49-c1f3f7205e32",
+            "a9d4794d-0122-4d0c-8f32-47685300b963",
+            "98d4b6bf-2db6-49f1-94c8-c442a51c209f",
+            "afadce57-ebc5-4203-aac2-535976b196ab",
+            "1f3c3b7f-058e-4062-aaec-13f2ab1c14a2",
+            "451539f4-09af-46ad-8deb-c48e61fa224b",
+            "73640d6e-7bf1-4aea-8acd-ee88d2a86f91",
+            "bfcef003-2688-4cfe-b238-fb889b82e781",
+            "29ffe880-2b21-457a-931c-e7fe3ad31ca0",
+            "b116e99f-b535-46c9-95ab-5390c3314af3",
+            "45381879-4f98-4508-b685-322be3b7d440"
+          ],
+          "memory_ids": [
+            "00e6a4cb-9249-4a4a-8f90-ea35735a580c",
+            "7445ff97-e08f-4b59-a1db-1d3523540053",
+            "4cff6cd9-c597-4e7f-9eed-deb031d6e38f",
+            "1f0b2afb-aa5c-48d5-a033-3286503ce937"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_13"
+        },
+        {
+          "chat_ids": [
+            "356a6441-9e59-4073-b846-7939c2a75af2",
+            "79aacab6-f5c0-49a4-b348-b31940d07ea5",
+            "8c461fbe-52b9-40f7-addd-d6de7f916fed",
+            "73fd304b-59aa-4038-b144-eedee2435d0b",
+            "11dbcae0-e62a-4f6e-b341-6befb0a27697",
+            "0d804a04-b9db-4917-9b50-7a55d5e9b81b",
+            "2873bac8-d910-4ae1-b751-8fbfdd4a18e8",
+            "922c0a06-c3a0-4a78-b6a9-3b34ffc80a02",
+            "05b23b8a-8cec-4062-a915-822120e46951",
+            "6d8a1007-95c0-404f-bb8f-af190a26070f",
+            "a932a5ad-b1a6-4570-b45a-97dc3b10d89a",
+            "084924fd-06f2-4c56-80cb-4728968a1070",
+            "784d195a-5b3d-4300-8b19-20be91632c71",
+            "d2a89a09-b52f-4f75-bb81-329dcf2481fd",
+            "c3545e3d-ffd9-433e-b67c-63a665bf4ebf",
+            "e14bc4ad-900c-44fe-8f37-11255ff47225",
+            "980dfbc7-f8bb-435d-88c1-48ac1dbf8d4c",
+            "2e965723-c895-4b2a-a5d4-e08fe0c82b5a",
+            "1446807e-df75-4766-9d58-d8e29b18fe82",
+            "325449ed-249b-412d-b6e7-1048b973dd2c",
+            "3f3c8b5f-be11-4b51-b88e-c0184947df81",
+            "3ffffa2a-bfa1-4a34-864e-bcdbc25b9b6c",
+            "8de4e4e7-da57-4451-85fa-4346c3ac5912",
+            "64c6467c-da6b-4190-a409-8f88d9da7942",
+            "34eb69f4-3c73-4a8b-9707-995ab80c5017",
+            "6ee5e8bb-27e0-4b5f-85b7-7a33c8895c6b",
+            "8ed00fbc-48c9-4f47-9329-200a7d0cc062",
+            "6aba9391-7ce5-4c02-b359-5694b4e6ea2e",
+            "76e59139-f1f9-40f7-8271-bdb6831b2ccc",
+            "b228fcb8-fb9a-4386-a338-cbf956976368",
+            "616dd5de-efde-46b0-a764-909393a310d3",
+            "70f5cd2c-5b07-41fd-9010-6e8de334647c",
+            "bf1c4f06-3984-4f9d-9e5b-0aee7677023c",
+            "73762a38-c3b4-4c62-ab23-4e76fb34c6a5",
+            "889542b8-ec21-4500-b227-9dcd31a9712e"
+          ],
+          "memory_ids": [
+            "45d3c889-d612-44d3-be2d-03c0507b3210",
+            "460a0dec-dc88-41fb-9b32-486fed0cecfb",
+            "a3b9f065-f3fe-4b25-b3db-a219038a509e",
+            "9dc68953-7d92-4a46-a44d-b3bc90e28660",
+            "275c6a76-d407-42ec-bcc8-e267a6399f63",
+            "3cf33a2f-fcc3-4cb9-815c-256af972883b",
+            "878ef9cd-c8ea-4fdb-9ddd-4dd3b8eebe4a"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_14"
+        },
+        {
+          "chat_ids": [
+            "8f992957-7e3d-4617-92e5-6d01c8f8200b",
+            "2e410568-38d4-4099-90f4-0cdbad42bb3f",
+            "2608f531-c96a-4df3-a0ce-27b2104982e8",
+            "c03a6096-e562-41ba-a732-66081ffea801",
+            "18264ab3-0645-4aea-b44b-e6307814a026",
+            "96371c24-dafb-448a-95ca-3f3af9b3eef8",
+            "b328eb9d-fa3e-422b-8d9b-ab2899f8f50a",
+            "bcfd6f97-d413-4c30-b21e-142c7d1d60bd",
+            "05e3feca-13c9-4574-a109-aa99ade39a9d",
+            "08222cad-2bfa-48ff-a254-e2bc8121a764",
+            "1b1a2983-65bf-477e-80e8-962850373a59",
+            "79b5006f-446a-4a42-bede-346522c1f7f8",
+            "826f1240-72b2-43d6-bfcb-b0b9ea1c3e88",
+            "3f83a9c6-7bea-48f9-a664-30ba77a2e6f2",
+            "00a15d9b-0527-4854-8c21-524cc97d4e1b",
+            "f9a81932-225f-4c71-868f-97fddb8fe958",
+            "05e525bf-e20a-46a1-93a7-d1a2c5d8d262",
+            "a5e1b3ab-ded4-4b5a-8ae6-233cb897dabc",
+            "d808bf99-129b-4535-9f93-0d6496813caf",
+            "9b792a09-117b-41ee-8a9b-dff51998e3d0",
+            "37cd2b17-2efd-45a8-a2bb-482cc6fafc94",
+            "5f3af5e3-50a3-4aa3-b5c3-b983bb37dd80",
+            "18674e46-85a6-425d-b5dd-93b6c8efcfe7",
+            "bb8f4e7b-afa0-4afd-a62c-07cc18751db5",
+            "08c984b9-b015-4a07-8d27-06e878665a7e",
+            "8760ba37-451c-41cb-b5ae-4bb687f68d9b",
+            "819fa25f-90b8-44ba-8360-b8d7b873821d",
+            "c96c96a0-382b-4cf5-84f5-521558b0650d"
+          ],
+          "memory_ids": [
+            "75076bce-f103-41f8-8373-c2ba71bd4533",
+            "a8194351-82a0-4b2e-95e1-fcda150f2ec0",
+            "77021056-01a6-459d-a2c7-e3d2e9794e67",
+            "b7b417a3-bf39-4e0e-bc62-a882e0f0e4b6",
+            "b59e20a5-8c22-4fdb-a381-ffd05ffe7d93",
+            "8b7814bc-0f5d-40bb-850f-ab6fe32be4f1"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_15"
+        },
+        {
+          "chat_ids": [
+            "9e1f9b1e-931c-4455-8694-27af81f63563",
+            "86a5808c-59b1-4dd5-a460-e1cd61b10f13",
+            "db7db297-49c7-4c58-a2a8-2a2e6cb82b6c",
+            "b6aa2308-0a59-4d16-b2b3-63ef8e04afa4",
+            "a7f86eb4-35b6-4de2-ac3a-233165543c43",
+            "485354a5-2545-44fd-bb4f-8f675c110d46",
+            "40941a7f-c272-41d3-9d1c-07693804c15f",
+            "90201a85-818d-4e4a-acf2-ee43b0cb9520",
+            "06195740-9088-4764-8a8d-650fb7ce3974",
+            "46993abd-75a7-4506-a4bc-fae0025bd3d4",
+            "ff66272f-41b1-4cbb-91ca-c66052919789",
+            "d7cbce53-316f-4881-8d4e-9b6d097f284a",
+            "0ea7ce04-0049-4d55-b088-34da2a854d94",
+            "8e37c548-cff8-4884-85a5-d29a0a5b1c11",
+            "76ffad8d-819c-4939-a9bb-36b2914592d4",
+            "e5039446-5876-4914-8ef0-9c1a2948a6b3",
+            "71432c19-dd33-4f75-b7b0-b7b09b3f4ffd",
+            "c16c1a5d-f0d8-4716-a944-0e985d1f3153",
+            "e6ef1283-89fe-4f02-95f6-b006fe6cb4f4",
+            "41868fa6-b413-4b09-a520-fb2a5c795c86"
+          ],
+          "memory_ids": [
+            "a6575145-c426-42a8-bee7-2a0d6caa48f0",
+            "9845bc45-af05-480f-8293-c542966d31ae",
+            "74c5545b-ba68-43e4-b365-cc53f4e40208",
+            "24513ca7-254c-408f-b348-ddb878332f11"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_16"
+        },
+        {
+          "chat_ids": [
+            "a0778b18-8d10-4ae7-aef6-3150af2b3639",
+            "4468b860-c08b-46bc-8845-b74fdb4a9b64",
+            "1fbb5e77-8179-4e94-b762-0906964558f1",
+            "1717173d-b2bc-4b14-9c74-c1cc35cb53ee",
+            "48c3c796-f81d-4d8d-ae78-b73e9f9a07dc",
+            "fe4d5e26-084e-46bd-9281-0c19585f3f36",
+            "7062281a-b1da-4335-b67e-99dcc124e159",
+            "61926df7-e550-49b2-af19-4b6ba28a0937",
+            "fb772a13-83cf-4860-a7b2-bea3c4d24e01",
+            "33039f0a-372c-4d34-9b5b-6c192f532dc3",
+            "96b8b73b-6f11-4449-a4c4-567f3261a78b",
+            "ce0bd092-d386-4230-ac94-92f221cef076",
+            "7d664b82-c193-43d2-8c36-e674d4f9be80",
+            "1a129f3f-4060-4358-b648-e7e4272f1733",
+            "1285ac73-6964-4f0b-9c8e-5e7a3077686b",
+            "a6e1d85e-ad17-41d2-9782-935d7f5e1932",
+            "21096f01-21d7-458b-8249-d7bb80194d57",
+            "dbc14e06-5cd4-4fb6-bab3-9a0331cc1092",
+            "7659048c-37db-4825-bfaf-fde5a91835b3",
+            "3dfac0fe-1f33-4b8d-a4d7-d5dfac66359b",
+            "e80199e0-81ed-48c7-b8a7-724a3db6ac9a",
+            "befed515-6708-4a2b-8d31-a8e64f370280",
+            "1b9bfb93-c8c6-40c4-b3fe-9e828b936be9",
+            "7782175a-32c7-4e6c-9596-b5d5f8172f56",
+            "90554348-5166-44f3-bddb-c4b44b15475c",
+            "d0cd7346-fb23-496c-81f3-c18dd34d97d4"
+          ],
+          "memory_ids": [
+            "fa6321e4-9844-4ef9-a45b-bc7c3a132379",
+            "1baf89e2-711b-472b-8709-3a3278dc4af7",
+            "2b392d0b-1a8d-4cef-9692-923e35220ec6",
+            "121bbb42-6f16-4a00-a3a2-04770989c665",
+            "98794506-aee2-43c1-92bf-a04641dcced5",
+            "4ba8ba80-3bcb-4ac0-a6e0-e1444e39822e"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_17"
+        },
+        {
+          "chat_ids": [
+            "82530442-801e-4a4f-b070-2bc9e35ee489",
+            "68dd75e2-5d1d-49ab-98a9-4c7d0597904e",
+            "d50eb0f1-2122-4b90-ad0e-e6f358fa8eea",
+            "15ee741a-ecf0-4b85-827d-3f960c7a5264",
+            "d51094a5-c6f1-4996-a82d-7b9dbdda7b8c",
+            "e3218110-3328-4534-9b1c-a09a4e4a4e7b",
+            "e57dc971-2cc8-4136-916f-84278294966d",
+            "46f39ce2-4240-4441-a18e-0e9e65a9a5a7",
+            "027e51b4-dd39-4720-9a9e-db5d7e6a55b8",
+            "0a141aa3-dc32-4dc8-9db9-2c09483c7a61",
+            "30fe3fcf-5c0f-4e3e-a271-4dbde3bd77c8",
+            "d40d8086-f3d4-4126-9201-f16e5fd67c36",
+            "819974f7-34ec-4374-b11d-1b5785553d3f",
+            "c143e951-38aa-49e1-84e2-a6805f0130c1",
+            "f862b3b8-5fe7-4c05-9b2e-91d038e79603",
+            "e16ed576-693b-4ac2-af20-fc263ae11de8",
+            "dab6a89c-302c-49d8-9c8c-d67e917a9ddd",
+            "e32dbb9e-5a3e-43ee-9fcc-79c466a68028",
+            "4fa5211f-4258-4be8-be4c-4bb3fce377d7",
+            "e314a203-47d2-4803-8f14-278df17687d0",
+            "48f08aae-518d-4a14-94e7-9a1a94d29112",
+            "ab090978-33be-4bf9-aee6-e3d849999057",
+            "7d65dbf6-183b-4b84-a218-0618062a779d",
+            "dd64876e-be68-4c6b-9a63-e76dd4003f07"
+          ],
+          "memory_ids": [
+            "fb8a26be-f6e3-4b07-9f5b-64d70c96a307",
+            "ab58e038-d6c5-4ffa-8eec-41cee1297d92",
+            "2ca6a7e8-2455-4efa-806c-ddff468be2d5",
+            "3dc75e18-c20f-4bc6-823d-ec6bb63c7f29",
+            "5fecc7a1-37c2-4831-abea-c89b711ce0c8"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_18"
+        },
+        {
+          "chat_ids": [
+            "15291adf-7af3-4587-8e6d-9db33d5aac4b",
+            "af3241e3-4c38-402a-bcb6-71ce9dda8313",
+            "54af4aa3-9a25-40de-b559-324b7c30abcf",
+            "add37b93-616c-4e61-9b26-c8c0f57dc0c0",
+            "61467bf0-f012-4ae8-b2bd-1c7a3db4f9fa",
+            "bd1e6c16-8342-4fd6-b68e-2913c620a098",
+            "8126bf8a-13bf-41e4-9a60-a1213a8e8c5e",
+            "7fef390f-3935-4ef2-b8a0-588adb027bb2",
+            "b5c3c490-3b93-4829-afea-c5228c8d24b5",
+            "29142f8d-fd7b-49ed-b478-786c0e789150",
+            "27a21223-46ec-4fb5-b553-90e55dc9f560",
+            "4f2b5fe9-041d-4d10-9fc9-e80c11485779",
+            "962fc713-7dd7-4647-a5d2-eb03578540fa",
+            "09ef76c0-ba73-4a3c-9038-4a1f2ea2befd",
+            "bc64df32-5596-4084-91e2-909a0737f328"
+          ],
+          "memory_ids": [
+            "f76c3892-3d1b-4e02-a51d-05cd5523b1bb",
+            "d76d6f24-6287-444f-b1af-b1c2229afa08",
+            "2bdaf8b8-808e-48e7-8ea9-9e7cb4018071"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_19"
+        },
+        {
+          "chat_ids": [
+            "e2d4641e-0110-4d59-ab0d-b5cdf9e37dab",
+            "4a93c054-1713-41ba-8e07-490f80e67b04",
+            "1fbe3c35-42c3-44a0-80c4-4713b7901032",
+            "67245665-9888-43fc-890e-78fe21ff10aa",
+            "dac2d749-48aa-45ee-bd71-bf0420bfd6c3",
+            "8db5b264-c8b4-435d-841f-993404fba6fb",
+            "b8cfd7c8-693d-43a5-91ca-fa48bd4547f4",
+            "0e2d5103-6754-4d28-b607-cbd5058efefa",
+            "ac2b9a4c-972a-4010-bc3f-487bc159acfa",
+            "7bde837d-076c-4899-9c3c-177b5b9ed9d7",
+            "41a3c3f3-6188-4b49-be40-2f4c5995c8c2",
+            "79bf174b-fbbf-4ff3-aa47-bcaeae1ab4aa",
+            "349b683a-561e-4c9d-9eb4-50eb118eb0ba",
+            "7769cba5-2bd9-4fd0-83a0-0ae7fc84c9a5",
+            "394edcdc-cbd4-4c82-b286-040e58766fb0",
+            "c6801e70-4b65-4e77-8290-dc0f791813c9",
+            "52dfa1df-4221-4550-9b61-18bece37f194"
+          ],
+          "memory_ids": [
+            "1357585d-c52b-4689-85cf-3600fa9abff2",
+            "2f9ffad4-9cf8-4ac6-adb7-13a0fd76c169",
+            "f96d22a9-b05b-40ab-9a71-a4357fe6679d",
+            "8315792c-cab3-4d31-a379-937cc017116d"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_2"
+        },
+        {
+          "chat_ids": [
+            "a153609f-e5b0-476b-aad9-ac942831456e",
+            "a3501525-e14d-4fed-85d0-cae0f84f8117",
+            "903515cc-a790-4a92-ba9f-5cb002cd1603",
+            "90b31662-cff6-4e43-857d-eb3bc48fb1d8",
+            "b33974ae-3ab8-4ce5-a333-5caf28c0b656",
+            "ab8d5092-8472-4cff-b253-7a53c47020ca",
+            "a1f9cd56-38ba-4026-889c-18d641fb17c8",
+            "f99876af-1155-4306-98b0-15b090c6fcf4",
+            "7e8df294-4ca6-465f-9e8b-e5fa5c564363",
+            "eb7068c6-43b1-4d98-9b1b-29eef9375a6d",
+            "f7a6e73e-f3cc-46b6-8a20-c0df68582f48",
+            "eeba80f0-edce-4052-95d2-835f773b4572",
+            "dfe29150-31f3-4855-b76e-af9aa5a07658",
+            "2dc00f71-9683-4b83-85b4-5e49e600a144",
+            "801c7585-8c7a-4ecf-96ba-e158339bac6a",
+            "7d403730-06e9-4126-9b0b-9b4db2a635ab",
+            "63c51655-3958-426a-b039-2f9540352f39",
+            "a0d8e81d-19fa-45fa-a1a6-7d834a50880d",
+            "87e39b4d-942b-4d9b-8898-0b04f95c34a1",
+            "3dc260b5-9cfd-49b4-8f31-e3eb5b045183",
+            "fb763561-bfda-45af-9e47-b1ac981bf04b",
+            "f139e8fa-08bb-451f-bf2a-b0abed7a7e8b",
+            "befebaa1-3b20-40d1-a1bd-607db2c6515c"
+          ],
+          "memory_ids": [
+            "7da1c8bf-f00b-4535-827d-0c86cd8fc102",
+            "de658a80-bc55-48b1-8370-3df8c1b4a485",
+            "9473e93b-5ef2-4f58-8d63-118f14a48781",
+            "27c547ab-9e56-4fa9-8558-1ad5442ca62e",
+            "5eed2e66-ffd6-447f-9e9c-9e475ed56984"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_3"
+        },
+        {
+          "chat_ids": [
+            "5e5cfb91-81b6-4ff4-8116-2cdb468d4326",
+            "078ab81b-0962-4f99-ad91-41d8966f06c7",
+            "7cff54c1-0316-433f-b15c-d90283f61c50",
+            "a22c01e7-6bde-4c0b-84c7-5d5f6a664eeb",
+            "e8c53543-cac2-41f3-838b-fcaacee778b2",
+            "432d76ad-bfb5-4e48-9327-9533b2246d23",
+            "78e7f09f-a3ff-4e8f-8c4e-8e4749a93ee4",
+            "7de00b21-a3e3-4aa4-bf59-cdc961b2b13d",
+            "beb84754-803f-42fe-a9a7-a06c9257bb81",
+            "36bc2757-f742-45e0-b720-2d089af37fdd",
+            "732f9af6-4708-4d8a-806b-c80c1527ce9d",
+            "53496776-e1b2-414b-a69f-29e3edb828d8",
+            "fc4b665b-22dc-4e57-9d14-186e6f15dee2",
+            "14696658-1eeb-4b5a-8ee2-6c5580563d2d",
+            "090ff350-d3b8-4a5c-bd9b-6f0d180d4547",
+            "b77c5723-9fe0-439b-b4f1-9b5f82939d06",
+            "31182f51-8021-4fca-a1fa-7bd41da3b696",
+            "84e51e48-83e4-41d5-bc3d-a0622d310332"
+          ],
+          "memory_ids": [
+            "ee67e2dc-0e8d-4199-9c14-166027ed12e7",
+            "13d3898b-b746-4fb5-9786-e952076c3008",
+            "7e1212f5-e5e5-44a2-8e35-e001af4dab57",
+            "7570a834-12cf-437e-a5c6-1b9be7d66930"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_4"
+        },
+        {
+          "chat_ids": [
+            "27f78736-9d6b-4d4b-bdaa-4a7309c6dd56",
+            "5870fb08-fb6e-4acc-bb61-1388333b4fa3",
+            "7ce37f29-9192-4004-bca3-3267d3b29c92",
+            "0a26fc89-0fe1-4a5c-8449-fbbec4fb9d4b",
+            "9183d6ce-d9ad-481d-bdcb-7c1b45f1adba",
+            "95e78340-d17d-44cb-aad1-0015de31c27a",
+            "a3db84c6-1499-4505-9d88-f8efe3a4c17e",
+            "3c1ca0b3-4099-4aa2-9538-036b552dfa53",
+            "df8f647f-f965-4eac-9f97-7ebf333713f8",
+            "24bdebbd-3a4d-47e0-98e3-74d2ba8f102b",
+            "618c3239-7e8b-4500-8846-e6e82b55b7f8",
+            "21d936b1-2de3-43bc-976f-afb616729b48",
+            "77970846-d751-4da0-9a0e-a4b357b525ff",
+            "a2038165-8b5b-45e9-a702-2bbf0611a18c",
+            "3d4cd8ea-5957-4844-b429-6e7fea9f0322",
+            "bb4d72a3-05db-4cf7-ba98-9ec7ef992713"
+          ],
+          "memory_ids": [
+            "b2e43c38-c535-4541-80ea-2a8227aba1b5",
+            "6b2c0efd-c583-4278-86f3-5bd0febc75bd",
+            "21e81c77-1eb6-4d33-89e5-3973341ca7fb"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_5"
+        },
+        {
+          "chat_ids": [
+            "224cab01-2e87-4dc0-9f0b-667f071b3a7e",
+            "9629ee67-ff5a-4eee-bcb3-baabf9ce1c89",
+            "d33f1529-b69f-4bfc-805e-988defc3884c",
+            "6845bf53-d9cd-4c71-b440-2633f6004e55",
+            "391dc888-b385-4e2c-bab1-ad501c8dd9fa",
+            "a93c6751-16c5-4a85-ae9e-1b159452f3d4",
+            "18ce0fce-7c12-4255-85cb-b15be0da2e57",
+            "88905a4d-2fac-462c-b811-4a3939fa9c4b",
+            "af3ea064-11bd-4731-92bd-9ea475ec107d",
+            "fc53c5e4-083c-4da5-a683-766809e1211c",
+            "2f859983-61c7-44d0-9110-df653f9717ec",
+            "c26cdac5-42c9-4582-90ad-b171e08f26fd",
+            "2908716e-8b02-48b7-b4c8-2dba36264c46",
+            "0a164795-5acb-47a7-b242-f5db5b1725c2",
+            "308b090f-6758-45c6-8fb9-f7f2331d3514",
+            "5f4902a0-708b-4847-9e13-b82f5ba3748a"
+          ],
+          "memory_ids": [
+            "2db8467a-81d7-4230-a4c4-560dadbaf641",
+            "a2b191d9-a7db-440c-aa8c-6550dd6e30b3",
+            "d95b072e-2357-489f-9ee3-cf6b1bdb5819",
+            "67de9f96-0d7d-45cb-8f96-cdb0df434c3b"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_6"
+        },
+        {
+          "chat_ids": [
+            "66ab7eda-48da-49e6-934b-c47b22f2c461",
+            "4a3ca7fe-03f2-42ce-a1ee-8de0b168a537",
+            "fc75916a-c65e-43ad-a708-2174b47f5151",
+            "11b98639-0149-4cec-8589-f24c9b362f9b",
+            "42b3b4d7-12ec-45ba-be08-483d30481ede",
+            "42053839-c6c4-41bc-94e8-b95e827d4eec",
+            "9723fe88-ee7b-415c-a5a5-432cb12d1806",
+            "452372be-9833-4010-92a6-07a7c9c0f6d0",
+            "abf1af53-4322-4ad0-a644-673c89b93b8d",
+            "342d1677-bc8f-4b27-8b93-4d0911feee6a",
+            "e71dcd8c-c26d-4e6b-85d4-ed728483b850",
+            "8ee5d0a9-492a-4fde-a77b-c089e83bbcbe",
+            "3505c8c3-df6b-4754-8602-db5c7b29f02c",
+            "fd0c63a5-47ce-4eec-a14e-f3930b746c1d",
+            "699e7d76-5415-44a4-8f87-ec3f484a03f8",
+            "beae91bc-6b98-4c69-ae90-c8976fb1180c",
+            "facc8bfa-4b43-4269-a7a5-ae228f9bc17c",
+            "942a4913-c3c7-4109-a8fa-5240e48fa8fd",
+            "5000c19d-81fc-4044-9a9d-d831e9299929",
+            "dc75a0a6-6df3-4d43-84bc-871c73ab5829",
+            "e4850366-d406-4c3b-8dae-436f1ea32ec5",
+            "62b6496b-b796-4645-8849-b3c3c3a5c68a",
+            "aca124c3-084a-4073-aac0-2c14f4ac564a",
+            "6dc571f3-d2dc-48b0-86a0-f29f15de6289",
+            "1c08e18d-85e8-4d57-ab90-b7bc47ce3fdb",
+            "f7749679-cba6-4339-8814-f2634d3a9a87",
+            "ae9a0774-35ca-4fcd-83ee-b34c23581980"
+          ],
+          "memory_ids": [
+            "195491c3-6f25-4856-b6fc-b47f745f15de",
+            "ebc729da-083f-4b93-ada2-2452bb46cb69",
+            "796fabc6-13aa-4c88-be95-0c2e1b77352d",
+            "bd45eda7-f913-4b50-82ee-eb4221469f53",
+            "f0a9efb9-b46d-4816-9430-754ee38e1106",
+            "ab6032d9-fd0d-4f11-920a-ce6db9ce9221"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_7"
+        },
+        {
+          "chat_ids": [
+            "9f7a3e45-2571-4aed-82c5-3b1ed0cb3f00",
+            "7a9d16e0-9215-4c3e-b264-75faac32928f",
+            "94fd7226-b044-43a8-8c95-0f514067b4c8",
+            "640bf09a-8a8a-4143-871f-8661629342ec",
+            "c6dc66f0-6ced-457b-b273-7a52a7912df8",
+            "e50974a2-c2d6-422a-b69b-030f58d7ccae",
+            "08682770-373b-4cc1-83b5-85d03b745787",
+            "be23c95b-4cb8-40af-a6c1-cbe81dcd9974",
+            "87242bec-c59b-412b-8260-1a7e07babcaa",
+            "23c4475f-e802-4f7c-bab0-3c10408cd3b1",
+            "36836d88-fb7b-40d5-b94b-5aa3ce8670de",
+            "ff37ec4c-824c-471b-b4ec-8676e6a62374",
+            "e0d8fed5-22ca-487c-8b0d-4b9e08c16f60",
+            "7821e3f6-1466-4d7a-a1d1-466b9821328d",
+            "131b29fe-aa33-46c0-9e5e-dac22613d967",
+            "fd6a6793-d1ef-4de1-899c-c36840e707e1",
+            "a441df92-3399-411a-a749-7a953f171980",
+            "fcede644-323a-42e8-9e07-369776bd9b8f",
+            "1a744348-071c-411c-8924-39d49e4b11f2",
+            "1b60311c-da4b-4cf6-a430-6477ad0eb634",
+            "31e5e295-da16-4950-8101-056b3e89fce7",
+            "98b1637e-7ee9-40dd-a4f1-f1742572dfcd",
+            "400adbfe-f7c6-4c3f-b908-2521633de48b",
+            "77810779-043e-4a6d-bd8b-4bc5d4f2111b",
+            "aa2d7baa-2b45-459d-a19f-82fa310ee051",
+            "da384b07-e415-4840-9b4c-d1c9d6678caf",
+            "114e0299-2be2-4054-a748-946ee4ac0b64",
+            "b0f8f421-4bdd-4480-bc91-c80fd121e1cc",
+            "5731c07f-421c-47a8-8263-c8242b7efeb6",
+            "01358229-5f3d-49b5-99eb-ec9305830062",
+            "6e4d141a-a995-40f8-abab-9ad4306d22bb",
+            "d6679843-646e-424f-93ec-ac1d57b8ec6e",
+            "d8ea1745-908e-4f91-8f97-e2d5baf0158f",
+            "7e096992-de46-4825-8ee0-2e75bd122b32",
+            "731393dc-2962-4385-b3ef-a1919ee458a8",
+            "1288fd87-777b-4a58-a3e9-82d1398b05af",
+            "c209e548-eb7f-4a7f-98f7-80497aca4fbf",
+            "8f31633e-53c9-4283-980a-98613a272332",
+            "a606582a-101b-494e-ac49-6fbb6946e9ef"
+          ],
+          "memory_ids": [
+            "5310016b-6600-49cf-8089-ef02934f8eb1",
+            "fe24c526-6663-4a82-8671-a0ab0adc9607",
+            "2a58f09f-fe0b-4899-af91-342d7d88bfc9",
+            "1a0d4a09-200a-451a-a77d-dbda0774a4a1",
+            "3eb393e5-a4c0-4200-90ec-57653dde3226",
+            "04b34373-c3a1-4e70-87f0-4bef20d11c51",
+            "11e75631-c607-4113-99da-8e3871a96b5a",
+            "79af5d91-2bb0-4e0f-aef0-7f5c463484e3"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_8"
+        },
+        {
+          "chat_ids": [
+            "292b7c15-a11d-445b-bc58-59d4b7f2541a",
+            "63c5659e-f513-4288-a6d0-cda2e5c9c3f0",
+            "c9cda2cd-af26-4559-a387-84eb25492899",
+            "d961a2bc-012f-4fd4-83d7-c0e3975a31cf",
+            "f15d02db-5f0a-46ec-8267-d16a6727643c",
+            "d460392d-b5b9-4375-9924-cad882be4e8f",
+            "e44d583c-a6d5-4d09-acee-afa66443a471",
+            "179a53a2-0f7f-41d6-b528-dc402c0d1ac7",
+            "f034ae9b-6128-4f70-b251-0bb0eabb79c7",
+            "ee806697-ec0d-4238-bffe-de6d40fd7108",
+            "b6c38bc5-e2ae-45ed-ba4a-392fb10bc09f",
+            "c41bef00-41e3-474d-a090-7eb993e449bb",
+            "4347344a-a73a-4ae8-9136-f809249e2b32",
+            "634cb265-29e4-48e5-ba04-63efb6934eae",
+            "89904be3-794c-43b3-bb01-864c0b9bb098",
+            "6ed6556e-dfc7-4f2b-90bf-d12ad3ed6dc6",
+            "0dd3f18a-0fe5-4dbc-80d9-f1d16ea221d8"
+          ],
+          "memory_ids": [
+            "167a7919-509f-49dc-a5bf-31728d738990",
+            "3e5086de-681b-41d5-b393-573fe1b5770d",
+            "343d6e8c-dac7-41ae-95bf-3c27b7247e3c",
+            "b525fba5-6204-41bb-94c0-3c05c02ddc2e"
+          ],
+          "session_id": "conv_01_Caroline_Melanie_session_9"
+        }
+      ],
+      "total_chat_ids": [
+        "81d9dec6-7304-4945-8ec1-7b617dd68836",
+        "c018bd42-8a20-426b-a06e-0056dcd70e26",
+        "973bed70-53cf-4418-8099-90cc83eb6081",
+        "698006f6-61ef-43fc-a99a-41268ad94a19",
+        "49ace925-f3fe-4b24-a103-200ee54dea35",
+        "5c64f449-2714-44a8-b2fb-0f1da72071ae",
+        "6a951b13-40af-42e0-8cdb-9108566db6bd",
+        "bd900779-8874-41f5-a6c2-a249321c46c0",
+        "cf8723fe-6bf3-49d3-8906-0b10bef097c4",
+        "ca52e560-5686-4b46-bda6-597b7815d375",
+        "f3b9fdb2-3772-4356-8d90-bdad5d71abd9",
+        "19c3363b-0e1e-4499-9320-325edea7b1b4",
+        "54af44e9-579b-4d00-b4a3-04dc35164124",
+        "64023e5d-60df-43a0-b686-121374085773",
+        "60e12fe6-673b-4e90-8000-c24f0dc1ff02",
+        "a9c69225-0654-4e5b-96f7-ac46658ac4e5",
+        "384d08c8-1a5f-4df2-a0a9-56e8e315e713",
+        "0473f9fd-e14c-47d8-8e95-14d93c783e22",
+        "1678a8c2-c906-45fc-a7ee-619213dd82ab",
+        "637f12dc-d29f-4e4a-821c-2ebfd1b9051a",
+        "5ffb3a45-7506-46d3-bbb0-9ecfcef51fb7",
+        "c31413ba-6417-4b98-9583-fc5350a32c58",
+        "6918fc43-9741-478c-b69e-89573f310067",
+        "dfab9695-b58b-4239-bb17-b47785e6af6b",
+        "1211025d-e246-414d-b726-6c50d5d9b79e",
+        "54064474-57f3-4d0c-aa74-07b79c518a90",
+        "260e5374-5b23-480a-8a66-119b879a662b",
+        "ffa3aeb3-8ba9-496b-91b1-27ca233595f1",
+        "8d891d3e-0aa9-434a-a105-6788ba40d439",
+        "62481878-7929-43d3-8b04-0587f376b5ad",
+        "0870fbc6-c322-4df0-b393-d3da422be14f",
+        "c6652935-7ca7-4911-93ea-53d77554aa11",
+        "5ea23f8e-30e1-4c5f-9887-d48c054334f9",
+        "4ef88df9-d46e-47df-9ffc-80329d21073d",
+        "33dbf7ae-4a88-4621-822a-f3c6605d6324",
+        "4ecb12cd-9abc-4cd7-87cc-92febb38b708",
+        "26cd8395-26a3-4b7a-beaa-f1f6c2fee0b4",
+        "b87643e5-fe77-4eda-b4a7-8a9a95c3ab43",
+        "c4c29807-3cb9-4cd4-b06a-d61086790076",
+        "bfa78bba-1382-41f7-8b45-d8ebd7bbde8d",
+        "da583def-e69d-4891-87c4-5b85fa76c080",
+        "602b29b8-1054-42bb-86b8-e47faf57d0e4",
+        "2407d1f7-135d-4efb-919b-ecc9fe6fade7",
+        "45114c0a-32e4-4423-87b4-3552c0797c5b",
+        "617454e7-26e0-4306-b5a9-291ed46cac26",
+        "dcaef1c1-ea4d-4aae-ab19-8efb18427e69",
+        "047fcf4c-480e-4347-ac14-049d91cbda19",
+        "3d9f6c93-59a5-4320-aa7c-337899dafbf3",
+        "0c2f7913-9b24-4442-8f3e-d27ee7504ba1",
+        "73fa478a-26e5-470a-9137-d35f01524c2a",
+        "460822c2-5c63-44e8-b075-0232f28d6f1b",
+        "847cfc7e-70fa-4c81-bb77-cae86b9cf192",
+        "9c466998-839b-4f9a-bc18-2b575f48b15b",
+        "242f4325-ed76-4c7a-9c0f-1091cf96a5dd",
+        "ae727615-fdbe-4a98-966b-e01d2c32c8de",
+        "391c92c6-a765-4e4f-858e-481ffcbab9db",
+        "6a22848a-5504-43ee-9612-5dd7b18127d0",
+        "82a15cb1-1a6c-4f01-86d5-95cdb339d43d",
+        "a9ba84da-787b-4fa4-bd00-6c35c18cef3b",
+        "6b3211e6-d670-4d0a-ad40-4d32d52f59b4",
+        "0c5b7d5f-4dc1-4574-bc32-42ad7b8f5cc1",
+        "653161e2-9ea2-406f-9a4c-c0008fff38f7",
+        "28fa437e-b704-47bc-b2ef-d5af60197193",
+        "b69c2939-6437-4dc2-9166-d856fbe56b5b",
+        "dc1301a3-19d0-4fa3-8308-e26112843a0f",
+        "83c199c6-8d52-4df8-b5af-e7aeaabcd05d",
+        "d257da14-b7d6-46f0-9d19-8c6cfc723ad1",
+        "97a3c202-114d-4b42-9025-00dbf6894294",
+        "d2177675-3803-4b73-be2b-f83105774f47",
+        "eb3e4482-3ba6-4fad-b14f-914b5310172b",
+        "1092221f-5a92-42d9-9cd4-6a4621705562",
+        "7066d164-5a9a-42e7-83c3-3f340d44b574",
+        "983c309a-5525-408d-a604-dec3324a4e07",
+        "369366d9-6a5b-4621-a093-21f05d9a67a3",
+        "a363b600-a0ab-49d3-8ef2-d7aa669c5394",
+        "8496fbb9-12ea-4d83-b3af-24a8608d30e1",
+        "73a12913-c710-4b60-afc7-8e04dc6f9a91",
+        "e427b7b7-30fb-47e8-b759-4ac90725beba",
+        "8546f64e-52e3-47b9-8bd7-b4276868f2fb",
+        "36cbeff6-d5cb-4ec0-bca7-20d1bbad05b7",
+        "4d802826-cec0-4934-8906-474bd45d1c10",
+        "79832439-afa2-4b25-884f-ca3dcd4bdff6",
+        "6250f978-0a22-4bcc-8d40-826bec535fee",
+        "abe89eae-1d8f-4d66-9c0c-e914cc2ecb65",
+        "54d687d9-48b2-41bd-9909-c5edcecc1a0d",
+        "609a3fbf-894d-418d-abc5-836edac18181",
+        "5cae691f-5511-4560-958f-4b5d820f57b5",
+        "14c4b7e0-7355-4e16-9a49-c1f3f7205e32",
+        "a9d4794d-0122-4d0c-8f32-47685300b963",
+        "98d4b6bf-2db6-49f1-94c8-c442a51c209f",
+        "afadce57-ebc5-4203-aac2-535976b196ab",
+        "1f3c3b7f-058e-4062-aaec-13f2ab1c14a2",
+        "451539f4-09af-46ad-8deb-c48e61fa224b",
+        "73640d6e-7bf1-4aea-8acd-ee88d2a86f91",
+        "bfcef003-2688-4cfe-b238-fb889b82e781",
+        "29ffe880-2b21-457a-931c-e7fe3ad31ca0",
+        "b116e99f-b535-46c9-95ab-5390c3314af3",
+        "45381879-4f98-4508-b685-322be3b7d440",
+        "356a6441-9e59-4073-b846-7939c2a75af2",
+        "79aacab6-f5c0-49a4-b348-b31940d07ea5",
+        "8c461fbe-52b9-40f7-addd-d6de7f916fed",
+        "73fd304b-59aa-4038-b144-eedee2435d0b",
+        "11dbcae0-e62a-4f6e-b341-6befb0a27697",
+        "0d804a04-b9db-4917-9b50-7a55d5e9b81b",
+        "2873bac8-d910-4ae1-b751-8fbfdd4a18e8",
+        "922c0a06-c3a0-4a78-b6a9-3b34ffc80a02",
+        "05b23b8a-8cec-4062-a915-822120e46951",
+        "6d8a1007-95c0-404f-bb8f-af190a26070f",
+        "a932a5ad-b1a6-4570-b45a-97dc3b10d89a",
+        "084924fd-06f2-4c56-80cb-4728968a1070",
+        "784d195a-5b3d-4300-8b19-20be91632c71",
+        "d2a89a09-b52f-4f75-bb81-329dcf2481fd",
+        "c3545e3d-ffd9-433e-b67c-63a665bf4ebf",
+        "e14bc4ad-900c-44fe-8f37-11255ff47225",
+        "980dfbc7-f8bb-435d-88c1-48ac1dbf8d4c",
+        "2e965723-c895-4b2a-a5d4-e08fe0c82b5a",
+        "1446807e-df75-4766-9d58-d8e29b18fe82",
+        "325449ed-249b-412d-b6e7-1048b973dd2c",
+        "3f3c8b5f-be11-4b51-b88e-c0184947df81",
+        "3ffffa2a-bfa1-4a34-864e-bcdbc25b9b6c",
+        "8de4e4e7-da57-4451-85fa-4346c3ac5912",
+        "64c6467c-da6b-4190-a409-8f88d9da7942",
+        "34eb69f4-3c73-4a8b-9707-995ab80c5017",
+        "6ee5e8bb-27e0-4b5f-85b7-7a33c8895c6b",
+        "8ed00fbc-48c9-4f47-9329-200a7d0cc062",
+        "6aba9391-7ce5-4c02-b359-5694b4e6ea2e",
+        "76e59139-f1f9-40f7-8271-bdb6831b2ccc",
+        "b228fcb8-fb9a-4386-a338-cbf956976368",
+        "616dd5de-efde-46b0-a764-909393a310d3",
+        "70f5cd2c-5b07-41fd-9010-6e8de334647c",
+        "bf1c4f06-3984-4f9d-9e5b-0aee7677023c",
+        "73762a38-c3b4-4c62-ab23-4e76fb34c6a5",
+        "889542b8-ec21-4500-b227-9dcd31a9712e",
+        "8f992957-7e3d-4617-92e5-6d01c8f8200b",
+        "2e410568-38d4-4099-90f4-0cdbad42bb3f",
+        "2608f531-c96a-4df3-a0ce-27b2104982e8",
+        "c03a6096-e562-41ba-a732-66081ffea801",
+        "18264ab3-0645-4aea-b44b-e6307814a026",
+        "96371c24-dafb-448a-95ca-3f3af9b3eef8",
+        "b328eb9d-fa3e-422b-8d9b-ab2899f8f50a",
+        "bcfd6f97-d413-4c30-b21e-142c7d1d60bd",
+        "05e3feca-13c9-4574-a109-aa99ade39a9d",
+        "08222cad-2bfa-48ff-a254-e2bc8121a764",
+        "1b1a2983-65bf-477e-80e8-962850373a59",
+        "79b5006f-446a-4a42-bede-346522c1f7f8",
+        "826f1240-72b2-43d6-bfcb-b0b9ea1c3e88",
+        "3f83a9c6-7bea-48f9-a664-30ba77a2e6f2",
+        "00a15d9b-0527-4854-8c21-524cc97d4e1b",
+        "f9a81932-225f-4c71-868f-97fddb8fe958",
+        "05e525bf-e20a-46a1-93a7-d1a2c5d8d262",
+        "a5e1b3ab-ded4-4b5a-8ae6-233cb897dabc",
+        "d808bf99-129b-4535-9f93-0d6496813caf",
+        "9b792a09-117b-41ee-8a9b-dff51998e3d0",
+        "37cd2b17-2efd-45a8-a2bb-482cc6fafc94",
+        "5f3af5e3-50a3-4aa3-b5c3-b983bb37dd80",
+        "18674e46-85a6-425d-b5dd-93b6c8efcfe7",
+        "bb8f4e7b-afa0-4afd-a62c-07cc18751db5",
+        "08c984b9-b015-4a07-8d27-06e878665a7e",
+        "8760ba37-451c-41cb-b5ae-4bb687f68d9b",
+        "819fa25f-90b8-44ba-8360-b8d7b873821d",
+        "c96c96a0-382b-4cf5-84f5-521558b0650d",
+        "9e1f9b1e-931c-4455-8694-27af81f63563",
+        "86a5808c-59b1-4dd5-a460-e1cd61b10f13",
+        "db7db297-49c7-4c58-a2a8-2a2e6cb82b6c",
+        "b6aa2308-0a59-4d16-b2b3-63ef8e04afa4",
+        "a7f86eb4-35b6-4de2-ac3a-233165543c43",
+        "485354a5-2545-44fd-bb4f-8f675c110d46",
+        "40941a7f-c272-41d3-9d1c-07693804c15f",
+        "90201a85-818d-4e4a-acf2-ee43b0cb9520",
+        "06195740-9088-4764-8a8d-650fb7ce3974",
+        "46993abd-75a7-4506-a4bc-fae0025bd3d4",
+        "ff66272f-41b1-4cbb-91ca-c66052919789",
+        "d7cbce53-316f-4881-8d4e-9b6d097f284a",
+        "0ea7ce04-0049-4d55-b088-34da2a854d94",
+        "8e37c548-cff8-4884-85a5-d29a0a5b1c11",
+        "76ffad8d-819c-4939-a9bb-36b2914592d4",
+        "e5039446-5876-4914-8ef0-9c1a2948a6b3",
+        "71432c19-dd33-4f75-b7b0-b7b09b3f4ffd",
+        "c16c1a5d-f0d8-4716-a944-0e985d1f3153",
+        "e6ef1283-89fe-4f02-95f6-b006fe6cb4f4",
+        "41868fa6-b413-4b09-a520-fb2a5c795c86",
+        "a0778b18-8d10-4ae7-aef6-3150af2b3639",
+        "4468b860-c08b-46bc-8845-b74fdb4a9b64",
+        "1fbb5e77-8179-4e94-b762-0906964558f1",
+        "1717173d-b2bc-4b14-9c74-c1cc35cb53ee",
+        "48c3c796-f81d-4d8d-ae78-b73e9f9a07dc",
+        "fe4d5e26-084e-46bd-9281-0c19585f3f36",
+        "7062281a-b1da-4335-b67e-99dcc124e159",
+        "61926df7-e550-49b2-af19-4b6ba28a0937",
+        "fb772a13-83cf-4860-a7b2-bea3c4d24e01",
+        "33039f0a-372c-4d34-9b5b-6c192f532dc3",
+        "96b8b73b-6f11-4449-a4c4-567f3261a78b",
+        "ce0bd092-d386-4230-ac94-92f221cef076",
+        "7d664b82-c193-43d2-8c36-e674d4f9be80",
+        "1a129f3f-4060-4358-b648-e7e4272f1733",
+        "1285ac73-6964-4f0b-9c8e-5e7a3077686b",
+        "a6e1d85e-ad17-41d2-9782-935d7f5e1932",
+        "21096f01-21d7-458b-8249-d7bb80194d57",
+        "dbc14e06-5cd4-4fb6-bab3-9a0331cc1092",
+        "7659048c-37db-4825-bfaf-fde5a91835b3",
+        "3dfac0fe-1f33-4b8d-a4d7-d5dfac66359b",
+        "e80199e0-81ed-48c7-b8a7-724a3db6ac9a",
+        "befed515-6708-4a2b-8d31-a8e64f370280",
+        "1b9bfb93-c8c6-40c4-b3fe-9e828b936be9",
+        "7782175a-32c7-4e6c-9596-b5d5f8172f56",
+        "90554348-5166-44f3-bddb-c4b44b15475c",
+        "d0cd7346-fb23-496c-81f3-c18dd34d97d4",
+        "82530442-801e-4a4f-b070-2bc9e35ee489",
+        "68dd75e2-5d1d-49ab-98a9-4c7d0597904e",
+        "d50eb0f1-2122-4b90-ad0e-e6f358fa8eea",
+        "15ee741a-ecf0-4b85-827d-3f960c7a5264",
+        "d51094a5-c6f1-4996-a82d-7b9dbdda7b8c",
+        "e3218110-3328-4534-9b1c-a09a4e4a4e7b",
+        "e57dc971-2cc8-4136-916f-84278294966d",
+        "46f39ce2-4240-4441-a18e-0e9e65a9a5a7",
+        "027e51b4-dd39-4720-9a9e-db5d7e6a55b8",
+        "0a141aa3-dc32-4dc8-9db9-2c09483c7a61",
+        "30fe3fcf-5c0f-4e3e-a271-4dbde3bd77c8",
+        "d40d8086-f3d4-4126-9201-f16e5fd67c36",
+        "819974f7-34ec-4374-b11d-1b5785553d3f",
+        "c143e951-38aa-49e1-84e2-a6805f0130c1",
+        "f862b3b8-5fe7-4c05-9b2e-91d038e79603",
+        "e16ed576-693b-4ac2-af20-fc263ae11de8",
+        "dab6a89c-302c-49d8-9c8c-d67e917a9ddd",
+        "e32dbb9e-5a3e-43ee-9fcc-79c466a68028",
+        "4fa5211f-4258-4be8-be4c-4bb3fce377d7",
+        "e314a203-47d2-4803-8f14-278df17687d0",
+        "48f08aae-518d-4a14-94e7-9a1a94d29112",
+        "ab090978-33be-4bf9-aee6-e3d849999057",
+        "7d65dbf6-183b-4b84-a218-0618062a779d",
+        "dd64876e-be68-4c6b-9a63-e76dd4003f07",
+        "15291adf-7af3-4587-8e6d-9db33d5aac4b",
+        "af3241e3-4c38-402a-bcb6-71ce9dda8313",
+        "54af4aa3-9a25-40de-b559-324b7c30abcf",
+        "add37b93-616c-4e61-9b26-c8c0f57dc0c0",
+        "61467bf0-f012-4ae8-b2bd-1c7a3db4f9fa",
+        "bd1e6c16-8342-4fd6-b68e-2913c620a098",
+        "8126bf8a-13bf-41e4-9a60-a1213a8e8c5e",
+        "7fef390f-3935-4ef2-b8a0-588adb027bb2",
+        "b5c3c490-3b93-4829-afea-c5228c8d24b5",
+        "29142f8d-fd7b-49ed-b478-786c0e789150",
+        "27a21223-46ec-4fb5-b553-90e55dc9f560",
+        "4f2b5fe9-041d-4d10-9fc9-e80c11485779",
+        "962fc713-7dd7-4647-a5d2-eb03578540fa",
+        "09ef76c0-ba73-4a3c-9038-4a1f2ea2befd",
+        "bc64df32-5596-4084-91e2-909a0737f328",
+        "e2d4641e-0110-4d59-ab0d-b5cdf9e37dab",
+        "4a93c054-1713-41ba-8e07-490f80e67b04",
+        "1fbe3c35-42c3-44a0-80c4-4713b7901032",
+        "67245665-9888-43fc-890e-78fe21ff10aa",
+        "dac2d749-48aa-45ee-bd71-bf0420bfd6c3",
+        "8db5b264-c8b4-435d-841f-993404fba6fb",
+        "b8cfd7c8-693d-43a5-91ca-fa48bd4547f4",
+        "0e2d5103-6754-4d28-b607-cbd5058efefa",
+        "ac2b9a4c-972a-4010-bc3f-487bc159acfa",
+        "7bde837d-076c-4899-9c3c-177b5b9ed9d7",
+        "41a3c3f3-6188-4b49-be40-2f4c5995c8c2",
+        "79bf174b-fbbf-4ff3-aa47-bcaeae1ab4aa",
+        "349b683a-561e-4c9d-9eb4-50eb118eb0ba",
+        "7769cba5-2bd9-4fd0-83a0-0ae7fc84c9a5",
+        "394edcdc-cbd4-4c82-b286-040e58766fb0",
+        "c6801e70-4b65-4e77-8290-dc0f791813c9",
+        "52dfa1df-4221-4550-9b61-18bece37f194",
+        "a153609f-e5b0-476b-aad9-ac942831456e",
+        "a3501525-e14d-4fed-85d0-cae0f84f8117",
+        "903515cc-a790-4a92-ba9f-5cb002cd1603",
+        "90b31662-cff6-4e43-857d-eb3bc48fb1d8",
+        "b33974ae-3ab8-4ce5-a333-5caf28c0b656",
+        "ab8d5092-8472-4cff-b253-7a53c47020ca",
+        "a1f9cd56-38ba-4026-889c-18d641fb17c8",
+        "f99876af-1155-4306-98b0-15b090c6fcf4",
+        "7e8df294-4ca6-465f-9e8b-e5fa5c564363",
+        "eb7068c6-43b1-4d98-9b1b-29eef9375a6d",
+        "f7a6e73e-f3cc-46b6-8a20-c0df68582f48",
+        "eeba80f0-edce-4052-95d2-835f773b4572",
+        "dfe29150-31f3-4855-b76e-af9aa5a07658",
+        "2dc00f71-9683-4b83-85b4-5e49e600a144",
+        "801c7585-8c7a-4ecf-96ba-e158339bac6a",
+        "7d403730-06e9-4126-9b0b-9b4db2a635ab",
+        "63c51655-3958-426a-b039-2f9540352f39",
+        "a0d8e81d-19fa-45fa-a1a6-7d834a50880d",
+        "87e39b4d-942b-4d9b-8898-0b04f95c34a1",
+        "3dc260b5-9cfd-49b4-8f31-e3eb5b045183",
+        "fb763561-bfda-45af-9e47-b1ac981bf04b",
+        "f139e8fa-08bb-451f-bf2a-b0abed7a7e8b",
+        "befebaa1-3b20-40d1-a1bd-607db2c6515c",
+        "5e5cfb91-81b6-4ff4-8116-2cdb468d4326",
+        "078ab81b-0962-4f99-ad91-41d8966f06c7",
+        "7cff54c1-0316-433f-b15c-d90283f61c50",
+        "a22c01e7-6bde-4c0b-84c7-5d5f6a664eeb",
+        "e8c53543-cac2-41f3-838b-fcaacee778b2",
+        "432d76ad-bfb5-4e48-9327-9533b2246d23",
+        "78e7f09f-a3ff-4e8f-8c4e-8e4749a93ee4",
+        "7de00b21-a3e3-4aa4-bf59-cdc961b2b13d",
+        "beb84754-803f-42fe-a9a7-a06c9257bb81",
+        "36bc2757-f742-45e0-b720-2d089af37fdd",
+        "732f9af6-4708-4d8a-806b-c80c1527ce9d",
+        "53496776-e1b2-414b-a69f-29e3edb828d8",
+        "fc4b665b-22dc-4e57-9d14-186e6f15dee2",
+        "14696658-1eeb-4b5a-8ee2-6c5580563d2d",
+        "090ff350-d3b8-4a5c-bd9b-6f0d180d4547",
+        "b77c5723-9fe0-439b-b4f1-9b5f82939d06",
+        "31182f51-8021-4fca-a1fa-7bd41da3b696",
+        "84e51e48-83e4-41d5-bc3d-a0622d310332",
+        "27f78736-9d6b-4d4b-bdaa-4a7309c6dd56",
+        "5870fb08-fb6e-4acc-bb61-1388333b4fa3",
+        "7ce37f29-9192-4004-bca3-3267d3b29c92",
+        "0a26fc89-0fe1-4a5c-8449-fbbec4fb9d4b",
+        "9183d6ce-d9ad-481d-bdcb-7c1b45f1adba",
+        "95e78340-d17d-44cb-aad1-0015de31c27a",
+        "a3db84c6-1499-4505-9d88-f8efe3a4c17e",
+        "3c1ca0b3-4099-4aa2-9538-036b552dfa53",
+        "df8f647f-f965-4eac-9f97-7ebf333713f8",
+        "24bdebbd-3a4d-47e0-98e3-74d2ba8f102b",
+        "618c3239-7e8b-4500-8846-e6e82b55b7f8",
+        "21d936b1-2de3-43bc-976f-afb616729b48",
+        "77970846-d751-4da0-9a0e-a4b357b525ff",
+        "a2038165-8b5b-45e9-a702-2bbf0611a18c",
+        "3d4cd8ea-5957-4844-b429-6e7fea9f0322",
+        "bb4d72a3-05db-4cf7-ba98-9ec7ef992713",
+        "224cab01-2e87-4dc0-9f0b-667f071b3a7e",
+        "9629ee67-ff5a-4eee-bcb3-baabf9ce1c89",
+        "d33f1529-b69f-4bfc-805e-988defc3884c",
+        "6845bf53-d9cd-4c71-b440-2633f6004e55",
+        "391dc888-b385-4e2c-bab1-ad501c8dd9fa",
+        "a93c6751-16c5-4a85-ae9e-1b159452f3d4",
+        "18ce0fce-7c12-4255-85cb-b15be0da2e57",
+        "88905a4d-2fac-462c-b811-4a3939fa9c4b",
+        "af3ea064-11bd-4731-92bd-9ea475ec107d",
+        "fc53c5e4-083c-4da5-a683-766809e1211c",
+        "2f859983-61c7-44d0-9110-df653f9717ec",
+        "c26cdac5-42c9-4582-90ad-b171e08f26fd",
+        "2908716e-8b02-48b7-b4c8-2dba36264c46",
+        "0a164795-5acb-47a7-b242-f5db5b1725c2",
+        "308b090f-6758-45c6-8fb9-f7f2331d3514",
+        "5f4902a0-708b-4847-9e13-b82f5ba3748a",
+        "66ab7eda-48da-49e6-934b-c47b22f2c461",
+        "4a3ca7fe-03f2-42ce-a1ee-8de0b168a537",
+        "fc75916a-c65e-43ad-a708-2174b47f5151",
+        "11b98639-0149-4cec-8589-f24c9b362f9b",
+        "42b3b4d7-12ec-45ba-be08-483d30481ede",
+        "42053839-c6c4-41bc-94e8-b95e827d4eec",
+        "9723fe88-ee7b-415c-a5a5-432cb12d1806",
+        "452372be-9833-4010-92a6-07a7c9c0f6d0",
+        "abf1af53-4322-4ad0-a644-673c89b93b8d",
+        "342d1677-bc8f-4b27-8b93-4d0911feee6a",
+        "e71dcd8c-c26d-4e6b-85d4-ed728483b850",
+        "8ee5d0a9-492a-4fde-a77b-c089e83bbcbe",
+        "3505c8c3-df6b-4754-8602-db5c7b29f02c",
+        "fd0c63a5-47ce-4eec-a14e-f3930b746c1d",
+        "699e7d76-5415-44a4-8f87-ec3f484a03f8",
+        "beae91bc-6b98-4c69-ae90-c8976fb1180c",
+        "facc8bfa-4b43-4269-a7a5-ae228f9bc17c",
+        "942a4913-c3c7-4109-a8fa-5240e48fa8fd",
+        "5000c19d-81fc-4044-9a9d-d831e9299929",
+        "dc75a0a6-6df3-4d43-84bc-871c73ab5829",
+        "e4850366-d406-4c3b-8dae-436f1ea32ec5",
+        "62b6496b-b796-4645-8849-b3c3c3a5c68a",
+        "aca124c3-084a-4073-aac0-2c14f4ac564a",
+        "6dc571f3-d2dc-48b0-86a0-f29f15de6289",
+        "1c08e18d-85e8-4d57-ab90-b7bc47ce3fdb",
+        "f7749679-cba6-4339-8814-f2634d3a9a87",
+        "ae9a0774-35ca-4fcd-83ee-b34c23581980",
+        "9f7a3e45-2571-4aed-82c5-3b1ed0cb3f00",
+        "7a9d16e0-9215-4c3e-b264-75faac32928f",
+        "94fd7226-b044-43a8-8c95-0f514067b4c8",
+        "640bf09a-8a8a-4143-871f-8661629342ec",
+        "c6dc66f0-6ced-457b-b273-7a52a7912df8",
+        "e50974a2-c2d6-422a-b69b-030f58d7ccae",
+        "08682770-373b-4cc1-83b5-85d03b745787",
+        "be23c95b-4cb8-40af-a6c1-cbe81dcd9974",
+        "87242bec-c59b-412b-8260-1a7e07babcaa",
+        "23c4475f-e802-4f7c-bab0-3c10408cd3b1",
+        "36836d88-fb7b-40d5-b94b-5aa3ce8670de",
+        "ff37ec4c-824c-471b-b4ec-8676e6a62374",
+        "e0d8fed5-22ca-487c-8b0d-4b9e08c16f60",
+        "7821e3f6-1466-4d7a-a1d1-466b9821328d",
+        "131b29fe-aa33-46c0-9e5e-dac22613d967",
+        "fd6a6793-d1ef-4de1-899c-c36840e707e1",
+        "a441df92-3399-411a-a749-7a953f171980",
+        "fcede644-323a-42e8-9e07-369776bd9b8f",
+        "1a744348-071c-411c-8924-39d49e4b11f2",
+        "1b60311c-da4b-4cf6-a430-6477ad0eb634",
+        "31e5e295-da16-4950-8101-056b3e89fce7",
+        "98b1637e-7ee9-40dd-a4f1-f1742572dfcd",
+        "400adbfe-f7c6-4c3f-b908-2521633de48b",
+        "77810779-043e-4a6d-bd8b-4bc5d4f2111b",
+        "aa2d7baa-2b45-459d-a19f-82fa310ee051",
+        "da384b07-e415-4840-9b4c-d1c9d6678caf",
+        "114e0299-2be2-4054-a748-946ee4ac0b64",
+        "b0f8f421-4bdd-4480-bc91-c80fd121e1cc",
+        "5731c07f-421c-47a8-8263-c8242b7efeb6",
+        "01358229-5f3d-49b5-99eb-ec9305830062",
+        "6e4d141a-a995-40f8-abab-9ad4306d22bb",
+        "d6679843-646e-424f-93ec-ac1d57b8ec6e",
+        "d8ea1745-908e-4f91-8f97-e2d5baf0158f",
+        "7e096992-de46-4825-8ee0-2e75bd122b32",
+        "731393dc-2962-4385-b3ef-a1919ee458a8",
+        "1288fd87-777b-4a58-a3e9-82d1398b05af",
+        "c209e548-eb7f-4a7f-98f7-80497aca4fbf",
+        "8f31633e-53c9-4283-980a-98613a272332",
+        "a606582a-101b-494e-ac49-6fbb6946e9ef",
+        "292b7c15-a11d-445b-bc58-59d4b7f2541a",
+        "63c5659e-f513-4288-a6d0-cda2e5c9c3f0",
+        "c9cda2cd-af26-4559-a387-84eb25492899",
+        "d961a2bc-012f-4fd4-83d7-c0e3975a31cf",
+        "f15d02db-5f0a-46ec-8267-d16a6727643c",
+        "d460392d-b5b9-4375-9924-cad882be4e8f",
+        "e44d583c-a6d5-4d09-acee-afa66443a471",
+        "179a53a2-0f7f-41d6-b528-dc402c0d1ac7",
+        "f034ae9b-6128-4f70-b251-0bb0eabb79c7",
+        "ee806697-ec0d-4238-bffe-de6d40fd7108",
+        "b6c38bc5-e2ae-45ed-ba4a-392fb10bc09f",
+        "c41bef00-41e3-474d-a090-7eb993e449bb",
+        "4347344a-a73a-4ae8-9136-f809249e2b32",
+        "634cb265-29e4-48e5-ba04-63efb6934eae",
+        "89904be3-794c-43b3-bb01-864c0b9bb098",
+        "6ed6556e-dfc7-4f2b-90bf-d12ad3ed6dc6",
+        "0dd3f18a-0fe5-4dbc-80d9-f1d16ea221d8"
+      ],
+      "total_memory_ids": [
+        "3b202045-6476-4510-9633-32b29ae2718c",
+        "235d63ec-51d1-448f-8f2f-f17af01162e3",
+        "28325d27-e930-4a43-b002-e85296396692",
+        "788b3a96-7fbf-4db8-ab26-fefd68529b6e",
+        "bbaebbdd-2f5a-4b51-baa7-94e7bdba1dfd",
+        "1b6b1370-6417-43e7-b275-4eb8b2cd93c5",
+        "700d1dd3-1c0e-40b1-a24f-15537d09170b",
+        "3e1c9e79-66b1-47d4-90a7-528e8ed279b6",
+        "bb3f2a68-38fb-4572-88a7-f6d2338a1ef0",
+        "9008dcdf-6cfa-44fb-b9b2-48f376c745bc",
+        "893808dc-5b1f-439d-bf87-a3becd0af98b",
+        "d73e8b0b-200f-4003-8620-3d5e2ad8aab1",
+        "2006b904-777c-4ba1-9aeb-0c5e64d8c6b9",
+        "dcb57ca5-4243-49b8-9106-e7a520b14570",
+        "3c41fc82-8bfb-4513-8f16-c5abaf801fe4",
+        "eb7e74cc-c65f-45bc-b3ba-4e9a92c82c4f",
+        "8b66221f-a894-4630-b928-e0f09a4d2626",
+        "00e6a4cb-9249-4a4a-8f90-ea35735a580c",
+        "7445ff97-e08f-4b59-a1db-1d3523540053",
+        "4cff6cd9-c597-4e7f-9eed-deb031d6e38f",
+        "1f0b2afb-aa5c-48d5-a033-3286503ce937",
+        "45d3c889-d612-44d3-be2d-03c0507b3210",
+        "460a0dec-dc88-41fb-9b32-486fed0cecfb",
+        "a3b9f065-f3fe-4b25-b3db-a219038a509e",
+        "9dc68953-7d92-4a46-a44d-b3bc90e28660",
+        "275c6a76-d407-42ec-bcc8-e267a6399f63",
+        "3cf33a2f-fcc3-4cb9-815c-256af972883b",
+        "878ef9cd-c8ea-4fdb-9ddd-4dd3b8eebe4a",
+        "75076bce-f103-41f8-8373-c2ba71bd4533",
+        "a8194351-82a0-4b2e-95e1-fcda150f2ec0",
+        "77021056-01a6-459d-a2c7-e3d2e9794e67",
+        "b7b417a3-bf39-4e0e-bc62-a882e0f0e4b6",
+        "b59e20a5-8c22-4fdb-a381-ffd05ffe7d93",
+        "8b7814bc-0f5d-40bb-850f-ab6fe32be4f1",
+        "a6575145-c426-42a8-bee7-2a0d6caa48f0",
+        "9845bc45-af05-480f-8293-c542966d31ae",
+        "74c5545b-ba68-43e4-b365-cc53f4e40208",
+        "24513ca7-254c-408f-b348-ddb878332f11",
+        "fa6321e4-9844-4ef9-a45b-bc7c3a132379",
+        "1baf89e2-711b-472b-8709-3a3278dc4af7",
+        "2b392d0b-1a8d-4cef-9692-923e35220ec6",
+        "121bbb42-6f16-4a00-a3a2-04770989c665",
+        "98794506-aee2-43c1-92bf-a04641dcced5",
+        "4ba8ba80-3bcb-4ac0-a6e0-e1444e39822e",
+        "fb8a26be-f6e3-4b07-9f5b-64d70c96a307",
+        "ab58e038-d6c5-4ffa-8eec-41cee1297d92",
+        "2ca6a7e8-2455-4efa-806c-ddff468be2d5",
+        "3dc75e18-c20f-4bc6-823d-ec6bb63c7f29",
+        "5fecc7a1-37c2-4831-abea-c89b711ce0c8",
+        "f76c3892-3d1b-4e02-a51d-05cd5523b1bb",
+        "d76d6f24-6287-444f-b1af-b1c2229afa08",
+        "2bdaf8b8-808e-48e7-8ea9-9e7cb4018071",
+        "1357585d-c52b-4689-85cf-3600fa9abff2",
+        "2f9ffad4-9cf8-4ac6-adb7-13a0fd76c169",
+        "f96d22a9-b05b-40ab-9a71-a4357fe6679d",
+        "8315792c-cab3-4d31-a379-937cc017116d",
+        "7da1c8bf-f00b-4535-827d-0c86cd8fc102",
+        "de658a80-bc55-48b1-8370-3df8c1b4a485",
+        "9473e93b-5ef2-4f58-8d63-118f14a48781",
+        "27c547ab-9e56-4fa9-8558-1ad5442ca62e",
+        "5eed2e66-ffd6-447f-9e9c-9e475ed56984",
+        "ee67e2dc-0e8d-4199-9c14-166027ed12e7",
+        "13d3898b-b746-4fb5-9786-e952076c3008",
+        "7e1212f5-e5e5-44a2-8e35-e001af4dab57",
+        "7570a834-12cf-437e-a5c6-1b9be7d66930",
+        "b2e43c38-c535-4541-80ea-2a8227aba1b5",
+        "6b2c0efd-c583-4278-86f3-5bd0febc75bd",
+        "21e81c77-1eb6-4d33-89e5-3973341ca7fb",
+        "2db8467a-81d7-4230-a4c4-560dadbaf641",
+        "a2b191d9-a7db-440c-aa8c-6550dd6e30b3",
+        "d95b072e-2357-489f-9ee3-cf6b1bdb5819",
+        "67de9f96-0d7d-45cb-8f96-cdb0df434c3b",
+        "195491c3-6f25-4856-b6fc-b47f745f15de",
+        "ebc729da-083f-4b93-ada2-2452bb46cb69",
+        "796fabc6-13aa-4c88-be95-0c2e1b77352d",
+        "bd45eda7-f913-4b50-82ee-eb4221469f53",
+        "f0a9efb9-b46d-4816-9430-754ee38e1106",
+        "ab6032d9-fd0d-4f11-920a-ce6db9ce9221",
+        "5310016b-6600-49cf-8089-ef02934f8eb1",
+        "fe24c526-6663-4a82-8671-a0ab0adc9607",
+        "2a58f09f-fe0b-4899-af91-342d7d88bfc9",
+        "1a0d4a09-200a-451a-a77d-dbda0774a4a1",
+        "3eb393e5-a4c0-4200-90ec-57653dde3226",
+        "04b34373-c3a1-4e70-87f0-4bef20d11c51",
+        "11e75631-c607-4113-99da-8e3871a96b5a",
+        "79af5d91-2bb0-4e0f-aef0-7f5c463484e3",
+        "167a7919-509f-49dc-a5bf-31728d738990",
+        "3e5086de-681b-41d5-b393-573fe1b5770d",
+        "343d6e8c-dac7-41ae-95bf-3c27b7247e3c",
+        "b525fba5-6204-41bb-94c0-3c05c02ddc2e"
+      ],
+      "errors": [],
+      "processing_type": "real_ai",
+      "processing_end": "2025-08-18 23:12:43.610538",
+      "processing_duration": 1083.523047,
+      "total_memories_stored": 90,
+      "total_chat_messages": 419
+    }
+  ],
+  "evaluation_results": {
+    "qa_evaluation": {
+      "total_questions": 20,
+      "evaluation_start": "2025-08-18 23:12:43.633356",
+      "individual_results": [
+        {
+          "question": "When did Caroline go to the LGBTQ support group?",
+          "correct_answer": "7 May 2023",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories.",
+          "category": 2,
+          "category_name": "temporal",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D1:3"
+          ],
+          "memories_retrieved": 8,
+          "total_evaluation_time": 4.122701644897461,
+          "metadata": {
+            "category": "temporal",
+            "memories_used": 8,
+            "generation_time": 1.117682933807373,
+            "token_usage": {
+              "prompt_tokens": 562,
+              "completion_tokens": 6,
+              "total_tokens": 568
+            },
+            "context_length": 2298
+          }
+        },
+        {
+          "question": "When did Melanie paint a sunrise?",
+          "correct_answer": 2022,
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories",
+          "category": 2,
+          "category_name": "temporal",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D1:12"
+          ],
+          "memories_retrieved": 4,
+          "total_evaluation_time": 3.303588628768921,
+          "metadata": {
+            "category": "temporal",
+            "memories_used": 4,
+            "generation_time": 1.0462894439697266,
+            "token_usage": {
+              "prompt_tokens": 406,
+              "completion_tokens": 5,
+              "total_tokens": 411
+            },
+            "context_length": 1502
+          }
+        },
+        {
+          "question": "What fields would Caroline be likely to pursue in her educaton?",
+          "correct_answer": "Psychology, counseling certification",
+          "adversarial_answer": null,
+          "generated_answer": "Caroline would likely pursue fields related to art and mental health in her education. She finds painting a powerful form of self-expression and uses art to explore identity and teach about trans experiences (Memory 1, Memory 5). Additionally, she is interested in a career in counseling or mental health, valuing empathy and understanding (Memory 2).",
+          "category": 3,
+          "category_name": "multi_hop",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D1:9",
+            "D1:11"
+          ],
+          "memories_retrieved": 5,
+          "total_evaluation_time": 5.333970069885254,
+          "metadata": {
+            "category": "multi_hop",
+            "memories_used": 5,
+            "generation_time": 1.5089924335479736,
+            "token_usage": {
+              "prompt_tokens": 486,
+              "completion_tokens": 69,
+              "total_tokens": 555
+            },
+            "context_length": 1884
+          }
+        },
+        {
+          "question": "What did Caroline research?",
+          "correct_answer": "Adoption agencies",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories.",
+          "category": 1,
+          "category_name": "single_hop",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D2:8"
+          ],
+          "memories_retrieved": 7,
+          "total_evaluation_time": 3.6660683155059814,
+          "metadata": {
+            "category": "single_hop",
+            "memories_used": 7,
+            "generation_time": 1.5407435894012451,
+            "token_usage": {
+              "prompt_tokens": 559,
+              "completion_tokens": 6,
+              "total_tokens": 565
+            },
+            "context_length": 2298
+          }
+        },
+        {
+          "question": "What is Caroline's identity?",
+          "correct_answer": "Transgender woman",
+          "adversarial_answer": null,
+          "generated_answer": "Caroline is a trans woman who uses art to explore her gender identity and find self-acceptance during her transition.",
+          "category": 1,
+          "category_name": "single_hop",
+          "exact_match": false,
+          "partial_match": true,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D1:5"
+          ],
+          "memories_retrieved": 7,
+          "total_evaluation_time": 5.356781482696533,
+          "metadata": {
+            "category": "single_hop",
+            "memories_used": 7,
+            "generation_time": 3.0358917713165283,
+            "token_usage": {
+              "prompt_tokens": 560,
+              "completion_tokens": 24,
+              "total_tokens": 584
+            },
+            "context_length": 2298
+          }
+        },
+        {
+          "question": "When did Melanie run a charity race?",
+          "correct_answer": "The sunday before 25 May 2023",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories.",
+          "category": 2,
+          "category_name": "temporal",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D2:1"
+          ],
+          "memories_retrieved": 8,
+          "total_evaluation_time": 2.904714822769165,
+          "metadata": {
+            "category": "temporal",
+            "memories_used": 8,
+            "generation_time": 0.8847832679748535,
+            "token_usage": {
+              "prompt_tokens": 570,
+              "completion_tokens": 6,
+              "total_tokens": 576
+            },
+            "context_length": 2343
+          }
+        },
+        {
+          "question": "When is Melanie planning on going camping?",
+          "correct_answer": "June 2023",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories.",
+          "category": 2,
+          "category_name": "temporal",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D2:7"
+          ],
+          "memories_retrieved": 9,
+          "total_evaluation_time": 3.105194091796875,
+          "metadata": {
+            "category": "temporal",
+            "memories_used": 9,
+            "generation_time": 1.2252178192138672,
+            "token_usage": {
+              "prompt_tokens": 570,
+              "completion_tokens": 6,
+              "total_tokens": 576
+            },
+            "context_length": 2343
+          }
+        },
+        {
+          "question": "What is Caroline's relationship status?",
+          "correct_answer": "Single",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories.",
+          "category": 1,
+          "category_name": "single_hop",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D3:13",
+            "D2:14"
+          ],
+          "memories_retrieved": 3,
+          "total_evaluation_time": 3.0945444107055664,
+          "metadata": {
+            "category": "single_hop",
+            "memories_used": 3,
+            "generation_time": 0.7697820663452148,
+            "token_usage": {
+              "prompt_tokens": 350,
+              "completion_tokens": 6,
+              "total_tokens": 356
+            },
+            "context_length": 1111
+          }
+        },
+        {
+          "question": "When did Caroline give a speech at a school?",
+          "correct_answer": "The week before 9 June 2023",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories.",
+          "category": 2,
+          "category_name": "temporal",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D3:1"
+          ],
+          "memories_retrieved": 7,
+          "total_evaluation_time": 3.8237740993499756,
+          "metadata": {
+            "category": "temporal",
+            "memories_used": 7,
+            "generation_time": 1.4749677181243896,
+            "token_usage": {
+              "prompt_tokens": 562,
+              "completion_tokens": 6,
+              "total_tokens": 568
+            },
+            "context_length": 2298
+          }
+        },
+        {
+          "question": "When did Caroline meet up with her friends, family, and mentors?",
+          "correct_answer": "The week before 9 June 2023",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories.",
+          "category": 2,
+          "category_name": "temporal",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D3:11"
+          ],
+          "memories_retrieved": 10,
+          "total_evaluation_time": 3.289917469024658,
+          "metadata": {
+            "category": "temporal",
+            "memories_used": 10,
+            "generation_time": 1.1144466400146484,
+            "token_usage": {
+              "prompt_tokens": 566,
+              "completion_tokens": 6,
+              "total_tokens": 572
+            },
+            "context_length": 2298
+          }
+        },
+        {
+          "question": "How long has Caroline had her current group of friends for?",
+          "correct_answer": "4 years",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories",
+          "category": 2,
+          "category_name": "temporal",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D3:13"
+          ],
+          "memories_retrieved": 7,
+          "total_evaluation_time": 3.2815983295440674,
+          "metadata": {
+            "category": "temporal",
+            "memories_used": 7,
+            "generation_time": 1.1319382190704346,
+            "token_usage": {
+              "prompt_tokens": 564,
+              "completion_tokens": 5,
+              "total_tokens": 569
+            },
+            "context_length": 2298
+          }
+        },
+        {
+          "question": "Where did Caroline move from 4 years ago?",
+          "correct_answer": "Sweden",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories",
+          "category": 1,
+          "category_name": "single_hop",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D3:13",
+            "D4:3"
+          ],
+          "memories_retrieved": 7,
+          "total_evaluation_time": 3.78650164604187,
+          "metadata": {
+            "category": "single_hop",
+            "memories_used": 7,
+            "generation_time": 1.4639992713928223,
+            "token_usage": {
+              "prompt_tokens": 564,
+              "completion_tokens": 5,
+              "total_tokens": 569
+            },
+            "context_length": 2298
+          }
+        },
+        {
+          "question": "How long ago was Caroline's 18th birthday?",
+          "correct_answer": "10 years ago",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories.",
+          "category": 2,
+          "category_name": "temporal",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D4:5"
+          ],
+          "memories_retrieved": 3,
+          "total_evaluation_time": 2.3911118507385254,
+          "metadata": {
+            "category": "temporal",
+            "memories_used": 3,
+            "generation_time": 0.8253166675567627,
+            "token_usage": {
+              "prompt_tokens": 352,
+              "completion_tokens": 6,
+              "total_tokens": 358
+            },
+            "context_length": 1111
+          }
+        },
+        {
+          "question": "What career path has Caroline decided to persue?",
+          "correct_answer": "counseling or mental health for Transgender people",
+          "adversarial_answer": null,
+          "generated_answer": "Caroline has decided to pursue a career in counseling or mental health. (Memory 2)",
+          "category": 1,
+          "category_name": "single_hop",
+          "exact_match": false,
+          "partial_match": true,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D4:13",
+            "D1:11"
+          ],
+          "memories_retrieved": 5,
+          "total_evaluation_time": 4.938734769821167,
+          "metadata": {
+            "category": "single_hop",
+            "memories_used": 5,
+            "generation_time": 1.8172006607055664,
+            "token_usage": {
+              "prompt_tokens": 484,
+              "completion_tokens": 19,
+              "total_tokens": 503
+            },
+            "context_length": 1884
+          }
+        },
+        {
+          "question": "Would Caroline still want to pursue counseling as a career if she hadn't received support growing up?",
+          "correct_answer": "Likely no",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories",
+          "category": 3,
+          "category_name": "multi_hop",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D4:15",
+            "D3:5"
+          ],
+          "memories_retrieved": 9,
+          "total_evaluation_time": 3.585113286972046,
+          "metadata": {
+            "category": "multi_hop",
+            "memories_used": 9,
+            "generation_time": 1.0547409057617188,
+            "token_usage": {
+              "prompt_tokens": 524,
+              "completion_tokens": 5,
+              "total_tokens": 529
+            },
+            "context_length": 2067
+          }
+        },
+        {
+          "question": "What activities does Melanie partake in?",
+          "correct_answer": "pottery, camping, painting, swimming",
+          "adversarial_answer": null,
+          "generated_answer": "Melanie partakes in painting, pottery, and enjoys live music. She finds painting and pottery calming and satisfying, and she recently attended a live band show.",
+          "category": 1,
+          "category_name": "single_hop",
+          "exact_match": false,
+          "partial_match": true,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D5:4",
+            "D9:1",
+            "D1:12",
+            "D1:18"
+          ],
+          "memories_retrieved": 9,
+          "total_evaluation_time": 3.9362006187438965,
+          "metadata": {
+            "category": "single_hop",
+            "memories_used": 9,
+            "generation_time": 1.4387307167053223,
+            "token_usage": {
+              "prompt_tokens": 561,
+              "completion_tokens": 32,
+              "total_tokens": 593
+            },
+            "context_length": 2310
+          }
+        },
+        {
+          "question": "When did Melanie sign up for a pottery class?",
+          "correct_answer": "2 July 2023",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories.",
+          "category": 2,
+          "category_name": "temporal",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D5:4"
+          ],
+          "memories_retrieved": 3,
+          "total_evaluation_time": 2.311363458633423,
+          "metadata": {
+            "category": "temporal",
+            "memories_used": 3,
+            "generation_time": 0.7388420104980469,
+            "token_usage": {
+              "prompt_tokens": 345,
+              "completion_tokens": 6,
+              "total_tokens": 351
+            },
+            "context_length": 1141
+          }
+        },
+        {
+          "question": "When is Caroline going to the transgender conference?",
+          "correct_answer": "July 2023",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories.",
+          "category": 2,
+          "category_name": "temporal",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D5:13"
+          ],
+          "memories_retrieved": 8,
+          "total_evaluation_time": 2.9737889766693115,
+          "metadata": {
+            "category": "temporal",
+            "memories_used": 8,
+            "generation_time": 0.7596297264099121,
+            "token_usage": {
+              "prompt_tokens": 561,
+              "completion_tokens": 6,
+              "total_tokens": 567
+            },
+            "context_length": 2298
+          }
+        },
+        {
+          "question": "Where has Melanie camped?",
+          "correct_answer": "beach, mountains, forest",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories.",
+          "category": 1,
+          "category_name": "single_hop",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D6:16",
+            "D4:6",
+            "D8:32"
+          ],
+          "memories_retrieved": 9,
+          "total_evaluation_time": 4.242737770080566,
+          "metadata": {
+            "category": "single_hop",
+            "memories_used": 9,
+            "generation_time": 0.8462855815887451,
+            "token_usage": {
+              "prompt_tokens": 570,
+              "completion_tokens": 6,
+              "total_tokens": 576
+            },
+            "context_length": 2343
+          }
+        },
+        {
+          "question": "What do Melanie's kids like?",
+          "correct_answer": "dinosaurs, nature",
+          "adversarial_answer": null,
+          "generated_answer": "Information not found in memories",
+          "category": 1,
+          "category_name": "single_hop",
+          "exact_match": false,
+          "partial_match": false,
+          "adversarial_match": false,
+          "evidence_ids": [
+            "D6:6",
+            "D4:8"
+          ],
+          "memories_retrieved": 2,
+          "total_evaluation_time": 2.695838689804077,
+          "metadata": {
+            "category": "single_hop",
+            "memories_used": 2,
+            "generation_time": 0.8773782253265381,
+            "token_usage": {
+              "prompt_tokens": 272,
+              "completion_tokens": 5,
+              "total_tokens": 277
+            },
+            "context_length": 771
+          }
+        }
+      ],
+      "category_performance": {
+        "single_hop": {
+          "total_questions": 8,
+          "exact_matches": 0,
+          "partial_matches": 3,
+          "adversarial_matches": 0,
+          "exact_match_accuracy": 0.0,
+          "partial_match_accuracy": 0.375,
+          "adversarial_match_rate": 0.0,
+          "avg_response_time": 3.9646759629249573,
+          "total_tokens": 4023,
+          "avg_tokens_per_question": 502.875,
+          "avg_memories_retrieved": 6.125
+        },
+        "temporal": {
+          "total_questions": 10,
+          "exact_matches": 0,
+          "partial_matches": 0,
+          "adversarial_matches": 0,
+          "exact_match_accuracy": 0.0,
+          "partial_match_accuracy": 0.0,
+          "adversarial_match_rate": 0.0,
+          "avg_response_time": 3.150775337219238,
+          "total_tokens": 5116,
+          "avg_tokens_per_question": 511.6,
+          "avg_memories_retrieved": 6.7
+        },
+        "multi_hop": {
+          "total_questions": 2,
+          "exact_matches": 0,
+          "partial_matches": 0,
+          "adversarial_matches": 0,
+          "exact_match_accuracy": 0.0,
+          "partial_match_accuracy": 0.0,
+          "adversarial_match_rate": 0.0,
+          "avg_response_time": 4.45954167842865,
+          "total_tokens": 1084,
+          "avg_tokens_per_question": 542.0,
+          "avg_memories_retrieved": 7.0
+        }
+      },
+      "overall_performance": {
+        "total_questions": 20,
+        "exact_matches": 0,
+        "partial_matches": 3,
+        "adversarial_matches": 0,
+        "exact_match_accuracy": 0.0,
+        "partial_match_accuracy": 0.15,
+        "adversarial_match_rate": 0.0,
+        "avg_response_time": 3.607212221622467,
+        "total_tokens": 10223,
+        "avg_tokens_per_question": 511.15,
+        "avg_memories_retrieved": 6.5
+      },
+      "evaluation_end": "2025-08-18 23:13:55.781097",
+      "total_evaluation_time": 72.147741
+    },
+    "llm_judge": {
+      "total_evaluations": 20,
+      "evaluation_start": 1755539035.8057053,
+      "individual_judgments": [
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer states that the information is not found, which is incorrect as the ground truth provides a specific date. This indicates a failure to retrieve or recognize the relevant information.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 1.0,
+          "question": "When did Caroline go to the LGBTQ support group?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "7 May 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 2.194079875946045,
+          "token_usage": {
+            "prompt_tokens": 566,
+            "completion_tokens": 92,
+            "total_tokens": 658
+          },
+          "original_qa_result": {
+            "question": "When did Caroline go to the LGBTQ support group?",
+            "correct_answer": "7 May 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D1:3"
+            ],
+            "memories_retrieved": 8,
+            "total_evaluation_time": 4.122701644897461,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 8,
+              "generation_time": 1.117682933807373,
+              "token_usage": {
+                "prompt_tokens": 562,
+                "completion_tokens": 6,
+                "total_tokens": 568
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer states 'Information not found in memories,' which is incorrect as the ground truth provides a specific year, 2022. This indicates a failure to retrieve the available information.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 1.0,
+          "question": "When did Melanie paint a sunrise?",
+          "generated_answer": "Information not found in memories",
+          "ground_truth_answer": 2022,
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 2.517000436782837,
+          "token_usage": {
+            "prompt_tokens": 560,
+            "completion_tokens": 94,
+            "total_tokens": 654
+          },
+          "original_qa_result": {
+            "question": "When did Melanie paint a sunrise?",
+            "correct_answer": 2022,
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D1:12"
+            ],
+            "memories_retrieved": 4,
+            "total_evaluation_time": 3.303588628768921,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 4,
+              "generation_time": 1.0462894439697266,
+              "token_usage": {
+                "prompt_tokens": 406,
+                "completion_tokens": 5,
+                "total_tokens": 411
+              },
+              "context_length": 1502
+            }
+          }
+        },
+        {
+          "score": 0.8,
+          "reasoning": "The generated answer accurately identifies mental health as a field Caroline is interested in, which aligns with the ground truth of psychology and counseling. However, it introduces art as a field of interest, which is not mentioned in the ground truth. This addition is relevant based on the context but not directly aligned with the ground truth answer.",
+          "accuracy": 0.8,
+          "completeness": 0.8,
+          "relevance": 0.8,
+          "clarity": 1.0,
+          "question": "What fields would Caroline be likely to pursue in her educaton?",
+          "generated_answer": "Caroline would likely pursue fields related to art and mental health in her education. She finds painting a powerful form of self-expression and uses art to explore identity and teach about trans experiences (Memory 1, Memory 5). Additionally, she is interested in a career in counseling or mental health, valuing empathy and understanding (Memory 2).",
+          "ground_truth_answer": "Psychology, counseling certification",
+          "category": "multi_hop",
+          "category_id": 3,
+          "evaluation_time": 2.538712739944458,
+          "token_usage": {
+            "prompt_tokens": 636,
+            "completion_tokens": 121,
+            "total_tokens": 757
+          },
+          "original_qa_result": {
+            "question": "What fields would Caroline be likely to pursue in her educaton?",
+            "correct_answer": "Psychology, counseling certification",
+            "adversarial_answer": null,
+            "generated_answer": "Caroline would likely pursue fields related to art and mental health in her education. She finds painting a powerful form of self-expression and uses art to explore identity and teach about trans experiences (Memory 1, Memory 5). Additionally, she is interested in a career in counseling or mental health, valuing empathy and understanding (Memory 2).",
+            "category": 3,
+            "category_name": "multi_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D1:9",
+              "D1:11"
+            ],
+            "memories_retrieved": 5,
+            "total_evaluation_time": 5.333970069885254,
+            "metadata": {
+              "category": "multi_hop",
+              "memories_used": 5,
+              "generation_time": 1.5089924335479736,
+              "token_usage": {
+                "prompt_tokens": 486,
+                "completion_tokens": 69,
+                "total_tokens": 555
+              },
+              "context_length": 1884
+            }
+          }
+        },
+        {
+          "score": 0.0,
+          "reasoning": "The generated answer 'Information not found in memories' is incorrect as the ground truth clearly states that Caroline researched 'Adoption agencies'. The generated answer fails to provide any factual information, completeness, or relevance to the question.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.0,
+          "clarity": 0.0,
+          "question": "What did Caroline research?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "Adoption agencies",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 2.3194007873535156,
+          "token_usage": {
+            "prompt_tokens": 559,
+            "completion_tokens": 101,
+            "total_tokens": 660
+          },
+          "original_qa_result": {
+            "question": "What did Caroline research?",
+            "correct_answer": "Adoption agencies",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D2:8"
+            ],
+            "memories_retrieved": 7,
+            "total_evaluation_time": 3.6660683155059814,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 7,
+              "generation_time": 1.5407435894012451,
+              "token_usage": {
+                "prompt_tokens": 559,
+                "completion_tokens": 6,
+                "total_tokens": 565
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.8,
+          "reasoning": "The generated answer accurately identifies Caroline as a trans woman, which matches the ground truth. However, it includes additional information about her using art to explore her gender identity, which is not present in the ground truth. This extra detail does not detract from the factual accuracy but affects completeness as it introduces elements not required by the question.",
+          "accuracy": 1.0,
+          "completeness": 0.7,
+          "relevance": 0.8,
+          "clarity": 1.0,
+          "question": "What is Caroline's identity?",
+          "generated_answer": "Caroline is a trans woman who uses art to explore her gender identity and find self-acceptance during her transition.",
+          "ground_truth_answer": "Transgender woman",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 2.555816411972046,
+          "token_usage": {
+            "prompt_tokens": 578,
+            "completion_tokens": 123,
+            "total_tokens": 701
+          },
+          "original_qa_result": {
+            "question": "What is Caroline's identity?",
+            "correct_answer": "Transgender woman",
+            "adversarial_answer": null,
+            "generated_answer": "Caroline is a trans woman who uses art to explore her gender identity and find self-acceptance during her transition.",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": true,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D1:5"
+            ],
+            "memories_retrieved": 7,
+            "total_evaluation_time": 5.356781482696533,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 7,
+              "generation_time": 3.0358917713165283,
+              "token_usage": {
+                "prompt_tokens": 560,
+                "completion_tokens": 24,
+                "total_tokens": 584
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer 'Information not found in memories' is incorrect as the ground truth provides a specific date. The system failed to retrieve the available information.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 0.5,
+          "question": "When did Melanie run a charity race?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "The sunday before 25 May 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 2.126967191696167,
+          "token_usage": {
+            "prompt_tokens": 567,
+            "completion_tokens": 87,
+            "total_tokens": 654
+          },
+          "original_qa_result": {
+            "question": "When did Melanie run a charity race?",
+            "correct_answer": "The sunday before 25 May 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D2:1"
+            ],
+            "memories_retrieved": 8,
+            "total_evaluation_time": 2.904714822769165,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 8,
+              "generation_time": 0.8847832679748535,
+              "token_usage": {
+                "prompt_tokens": 570,
+                "completion_tokens": 6,
+                "total_tokens": 576
+              },
+              "context_length": 2343
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer states 'Information not found in memories,' which is incorrect as the ground truth specifies 'June 2023.' The generated answer fails to provide any factual information or completeness regarding the question.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 0.5,
+          "question": "When is Melanie planning on going camping?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "June 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 2.1647591590881348,
+          "token_usage": {
+            "prompt_tokens": 562,
+            "completion_tokens": 97,
+            "total_tokens": 659
+          },
+          "original_qa_result": {
+            "question": "When is Melanie planning on going camping?",
+            "correct_answer": "June 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D2:7"
+            ],
+            "memories_retrieved": 9,
+            "total_evaluation_time": 3.105194091796875,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 9,
+              "generation_time": 1.2252178192138672,
+              "token_usage": {
+                "prompt_tokens": 570,
+                "completion_tokens": 6,
+                "total_tokens": 576
+              },
+              "context_length": 2343
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer 'Information not found in memories' is incorrect as the ground truth clearly states that Caroline is 'Single'. The generated answer fails to provide the factual information available in the evidence context.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 0.5,
+          "question": "What is Caroline's relationship status?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "Single",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 2.2850756645202637,
+          "token_usage": {
+            "prompt_tokens": 565,
+            "completion_tokens": 96,
+            "total_tokens": 661
+          },
+          "original_qa_result": {
+            "question": "What is Caroline's relationship status?",
+            "correct_answer": "Single",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D3:13",
+              "D2:14"
+            ],
+            "memories_retrieved": 3,
+            "total_evaluation_time": 3.0945444107055664,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 3,
+              "generation_time": 0.7697820663452148,
+              "token_usage": {
+                "prompt_tokens": 350,
+                "completion_tokens": 6,
+                "total_tokens": 356
+              },
+              "context_length": 1111
+            }
+          }
+        },
+        {
+          "score": 0.4,
+          "reasoning": "The generated answer 'Information not found in memories' is incorrect as the ground truth provides a specific temporal detail. The generated answer fails to capture any factual information or key elements from the ground truth, which indicates a major omission. However, the answer is clear in its statement.",
+          "accuracy": 0.3,
+          "completeness": 0.3,
+          "relevance": 0.5,
+          "clarity": 1.0,
+          "question": "When did Caroline give a speech at a school?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "The week before 9 June 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 4.036327362060547,
+          "token_usage": {
+            "prompt_tokens": 569,
+            "completion_tokens": 112,
+            "total_tokens": 681
+          },
+          "original_qa_result": {
+            "question": "When did Caroline give a speech at a school?",
+            "correct_answer": "The week before 9 June 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D3:1"
+            ],
+            "memories_retrieved": 7,
+            "total_evaluation_time": 3.8237740993499756,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 7,
+              "generation_time": 1.4749677181243896,
+              "token_usage": {
+                "prompt_tokens": 562,
+                "completion_tokens": 6,
+                "total_tokens": 568
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer states that the information is not found, which is incorrect as the ground truth provides a specific time frame. The generated answer fails to capture any factual information, lacks completeness, and does not address the question directly.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.3,
+          "clarity": 1.0,
+          "question": "When did Caroline meet up with her friends, family, and mentors?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "The week before 9 June 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 3.0518527030944824,
+          "token_usage": {
+            "prompt_tokens": 573,
+            "completion_tokens": 102,
+            "total_tokens": 675
+          },
+          "original_qa_result": {
+            "question": "When did Caroline meet up with her friends, family, and mentors?",
+            "correct_answer": "The week before 9 June 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D3:11"
+            ],
+            "memories_retrieved": 10,
+            "total_evaluation_time": 3.289917469024658,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 10,
+              "generation_time": 1.1144466400146484,
+              "token_usage": {
+                "prompt_tokens": 566,
+                "completion_tokens": 6,
+                "total_tokens": 572
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "Parse error: Expecting value: line 1 column 1 (char 0)",
+          "accuracy": 0.3,
+          "completeness": 0.3,
+          "relevance": 0.3,
+          "clarity": 0.3,
+          "question": "How long has Caroline had her current group of friends for?",
+          "generated_answer": "Information not found in memories",
+          "ground_truth_answer": "4 years",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 1.741013765335083,
+          "token_usage": {
+            "prompt_tokens": 565,
+            "completion_tokens": 95,
+            "total_tokens": 660
+          },
+          "original_qa_result": {
+            "question": "How long has Caroline had her current group of friends for?",
+            "correct_answer": "4 years",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D3:13"
+            ],
+            "memories_retrieved": 7,
+            "total_evaluation_time": 3.2815983295440674,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 7,
+              "generation_time": 1.1319382190704346,
+              "token_usage": {
+                "prompt_tokens": 564,
+                "completion_tokens": 5,
+                "total_tokens": 569
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer 'Information not found in memories' is incorrect as the ground truth answer 'Sweden' is available in the evidence context. The system failed to retrieve the correct information from the provided context.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 1.0,
+          "question": "Where did Caroline move from 4 years ago?",
+          "generated_answer": "Information not found in memories",
+          "ground_truth_answer": "Sweden",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 1.8594779968261719,
+          "token_usage": {
+            "prompt_tokens": 568,
+            "completion_tokens": 98,
+            "total_tokens": 666
+          },
+          "original_qa_result": {
+            "question": "Where did Caroline move from 4 years ago?",
+            "correct_answer": "Sweden",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D3:13",
+              "D4:3"
+            ],
+            "memories_retrieved": 7,
+            "total_evaluation_time": 3.78650164604187,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 7,
+              "generation_time": 1.4639992713928223,
+              "token_usage": {
+                "prompt_tokens": 564,
+                "completion_tokens": 5,
+                "total_tokens": 569
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer 'Information not found in memories.' does not provide the factual information that Caroline's 18th birthday was 10 years ago. It fails to address the temporal aspect of the question and does not include any key elements from the ground truth.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 0.5,
+          "question": "How long ago was Caroline's 18th birthday?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "10 years ago",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 1.9541723728179932,
+          "token_usage": {
+            "prompt_tokens": 565,
+            "completion_tokens": 108,
+            "total_tokens": 673
+          },
+          "original_qa_result": {
+            "question": "How long ago was Caroline's 18th birthday?",
+            "correct_answer": "10 years ago",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D4:5"
+            ],
+            "memories_retrieved": 3,
+            "total_evaluation_time": 2.3911118507385254,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 3,
+              "generation_time": 0.8253166675567627,
+              "token_usage": {
+                "prompt_tokens": 352,
+                "completion_tokens": 6,
+                "total_tokens": 358
+              },
+              "context_length": 1111
+            }
+          }
+        },
+        {
+          "score": 0.8,
+          "reasoning": "The generated answer accurately identifies the career path as counseling or mental health, which aligns with the ground truth. However, it omits the specific focus on Transgender people, which is a key detail.",
+          "accuracy": 0.8,
+          "completeness": 0.7,
+          "relevance": 1.0,
+          "clarity": 1.0,
+          "question": "What career path has Caroline decided to persue?",
+          "generated_answer": "Caroline has decided to pursue a career in counseling or mental health. (Memory 2)",
+          "ground_truth_answer": "counseling or mental health for Transgender people",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 1.8646068572998047,
+          "token_usage": {
+            "prompt_tokens": 587,
+            "completion_tokens": 97,
+            "total_tokens": 684
+          },
+          "original_qa_result": {
+            "question": "What career path has Caroline decided to persue?",
+            "correct_answer": "counseling or mental health for Transgender people",
+            "adversarial_answer": null,
+            "generated_answer": "Caroline has decided to pursue a career in counseling or mental health. (Memory 2)",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": true,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D4:13",
+              "D1:11"
+            ],
+            "memories_retrieved": 5,
+            "total_evaluation_time": 4.938734769821167,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 5,
+              "generation_time": 1.8172006607055664,
+              "token_usage": {
+                "prompt_tokens": 484,
+                "completion_tokens": 19,
+                "total_tokens": 503
+              },
+              "context_length": 1884
+            }
+          }
+        },
+        {
+          "score": 0.5,
+          "reasoning": "The generated answer 'Information not found in memories' indicates that the system could not find relevant information to answer the question. The ground truth suggests a likely 'no', implying that there is some information in the context that could lead to this conclusion. The generated answer lacks factual accuracy and completeness but is relevant in acknowledging the lack of information. Clarity is maintained as the response is straightforward.",
+          "accuracy": 0.4,
+          "completeness": 0.4,
+          "relevance": 0.6,
+          "clarity": 0.8,
+          "question": "Would Caroline still want to pursue counseling as a career if she hadn't received support growing up?",
+          "generated_answer": "Information not found in memories",
+          "ground_truth_answer": "Likely no",
+          "category": "multi_hop",
+          "category_id": 3,
+          "evaluation_time": 2.862372875213623,
+          "token_usage": {
+            "prompt_tokens": 578,
+            "completion_tokens": 134,
+            "total_tokens": 712
+          },
+          "original_qa_result": {
+            "question": "Would Caroline still want to pursue counseling as a career if she hadn't received support growing up?",
+            "correct_answer": "Likely no",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories",
+            "category": 3,
+            "category_name": "multi_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D4:15",
+              "D3:5"
+            ],
+            "memories_retrieved": 9,
+            "total_evaluation_time": 3.585113286972046,
+            "metadata": {
+              "category": "multi_hop",
+              "memories_used": 9,
+              "generation_time": 1.0547409057617188,
+              "token_usage": {
+                "prompt_tokens": 524,
+                "completion_tokens": 5,
+                "total_tokens": 529
+              },
+              "context_length": 2067
+            }
+          }
+        },
+        {
+          "score": 0.5,
+          "reasoning": "The generated answer includes painting and pottery, which are correct, but it incorrectly adds live music and omits camping and swimming. The factual accuracy is compromised by the inclusion of an incorrect activity and the omission of two correct ones. The answer is relevant and clear but lacks completeness.",
+          "accuracy": 0.5,
+          "completeness": 0.5,
+          "relevance": 0.8,
+          "clarity": 1.0,
+          "question": "What activities does Melanie partake in?",
+          "generated_answer": "Melanie partakes in painting, pottery, and enjoys live music. She finds painting and pottery calming and satisfying, and she recently attended a live band show.",
+          "ground_truth_answer": "pottery, camping, painting, swimming",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 2.624316930770874,
+          "token_usage": {
+            "prompt_tokens": 606,
+            "completion_tokens": 112,
+            "total_tokens": 718
+          },
+          "original_qa_result": {
+            "question": "What activities does Melanie partake in?",
+            "correct_answer": "pottery, camping, painting, swimming",
+            "adversarial_answer": null,
+            "generated_answer": "Melanie partakes in painting, pottery, and enjoys live music. She finds painting and pottery calming and satisfying, and she recently attended a live band show.",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": true,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D5:4",
+              "D9:1",
+              "D1:12",
+              "D1:18"
+            ],
+            "memories_retrieved": 9,
+            "total_evaluation_time": 3.9362006187438965,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 9,
+              "generation_time": 1.4387307167053223,
+              "token_usage": {
+                "prompt_tokens": 561,
+                "completion_tokens": 32,
+                "total_tokens": 593
+              },
+              "context_length": 2310
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "The generated answer states that the information is not found, which is incorrect as the ground truth provides a specific date. This indicates a failure to retrieve the relevant information from the memory.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.5,
+          "clarity": 1.0,
+          "question": "When did Melanie sign up for a pottery class?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "2 July 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 2.8726768493652344,
+          "token_usage": {
+            "prompt_tokens": 566,
+            "completion_tokens": 93,
+            "total_tokens": 659
+          },
+          "original_qa_result": {
+            "question": "When did Melanie sign up for a pottery class?",
+            "correct_answer": "2 July 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D5:4"
+            ],
+            "memories_retrieved": 3,
+            "total_evaluation_time": 2.311363458633423,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 3,
+              "generation_time": 0.7388420104980469,
+              "token_usage": {
+                "prompt_tokens": 345,
+                "completion_tokens": 6,
+                "total_tokens": 351
+              },
+              "context_length": 1141
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "Parse error: Expecting value: line 1 column 1 (char 0)",
+          "accuracy": 0.3,
+          "completeness": 0.3,
+          "relevance": 0.3,
+          "clarity": 0.3,
+          "question": "When is Caroline going to the transgender conference?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "July 2023",
+          "category": "temporal",
+          "category_id": 2,
+          "evaluation_time": 2.013782501220703,
+          "token_usage": {
+            "prompt_tokens": 563,
+            "completion_tokens": 110,
+            "total_tokens": 673
+          },
+          "original_qa_result": {
+            "question": "When is Caroline going to the transgender conference?",
+            "correct_answer": "July 2023",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 2,
+            "category_name": "temporal",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D5:13"
+            ],
+            "memories_retrieved": 8,
+            "total_evaluation_time": 2.9737889766693115,
+            "metadata": {
+              "category": "temporal",
+              "memories_used": 8,
+              "generation_time": 0.7596297264099121,
+              "token_usage": {
+                "prompt_tokens": 561,
+                "completion_tokens": 6,
+                "total_tokens": 567
+              },
+              "context_length": 2298
+            }
+          }
+        },
+        {
+          "score": 0.2,
+          "reasoning": "The generated answer 'Information not found in memories.' is incorrect as the ground truth clearly states that Melanie has camped at the beach, mountains, and forest. The generated answer fails to provide any of this information.",
+          "accuracy": 0.0,
+          "completeness": 0.0,
+          "relevance": 0.3,
+          "clarity": 0.5,
+          "question": "Where has Melanie camped?",
+          "generated_answer": "Information not found in memories.",
+          "ground_truth_answer": "beach, mountains, forest",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 2.2614543437957764,
+          "token_usage": {
+            "prompt_tokens": 573,
+            "completion_tokens": 100,
+            "total_tokens": 673
+          },
+          "original_qa_result": {
+            "question": "Where has Melanie camped?",
+            "correct_answer": "beach, mountains, forest",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories.",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D6:16",
+              "D4:6",
+              "D8:32"
+            ],
+            "memories_retrieved": 9,
+            "total_evaluation_time": 4.242737770080566,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 9,
+              "generation_time": 0.8462855815887451,
+              "token_usage": {
+                "prompt_tokens": 570,
+                "completion_tokens": 6,
+                "total_tokens": 576
+              },
+              "context_length": 2343
+            }
+          }
+        },
+        {
+          "score": 0.3,
+          "reasoning": "Parse error: Expecting value: line 1 column 1 (char 0)",
+          "accuracy": 0.3,
+          "completeness": 0.3,
+          "relevance": 0.3,
+          "clarity": 0.3,
+          "question": "What do Melanie's kids like?",
+          "generated_answer": "Information not found in memories",
+          "ground_truth_answer": "dinosaurs, nature",
+          "category": "single_hop",
+          "category_id": 1,
+          "evaluation_time": 2.3829398155212402,
+          "token_usage": {
+            "prompt_tokens": 567,
+            "completion_tokens": 111,
+            "total_tokens": 678
+          },
+          "original_qa_result": {
+            "question": "What do Melanie's kids like?",
+            "correct_answer": "dinosaurs, nature",
+            "adversarial_answer": null,
+            "generated_answer": "Information not found in memories",
+            "category": 1,
+            "category_name": "single_hop",
+            "exact_match": false,
+            "partial_match": false,
+            "adversarial_match": false,
+            "evidence_ids": [
+              "D6:6",
+              "D4:8"
+            ],
+            "memories_retrieved": 2,
+            "total_evaluation_time": 2.695838689804077,
+            "metadata": {
+              "category": "single_hop",
+              "memories_used": 2,
+              "generation_time": 0.8773782253265381,
+              "token_usage": {
+                "prompt_tokens": 272,
+                "completion_tokens": 5,
+                "total_tokens": 277
+              },
+              "context_length": 771
+            }
+          }
+        }
+      ],
+      "category_scores": {
+        "single_hop": {
+          "j_score": 0.4,
+          "j_score_percentage": 40.0,
+          "count": 8,
+          "accuracy": 0.325,
+          "completeness": 0.27499999999999997,
+          "relevance": 0.525,
+          "clarity": 0.6625
+        },
+        "temporal": {
+          "j_score": 0.31,
+          "j_score_percentage": 31.0,
+          "count": 10,
+          "accuracy": 0.09,
+          "completeness": 0.09,
+          "relevance": 0.44000000000000006,
+          "clarity": 0.71
+        },
+        "multi_hop": {
+          "j_score": 0.65,
+          "j_score_percentage": 65.0,
+          "count": 2,
+          "accuracy": 0.6000000000000001,
+          "completeness": 0.6000000000000001,
+          "relevance": 0.7,
+          "clarity": 0.9
+        }
+      },
+      "overall_scores": {
+        "j_score": 0.38,
+        "j_score_percentage": 38.0,
+        "accuracy": 0.23500000000000001,
+        "completeness": 0.215,
+        "relevance": 0.5,
+        "clarity": 0.71,
+        "total_evaluations": 20,
+        "failed_evaluations": 0,
+        "success_rate": 1.0,
+        "total_tokens": 13556,
+        "avg_tokens_per_evaluation": 677.8,
+        "avg_evaluation_time": 2.41134033203125
+      },
+      "evaluation_end": 1755539084.0355499,
+      "total_evaluation_time": 48.22984457015991
+    },
+    "event_summarization": {
+      "total_conversations": 1,
+      "evaluation_start": "2025-08-18 23:14:44.043250",
+      "individual_results": [
+        {
+          "conversation_id": "conv_01",
+          "speakers": [
+            "Caroline",
+            "Melanie"
+          ],
+          "total_sessions": 19,
+          "total_turns": 419,
+          "memories_found": 29,
+          "generated_summary": "Caroline and Melanie's conversations over 19 sessions reveal a rich tapestry of personal growth, advocacy, and mutual support. Caroline, a transgender woman, is deeply involved in the LGBTQ community, having joined the 'Connected LGBTQ Activists' group to champion rights and community support. Her art, including a stained glass window for a local church and the painting 'Embracing Identity,' serves as a medium for exploring her transition and promoting inclusivity.\n\nCaroline's journey is marked by significant milestones, such as organizing an LGBTQ art show and a talent show for kids, both aimed at fostering understanding and acceptance. Her commitment to community extends to volunteering at a youth center, where she shares her story to inspire young people.\n\nA pivotal development in Caroline's life is her decision to adopt. Supported by an adoption advice group and her mentor, she has successfully passed agency interviews, moving closer to her dream of providing a loving home. This decision is underscored by her excitement and readiness to embrace parenthood.\n\nMelanie, a passionate artist, shares a deep connection with Caroline through their mutual appreciation for art as a form of self-expression and therapy. Their friendship is characterized by shared experiences, such as a caf\u00e9 visit, a park outing, and a trip that included a visit to the Grand Canyon.\n\nThroughout their interactions, Melanie provides unwavering support to Caroline, celebrating her achievements and offering encouragement during challenging times. Their conversations highlight the importance of empathy, understanding, and the transformative power of art and community in their lives.",
+          "evaluation_scores": {
+            "accuracy": 3.0,
+            "completeness": 3.0,
+            "coherence": 3.0,
+            "temporal_understanding": 3.0,
+            "relevance": 3.0,
+            "overall_score": 3.0,
+            "reasoning": "Could not parse detailed evaluation"
+          },
+          "total_evaluation_time": 19.361067056655884,
+          "metadata": {
+            "memories_used": 29,
+            "generation_time": 15.225425243377686,
+            "token_usage": {
+              "prompt_tokens": 1249,
+              "completion_tokens": 301,
+              "total_tokens": 1550
+            },
+            "context_length": 5319,
+            "speakers": [
+              "Caroline",
+              "Melanie"
+            ],
+            "total_sessions": 19
+          }
+        }
+      ],
+      "overall_performance": {
+        "successful_evaluations": 1,
+        "failed_evaluations": 0,
+        "success_rate": 1.0,
+        "avg_generation_time": 15.225425243377686,
+        "total_tokens": 1550,
+        "avg_tokens_per_summary": 1550.0,
+        "avg_memories_used": 29.0,
+        "avg_accuracy": 3.0,
+        "avg_completeness": 3.0,
+        "avg_coherence": 3.0,
+        "avg_temporal_understanding": 3.0,
+        "avg_relevance": 3.0,
+        "avg_overall_score": 3.0
+      },
+      "evaluation_end": "2025-08-18 23:15:03.405300",
+      "total_evaluation_time": 19.36205
+    }
+  }
+}
