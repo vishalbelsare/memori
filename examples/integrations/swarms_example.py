@@ -50,7 +50,7 @@ print("\n" + "=" * 50 + "\n")
 
 # Follow-up interaction (agent should remember John and his preferences)
 customer_service_agent.run("""
-Hi Sarah, it's John Smith again. I just wanted to follow up on
+Hi Sarah, I just wanted to follow up on
 order we discussed earlier. Any updates on the delivery?
 """)
 
@@ -58,6 +58,6 @@ print("\n" + "=" * 50 + "\n")
 
 # Another follow-up showing memory of customer preferences
 customer_service_agent.run("""
-John here. The order arrived but there's a small issue with the keyboard.
+The order arrived but there's a small issue with the keyboard.
 Some keys are sticking. What should I do?
 """)
