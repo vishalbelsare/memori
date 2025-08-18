@@ -190,6 +190,6 @@ python basic_example.py
 
 ## Next Steps
 
-- [Personal Assistant](personal-assistant.md) - AI that remembers your preferences
-- [Advanced Config](advanced-config.md) - Production configuration
-- [API Reference](../api/core.md) - Complete API documentation
+- [Examples](https://github.com/GibsonAI/memori/tree/main/examples) - Explore more examples
+- [Framework Integrations](https://github.com/GibsonAI/memori/tree/main/examples/integrations) - See how Memori works seamlessly with popular AI Agent frameworks
+- [Demos](https://github.com/GibsonAI/memori/tree/main/demos) - Explore Memori's capabilities through these demos
