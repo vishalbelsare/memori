@@ -70,7 +70,7 @@ python demo.py
 
 - [Basic Usage](basic-usage.md) - Learn core concepts
 - [Configuration](../configuration/settings.md) - Customize for your needs
-- [Examples](../examples/basic.md) - Real-world use cases
+- [Examples](https://github.com/GibsonAI/memori/tree/main/examples) - Explore more examples
 
 !!! tip "Pro Tip"
     Try asking the same questions in a new session - Memori will remember your project context!
