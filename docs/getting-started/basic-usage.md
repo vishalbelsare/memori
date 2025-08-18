@@ -276,6 +276,6 @@ except Exception as e:
 
 ## Next Steps
 
+- [Framework Integrations](https://github.com/GibsonAI/memori/tree/main/examples/integrations) - See how Memori works seamlessly with popular AI Agent frameworks
+- [Demos](https://github.com/GibsonAI/memori/tree/main/demos) - Explore Memori's capabilities through these demos
 - [Configuration](../configuration/settings.md) - Advanced configuration options
-- [Examples](../examples/basic.md) - Real-world use cases
-- [API Reference](../api/core.md) - Complete API documentation

@@ -339,5 +339,6 @@ export MEMORI_LOGGING__LOG_TO_FILE="true"
 ## Next Steps
 
 - [Database Setup](database.md) - Database-specific configuration
-- [Environment Variables](environment.md) - Complete environment reference
-- [Examples](../examples/advanced-config.md) - Configuration examples
+- [Examples](https://github.com/GibsonAI/memori/tree/main/examples) - Explore more examples
+- [Framework Integrations](https://github.com/GibsonAI/memori/tree/main/examples/integrations) - See how Memori works seamlessly with popular AI Agent frameworks
+- [Demos](https://github.com/GibsonAI/memori/tree/main/demos) - Explore Memori's capabilities through these demos

@@ -360,9 +360,8 @@ Planned improvements:
 
 Ready to try conscious ingestion? Start with our examples:
 
-1. **[Basic Demo](../examples/basic_usage.py)** - Simple conscious ingestion showcase
-2. **[Personal Assistant](../examples/personal_assistant.py)** - AI that learns about you
-3. **[Interactive Demo](../memori_example.py)** - Live conscious ingestion
-4. **[Advanced Example](../examples/conscious_ingestion_demo.py)** - Full feature demonstration
+- [Examples](https://github.com/GibsonAI/memori/tree/main/examples) - Explore more examples
+- [Framework Integrations](https://github.com/GibsonAI/memori/tree/main/examples/integrations) - See how Memori works seamlessly with popular AI Agent frameworks
+- [Demos](https://github.com/GibsonAI/memori/tree/main/demos) - Explore Memori's capabilities through these demos
 
 The future of AI memory is here - no more repeating yourself! 🧠✨
