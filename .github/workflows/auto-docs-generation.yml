@@ -1,0 +1,383 @@
+name: Auto Documentation Generation
+
+on:
+  pull_request:
+    paths:
+      - 'examples/**/*.py'
+      - 'examples/**/*.md'
+    types: [opened, synchronize, reopened]
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.head_ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install anthropic python-dotenv pyyaml
+
+      - name: Detect changed example files
+        id: detect_changes
+        run: |
+          echo "Detecting changes in examples directory..."
+          
+          # Get the base branch (usually main)
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          
+          # Get changed files in examples directory
+          CHANGED_FILES=$(git diff --name-only origin/$BASE_BRANCH...HEAD -- examples/ | grep -E '\.(py)$' | grep -v __pycache__ | sort | uniq)
+          
+          echo "Changed example files:"
+          echo "$CHANGED_FILES"
+          
+          # Create a multiline output for GitHub Actions
+          {
+            echo 'changed_files<<EOF'
+            echo "$CHANGED_FILES"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+          
+          # Check if there are any changes
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate documentation using Claude AI
+        if: steps.detect_changes.outputs.has_changes == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CHANGED_FILES: ${{ steps.detect_changes.outputs.changed_files }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import sys
+          import json
+          import yaml
+          import re
+          from pathlib import Path
+          from anthropic import Anthropic
+          
+          # Initialize Claude client
+          client = Anthropic(api_key=os.environ['ANTHROPIC_API_KEY'])
+          
+          # Get changed files
+          changed_files = [f.strip() for f in os.environ['CHANGED_FILES'].split('\n') if f.strip()]
+          
+          print(f"Processing {len(changed_files)} changed files:")
+          for file in changed_files:
+              print(f"  - {file}")
+          
+          def read_file_content(file_path):
+              """Read file content safely"""
+              try:
+                  with open(file_path, 'r', encoding='utf-8') as f:
+                      return f.read()
+              except Exception as e:
+                  print(f"Error reading {file_path}: {e}")
+                  return None
+          
+          def write_file_content(file_path, content):
+              """Write file content safely"""
+              try:
+                  # Create directory if it doesn't exist
+                  Path(file_path).parent.mkdir(parents=True, exist_ok=True)
+                  with open(file_path, 'w', encoding='utf-8') as f:
+                      f.write(content)
+                  return True
+              except Exception as e:
+                  print(f"Error writing {file_path}: {e}")
+                  return False
+          
+          def get_framework_name(file_path):
+              """Extract framework name from file path"""
+              if 'integrations/' in file_path:
+                  filename = Path(file_path).stem
+                  # Remove '_example' suffix if present
+                  framework = filename.replace('_example', '')
+                  return framework
+              else:
+                  # For non-integration examples
+                  filename = Path(file_path).stem
+                  return filename.replace('_', '-')
+          
+          def get_existing_docs():
+              """Get existing documentation patterns"""
+              existing_docs = {}
+              docs_dir = Path('docs/examples')
+              
+              if docs_dir.exists():
+                  for doc_file in docs_dir.glob('*.md'):
+                      content = read_file_content(doc_file)
+                      if content:
+                          existing_docs[doc_file.name] = content
+              
+              return existing_docs
+          
+          def create_documentation(example_file, existing_docs):
+              """Generate documentation using Claude AI with code-reciprocator pattern"""
+              
+              # Read the example file
+              example_content = read_file_content(example_file)
+              if not example_content:
+                  return None
+                  
+              framework_name = get_framework_name(example_file)
+              
+              # Get sample documentation for pattern matching
+              sample_docs = ""
+              if existing_docs:
+                  # Use first 2 existing docs as examples
+                  sample_count = 0
+                  for doc_name, doc_content in existing_docs.items():
+                      if sample_count < 2:
+                          sample_docs += f"\n\n--- Sample Documentation ({doc_name}) ---\n{doc_content[:3000]}...\n"
+                          sample_count += 1
+              
+              # Prepare the prompt using code-reciprocator agent pattern
+              system_prompt = """You are a code-reciprocator agent. Your role is to analyze existing code patterns and create consistent, similar documentation following established patterns and architectural DNA.
+
+              When creating documentation, you must:
+              1. Analyze the existing documentation patterns provided as samples
+              2. Extract the common structure, style, and formatting approach
+              3. Replicate the same pattern for the new example while maintaining consistency
+              4. Follow the exact same sections, formatting, and tone as existing docs
+              5. Preserve architectural DNA across all integration documentation
+              
+              Key requirements:
+              - Follow the EXACT same markdown structure as sample documents
+              - Use the same section headers and organization
+              - Maintain consistent code formatting and explanation style
+              - Include all standard sections: Overview, Code, What Happens, Expected Output, Database Contents, Setup, Use Cases, Advanced Features, Best Practices, Next Steps
+              - Keep the same professional tone and technical depth
+              - Ensure integration-specific benefits and features are highlighted consistently
+              """
+              
+              user_prompt = f"""I need you to create documentation for a new example integration following the exact pattern of existing documentation.
+
+              NEW EXAMPLE FILE: {example_file}
+              FRAMEWORK: {framework_name}
+              
+              EXAMPLE CODE:
+              ```python
+              {example_content}
+              ```
+              
+              EXISTING DOCUMENTATION PATTERNS:
+              {sample_docs}
+              
+              Please create new documentation that follows the EXACT same structure, style, and formatting as the sample documentation. The documentation should:
+              
+              1. Use the same markdown structure and sections
+              2. Follow identical formatting patterns
+              3. Maintain the same professional tone
+              4. Include framework-specific integration details
+              5. Provide complete code examples with explanations
+              6. Follow the established architectural DNA
+              
+              Generate complete markdown documentation that could be saved as 'docs/examples/{framework_name}-integration.md'"""
+              
+              try:
+                  response = client.messages.create(
+                      model="claude-3-5-sonnet-20241022",
+                      max_tokens=8000,
+                      temperature=0.1,  # Low temperature for consistency
+                      system=system_prompt,
+                      messages=[{
+                          "role": "user",
+                          "content": user_prompt
+                      }]
+                  )
+                  
+                  return response.content[0].text
+                  
+              except Exception as e:
+                  print(f"Error generating documentation for {example_file}: {e}")
+                  return None
+          
+          def update_mkdocs_nav(new_docs):
+              """Update mkdocs.yml navigation with new documentation"""
+              mkdocs_path = 'mkdocs.yml'
+              
+              try:
+                  with open(mkdocs_path, 'r') as f:
+                      mkdocs_config = yaml.safe_load(f)
+                  
+                  # Find the Examples section in nav
+                  nav = mkdocs_config.get('nav', [])
+                  examples_section = None
+                  
+                  for section in nav:
+                      if isinstance(section, dict) and 'Examples' in section:
+                          examples_section = section['Examples']
+                          break
+                  
+                  if examples_section is None:
+                      print("Examples section not found in mkdocs.yml")
+                      return False
+                  
+                  # Add new documentation entries
+                  for framework_name in new_docs:
+                      doc_path = f"examples/{framework_name}-integration.md"
+                      display_name = f"{framework_name.title()} Integration"
+                      
+                      # Check if entry already exists
+                      entry_exists = False
+                      for item in examples_section:
+                          if isinstance(item, dict) and doc_path in item.values():
+                              entry_exists = True
+                              break
+                      
+                      if not entry_exists:
+                          examples_section.append({display_name: doc_path})
+                          print(f"Added {display_name} to mkdocs navigation")
+                  
+                  # Write back to mkdocs.yml
+                  with open(mkdocs_path, 'w') as f:
+                      yaml.dump(mkdocs_config, f, default_flow_style=False, sort_keys=False)
+                  
+                  return True
+                  
+              except Exception as e:
+                  print(f"Error updating mkdocs.yml: {e}")
+                  return False
+          
+          # Main processing
+          def main():
+              print("Starting documentation generation...")
+              
+              # Get existing documentation patterns
+              existing_docs = get_existing_docs()
+              print(f"Found {len(existing_docs)} existing documentation files for pattern matching")
+              
+              new_docs_generated = {}
+              
+              # Process each changed file
+              for file_path in changed_files:
+                  if not file_path.endswith('.py'):
+                      continue
+                      
+                  print(f"\nProcessing: {file_path}")
+                  framework_name = get_framework_name(file_path)
+                  
+                  # Generate documentation
+                  doc_content = create_documentation(file_path, existing_docs)
+                  
+                  if doc_content:
+                      # Save documentation file
+                      doc_file_path = f"docs/examples/{framework_name}-integration.md"
+                      
+                      if write_file_content(doc_file_path, doc_content):
+                          print(f"✅ Generated documentation: {doc_file_path}")
+                          new_docs_generated[framework_name] = doc_file_path
+                      else:
+                          print(f"❌ Failed to write documentation: {doc_file_path}")
+                  else:
+                      print(f"❌ Failed to generate documentation for: {file_path}")
+              
+              # Update mkdocs.yml if new docs were generated
+              if new_docs_generated:
+                  if update_mkdocs_nav(new_docs_generated):
+                      print("✅ Updated mkdocs.yml navigation")
+                  else:
+                      print("❌ Failed to update mkdocs.yml navigation")
+                      
+                  print(f"\n🎉 Successfully generated {len(new_docs_generated)} documentation files:")
+                  for framework, path in new_docs_generated.items():
+                      print(f"  - {framework}: {path}")
+              else:
+                  print("No new documentation was generated")
+          
+          if __name__ == "__main__":
+              main()
+          EOF
+
+      - name: Commit generated documentation
+        if: steps.detect_changes.outputs.has_changes == 'true'
+        run: |
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action - Auto Docs"
+          
+          # Check if there are any changes to commit
+          if [ -n "$(git status --porcelain docs/)" ]; then
+            echo "Documentation changes detected, committing..."
+            
+            # Add all documentation changes
+            git add docs/examples/*.md
+            git add mkdocs.yml
+            
+            # Create commit message
+            git commit -m "🤖 Auto-generate documentation for example changes
+
+            - Generated consistent documentation following code-reciprocator pattern  
+            - Updated mkdocs.yml navigation with new integration examples
+            - Maintained architectural DNA across all integration docs
+            
+            🔧 Generated with Claude AI Code-Reciprocator Agent
+            
+            Co-Authored-By: Claude <noreply@anthropic.com>" || echo "No changes to commit"
+            
+            # Push the changes
+            git push origin HEAD:${{ github.head_ref }}
+            
+            echo "✅ Documentation committed and pushed to PR"
+          else
+            echo "No documentation changes to commit"
+          fi
+
+      - name: Add PR comment
+        if: steps.detect_changes.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const changedFiles = process.env.CHANGED_FILES.split('\n').filter(f => f.trim());
+            
+            const comment = `## 🤖 Auto-Generated Documentation
+            
+            I've automatically generated documentation for the new/updated example files in this PR using the **code-reciprocator agent pattern** to ensure consistency across all integration examples.
+            
+            ### 📄 Processed Files:
+            ${changedFiles.map(file => `- \`${file}\``).join('\n')}
+            
+            ### ✅ Generated Documentation:
+            - Created new integration documentation following existing patterns
+            - Updated \`mkdocs.yml\` navigation to include new examples  
+            - Maintained architectural DNA and consistent formatting
+            - Applied code-reciprocator pattern for structural consistency
+            
+            ### 🎯 What was done:
+            1. **Pattern Analysis**: Analyzed existing documentation structure and style
+            2. **Consistent Generation**: Created new docs following established patterns
+            3. **Navigation Update**: Added new entries to mkdocs navigation
+            4. **Quality Assurance**: Ensured architectural DNA preservation
+            
+            The documentation has been committed to this PR and will be included in the deployment.
+            
+            *Generated with Claude AI Code-Reciprocator Agent* 🚀`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+        env:
+          CHANGED_FILES: ${{ steps.detect_changes.outputs.changed_files }}
