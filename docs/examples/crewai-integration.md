@@ -1,6 +1,6 @@
 # CrewAI Framework Integration
 
-Memory-enhanced multi-agent systems using [CrewAI](https://github.com/joaomdmoura/crewAI) framework with persistent conversation memory and intelligent context injection.
+Memory-enhanced multi-agent systems using [CrewAI](https://github.com/crewAIInc/crewAI) framework with persistent conversation memory and intelligent context injection.
 
 ## Overview
 

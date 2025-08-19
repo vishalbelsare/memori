@@ -1,6 +1,6 @@
 # Agno Framework Integration
 
-Memory-enhanced AI agents using [Agno](https://github.com/phidatahq/agno) framework with persistent conversation memory and intelligent context injection.
+Memory-enhanced AI agents using [Agno](https://github.com/agno-agi/agno) framework with persistent conversation memory and intelligent context injection.
 
 ## Overview
 
