@@ -76,6 +76,9 @@ nav:
     - Basic Usage: examples/basic-usage.md
     - DigitalOcean Integration: examples/digital-ocean-integration.md
     - Swarms Integration: examples/swarms-integration.md
+    - Agno Integration: examples/agno-integration.md
+    - CrewAI Integration: examples/crewai-integration.md
+    - LangChain Integration: examples/langchain-integration.md
   - Contributing: contributing.md
 
 extra:
