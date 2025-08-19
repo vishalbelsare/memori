@@ -74,6 +74,8 @@ nav:
     - Agents: conscious-ingestion/agents.md
   - Examples:
     - Basic Usage: examples/basic-usage.md
+    - DigitalOcean Integration: examples/digital-ocean-integration.md
+    - Swarms Integration: examples/swarms-integration.md
   - Contributing: contributing.md
 
 extra:
