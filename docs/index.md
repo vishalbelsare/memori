@@ -5,7 +5,14 @@
 !!! tip "Philosophy"
     **Second-memory for all your LLM work** - Never repeat context again. Simple, reliable architecture that just works out of the box.
 
+
+## What is Memori?
+
+**Memori** is an open-source memory layer to give your AI agents human-like memory. It remembers what matters, promotes what's essential, and injects structured context intelligently into LLM conversations.
+
 ## Why Memori?
+
+Memomi uses multi-agents working together to intelligently promote essential long-term memories to short-term storage for faster context injection.
 
 Give your AI agents structured, persistent memory with professional-grade architecture:
 
@@ -161,7 +168,7 @@ memori.enable()
 ## 📚 Next Steps
 
 - [Installation Guide](getting-started/installation.md) - Detailed setup instructions
-- [Quick Start](getting-started/quick-start.md) - Get running in 5 minutes  
+- [Quick Start](getting-started/quick-start.md) - Get running in 3 minutes  
 - [Basic Usage](getting-started/basic-usage.md) - Core concepts and examples
 - [Configuration](configuration/settings.md) - Production setup
 - [Examples](https://github.com/GibsonAI/memori/tree/main/examples) - Real-world use cases
