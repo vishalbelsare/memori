@@ -5,6 +5,7 @@ Simple demonstration of Memori v1.1's enhanced conscious ingestion system.
 ## Overview
 
 This example shows how to:
+
 - Initialize Memori with conscious ingestion
 - Enable AI-powered background analysis
 - See intelligent context injection in action
@@ -68,13 +69,13 @@ def main():
     print(f"Assistant: {response3.choices[0].message.content}")
     
     print("\n🎉 That's it! Your AI now remembers your:")
-    print("  • Tech stack (FastAPI, PostgreSQL)")  
-    print("  • Coding preferences (clean code, type hints)")
-    print("  • Project context (user models, database connections)")
+    print("  - Tech stack (FastAPI, PostgreSQL)")  
+    print("  - Coding preferences (clean code, type hints)")
+    print("  - Project context (user models, database connections)")
     print("\n🧠 With conscious_ingest=True:")
-    print("  • Background analysis will identify essential information")
-    print("  • Key facts automatically promoted for instant access")
-    print("  • Context injection gets smarter over time")
+    print("  - Background analysis will identify essential information")
+    print("  - Key facts automatically promoted for instant access")
+    print("  - Context injection gets smarter over time")
     print("\nNo more repeating context - just chat naturally!")
 
 if __name__ == "__main__":
@@ -94,17 +95,20 @@ office_work = Memori(
 ```
 
 **What `conscious_ingest=True` enables:**
+
 - 🧠 **Background Analysis**: AI analyzes memory patterns every 6 hours
 - 🎯 **Essential Memory Promotion**: Key personal facts promoted to immediate access
 - 📝 **Smart Context Injection**: 3-5 most relevant memories automatically included
 - 🔄 **Continuous Learning**: System adapts to your preferences and patterns
 
 **Intelligence Layers:**
+
 1. **Memory Agent** - Processes conversations with Pydantic structured outputs
 2. **Conscious Agent** - Identifies essential information worth promoting
 3. **Retrieval Agent** - Selects most relevant context for injection
 
 ### 2. Universal Recording
+
 ```python
 office_work.enable()
 ```
@@ -123,6 +127,7 @@ Each conversation builds on the previous with AI-powered selection:
 5. **Future**: All responses include essential + contextually relevant memories
 
 **Memory Categories Learned:**
+
 - **Facts**: "I use FastAPI and PostgreSQL"
 - **Preferences**: "I prefer clean, documented code with type hints"
 - **Skills**: Programming expertise and technology familiarity
@@ -144,9 +149,9 @@ Assistant: Since you're working with FastAPI and PostgreSQL, here's how to set u
 Assistant: I'll keep that in mind! Clean, well-documented code with type hints is definitely the way to go...
 
 🎉 That's it! Your AI now remembers your:
-  • Tech stack (FastAPI, PostgreSQL)
-  • Coding preferences (clean code, type hints)  
-  • Project context (user models, database connections)
+  - Tech stack (FastAPI, PostgreSQL)
+  - Coding preferences (clean code, type hints)  
+  - Project context (user models, database connections)
 
 No more repeating context - just chat naturally!
 ```
@@ -156,13 +161,16 @@ No more repeating context - just chat naturally!
 After running, check `office_memory.db`:
 
 ### Tables Created
+
 - `chat_history` - All conversations
 - `short_term_memory` - Recent context  
 - `long_term_memory` - Important insights
 - `memory_entities` - Extracted entities (FastAPI, PostgreSQL, etc.)
 
 ### Memory Processing
+
 Each conversation is processed to extract:
+
 - **Entities**: FastAPI, PostgreSQL, code, type hints
 - **Categories**: fact, preference, skill, context
 - **Importance**: Scored for relevance and retention
