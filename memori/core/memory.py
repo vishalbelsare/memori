@@ -199,7 +199,7 @@ class Memori:
                     self._background_task = loop.create_task(
                         self._run_conscious_initialization()
                     )
-                    logger.debug(
+                logger.debug("Conscious-ingest: Still no event loop available, deferred initialization remains pending")
                         "Conscious-ingest: Deferred initialization task started"
                     )
                     self._conscious_init_pending = False
