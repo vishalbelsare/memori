@@ -89,6 +89,7 @@ class Memori:
         self.search_engine = None
         self.conscious_agent = None
         self._background_task = None
+        self._conscious_init_pending = False
 
         if conscious_ingest or auto_ingest:
             try:
@@ -168,15 +169,37 @@ class Memori:
                 "Conscious-ingest: Starting conscious agent analysis at startup"
             )
 
-            # Run conscious agent analysis in background
-            if self._background_task is None or self._background_task.done():
-                self._background_task = asyncio.create_task(
-                    self._run_conscious_initialization()
-                )
-                logger.debug("Conscious-ingest: Background initialization task started")
+            # Check if there's a running event loop
+            try:
+                loop = asyncio.get_running_loop()
+                # If we're in an event loop, create the task
+                if self._background_task is None or self._background_task.done():
+                    self._background_task = loop.create_task(
+                        self._run_conscious_initialization()
+                    )
+                    logger.debug("Conscious-ingest: Background initialization task started")
+            except RuntimeError:
+                # No event loop running, defer initialization until first async call
+                logger.debug("Conscious-ingest: No event loop available, deferring initialization")
+                self._conscious_init_pending = True
 
         except Exception as e:
             logger.error(f"Failed to initialize conscious memory: {e}")
+
+    def _check_deferred_initialization(self):
+        """Check and handle deferred conscious memory initialization"""
+        if self._conscious_init_pending and self.conscious_agent:
+            try:
+                loop = asyncio.get_running_loop()
+                if self._background_task is None or self._background_task.done():
+                    self._background_task = loop.create_task(
+                        self._run_conscious_initialization()
+                    )
+                    logger.debug("Conscious-ingest: Deferred initialization task started")
+                    self._conscious_init_pending = False
+            except RuntimeError:
+                # Still no event loop, keep pending
+                pass
 
     async def _run_conscious_initialization(self):
         """Run conscious agent initialization in background"""
@@ -475,6 +498,8 @@ class Memori:
     def _inject_openai_context(self, kwargs):
         """Inject context for OpenAI calls"""
         try:
+            # Check for deferred conscious initialization
+            self._check_deferred_initialization()
             # Extract user input from messages
             user_input = ""
             for msg in reversed(kwargs.get("messages", [])):
@@ -513,6 +538,8 @@ class Memori:
     def _inject_anthropic_context(self, kwargs):
         """Inject context for Anthropic calls"""
         try:
+            # Check for deferred conscious initialization
+            self._check_deferred_initialization()
             # Extract user input from messages
             user_input = ""
             for msg in reversed(kwargs.get("messages", [])):
@@ -563,6 +590,8 @@ class Memori:
             mode: "conscious" (one-shot short-term) or "auto" (continuous retrieval)
         """
         try:
+            # Check for deferred conscious initialization
+            self._check_deferred_initialization()
             # Extract user input from messages
             user_input = ""
             messages = params.get("messages", [])
