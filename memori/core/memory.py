@@ -177,10 +177,14 @@ class Memori:
                     self._background_task = loop.create_task(
                         self._run_conscious_initialization()
                     )
-                    logger.debug("Conscious-ingest: Background initialization task started")
+                    logger.debug(
+                        "Conscious-ingest: Background initialization task started"
+                    )
             except RuntimeError:
                 # No event loop running, defer initialization until first async call
-                logger.debug("Conscious-ingest: No event loop available, deferring initialization")
+                logger.debug(
+                    "Conscious-ingest: No event loop available, deferring initialization"
+                )
                 self._conscious_init_pending = True
 
         except Exception as e:
@@ -195,7 +199,9 @@ class Memori:
                     self._background_task = loop.create_task(
                         self._run_conscious_initialization()
                     )
-                    logger.debug("Conscious-ingest: Deferred initialization task started")
+                    logger.debug(
+                        "Conscious-ingest: Deferred initialization task started"
+                    )
                     self._conscious_init_pending = False
             except RuntimeError:
                 # Still no event loop, keep pending
