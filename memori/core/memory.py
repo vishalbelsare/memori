@@ -188,7 +188,7 @@ class Memori:
                 self._conscious_init_pending = True
 
         except Exception as e:
-            logger.error(f"Failed to initialize conscious memory: {e}")
+        if self._conscious_init_pending:
 
     def _check_deferred_initialization(self):
         """Check and handle deferred conscious memory initialization"""
