@@ -188,7 +188,7 @@ class Memori:
                 self._conscious_init_pending = True
 
         except Exception as e:
-        if self._conscious_init_pending:
+            logger.error(f"Failed to initialize conscious memory: {e}")
 
     def _check_deferred_initialization(self):
         """Check and handle deferred conscious memory initialization"""
@@ -199,7 +199,7 @@ class Memori:
                     self._background_task = loop.create_task(
                         self._run_conscious_initialization()
                     )
-                logger.debug("Conscious-ingest: Still no event loop available, deferred initialization remains pending")
+                    logger.debug(
                         "Conscious-ingest: Deferred initialization task started"
                     )
                     self._conscious_init_pending = False
