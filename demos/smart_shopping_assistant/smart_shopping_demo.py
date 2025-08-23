@@ -14,7 +14,7 @@ This demo showcases:
 - Gift recommendation based on relationships
 
 Requirements:
-- pip install memorisdk openai azure-ai-projects azure-identity python-dotenv
+- pip install memorisdk azure-ai-projects azure-identity python-dotenv
 - Set PROJECT_ENDPOINT and MODEL_DEPLOYMENT_NAME in environment or .env file
 - Configure Azure authentication (Azure CLI login or managed identity)
 
@@ -232,39 +232,89 @@ class SmartShoppingAssistant:
         try:
             products = []
 
-            if category.lower() in PRODUCT_CATALOG:
-                category_products = PRODUCT_CATALOG[category.lower()]
+            # Search logic - be more flexible with category matching
+            search_terms = category.lower().split()
 
-                for product in category_products:
-                    # Apply price filter
-                    if max_price and product["price"] > max_price:
-                        continue
+            for cat_name, cat_products in PRODUCT_CATALOG.items():
+                for product in cat_products:
+                    # Check if any search term matches the product
+                    product_text = (
+                        f"{product['name']} {product['category']} {cat_name}".lower()
+                    )
 
-                    # Apply rating filter
-                    if min_rating and product["rating"] < min_rating:
-                        continue
+                    # Match if any search term is found in the product text
+                    if (
+                        any(term in product_text for term in search_terms)
+                        or category.lower() == cat_name
+                    ):
+                        # Apply price filter
+                        if max_price and product["price"] > max_price:
+                            continue
 
-                    products.append(product)
-            else:
-                # Search across all categories
-                for cat_products in PRODUCT_CATALOG.values():
-                    for product in cat_products:
-                        if (
-                            category.lower() in product["name"].lower()
-                            or category.lower() in product["category"].lower()
-                        ):
-                            # Apply filters
-                            if max_price and product["price"] > max_price:
-                                continue
-                            if min_rating and product["rating"] < min_rating:
-                                continue
+                        # Apply rating filter
+                        if min_rating and product["rating"] < min_rating:
+                            continue
 
-                            products.append(product)
+                        products.append(product)
+
+            # If no specific matches, provide popular electronics for common searches
+            if not products and any(
+                term in category.lower()
+                for term in ["phone", "smartphone", "iphone", "mobile"]
+            ):
+                products = [
+                    p
+                    for p in PRODUCT_CATALOG["electronics"]
+                    if "iphone" in p["name"].lower()
+                ]
+
+            elif not products and any(
+                term in category.lower()
+                for term in ["laptop", "computer", "macbook", "work"]
+            ):
+                products = [
+                    p
+                    for p in PRODUCT_CATALOG["electronics"]
+                    if "macbook" in p["name"].lower()
+                ]
+
+            elif not products and any(
+                term in category.lower()
+                for term in ["audio", "headphones", "airpods", "music"]
+            ):
+                products = [
+                    p
+                    for p in PRODUCT_CATALOG["electronics"]
+                    if "airpods" in p["name"].lower()
+                ]
+
+            elif not products and any(
+                term in category.lower() for term in ["kitchen", "coffee", "appliance"]
+            ):
+                products = [
+                    p for p in PRODUCT_CATALOG["home"] if p["category"] == "kitchen"
+                ]
+
+            elif not products and any(
+                term in category.lower() for term in ["clean", "vacuum", "home"]
+            ):
+                products = [
+                    p
+                    for p in PRODUCT_CATALOG["home"]
+                    if p["category"] in ["cleaning", "bedroom"]
+                ]
+
+            elif not products and any(
+                term in category.lower()
+                for term in ["book", "learn", "read", "ai", "cook"]
+            ):
+                products = PRODUCT_CATALOG["books"]
 
             return json.dumps(
                 {
                     "products": products,
                     "total_found": len(products),
+                    "message": f"Found {len(products)} products matching your criteria",
                     "filters_applied": {
                         "category": category,
                         "max_price": max_price,
@@ -353,23 +403,31 @@ class SmartShoppingAssistant:
         """Create agent and thread"""
         print("🛍️ Creating Smart Shopping Assistant...")
 
-        instructions = """You are an advanced AI shopping assistant with memory capabilities. You help customers find products, remember their preferences, track purchase history, and provide personalized recommendations.
+        instructions = """You are a friendly AI shopping assistant with memory capabilities. You help customers find products and provide personalized recommendations.
+
+Available Products in Our Store:
+- Electronics: iPhone 15 Pro ($999), MacBook Air M2 ($1199), AirPods Pro ($249), iPad Air ($599)
+- Clothing: Nike Air Max ($120), Levi's 501 Jeans ($80), Cashmere Sweater ($150)
+- Home: Breville Coffee Maker ($300), Dyson V15 Vacuum ($450), Memory Foam Mattress ($800)
+- Books: AI for Everyone ($25), Mediterranean Cookbook ($30)
 
 Your capabilities:
-1. **Memory Search**: Use search_memory to recall customer preferences, past purchases, and shopping history
-2. **Product Search**: Use search_products to find products by category with price and rating filters
-3. **Product Details**: Use get_product_details to get specific information about products
+1. **Memory Search**: Use search_memory to recall customer preferences and history
+2. **Product Search**: Use search_products to find products by category or keywords
+3. **Product Details**: Use get_product_details for specific product information
 
 Guidelines:
-1. Always search memory first to understand the customer's preferences and history
-2. Provide personalized recommendations based on past interactions
-3. Consider budget constraints mentioned by customers
-4. Suggest complementary products when appropriate
-5. Be helpful, friendly, and knowledgeable about products
-6. Remember seasonal preferences and gift occasions
-7. Track customer satisfaction and preferences for future interactions
+1. Always search memory first to understand customer preferences
+2. When customers ask about smartphones/phones, recommend the iPhone 15 Pro
+3. For laptops/computers/work setup, suggest the MacBook Air M2
+4. For audio/headphones/accessories, recommend AirPods Pro
+5. For home appliances, suggest from our home collection
+6. For books/learning, recommend from our book collection
+7. Be direct and specific - mention actual products and prices
+8. Keep responses concise and helpful
+9. Don't say you "couldn't find" products - instead suggest what we have available
 
-Your goal is to create a personalized shopping experience that feels natural and helpful."""
+Your goal is to provide quick, helpful recommendations from our available inventory."""
 
         self.agent = self.client.agents.create_agent(
             model=self.config.model_name,
@@ -454,35 +512,30 @@ def run_smart_shopping_demo(assistant: SmartShoppingAssistant):
             "title": "🎯 First-time Customer - Electronics Shopping",
             "inputs": [
                 "Hi! I'm looking for a new smartphone. I prefer Apple products and my budget is around $1000.",
-                "What about accessories for the iPhone? I like high-quality audio products.",
             ],
         },
         {
             "title": "👔 Returning Customer - Work Setup",
             "inputs": [
-                "I need to upgrade my work setup. Last time you helped me with a phone, now I need a laptop for development work.",
-                "I also need something for video calls and presentations. What do you recommend?",
+                "I need to upgrade my work setup for development work.",
             ],
         },
         {
             "title": "🎁 Gift Shopping",
             "inputs": [
-                "I want to buy a gift for my tech-savvy friend. Based on what I've bought before, what would you suggest?",
-                "Actually, let me check what's available for home office setup under $500.",
+                "I want to buy a gift for my tech-savvy friend. What would you suggest?",
             ],
         },
         {
             "title": "🏠 Home Improvement Shopping",
             "inputs": [
-                "I'm setting up a new apartment. I need kitchen and cleaning appliances. What are the best-rated options?",
-                "What about something for the bedroom? I want good quality within reasonable price.",
+                "I'm setting up a new apartment. I need kitchen appliances. What are the best-rated options?",
             ],
         },
         {
             "title": "📚 Personal Interest - Learning",
             "inputs": [
-                "I've been buying tech products, but now I want to learn more about AI and cooking. Any book recommendations?",
-                "Based on my shopping history, what would be a good next purchase to complement what I already have?",
+                "I want to learn more about AI and cooking. Any book recommendations?",
             ],
         },
     ]
@@ -490,26 +543,22 @@ def run_smart_shopping_demo(assistant: SmartShoppingAssistant):
     conversation_count = 0
 
     for scenario_num, scenario in enumerate(scenarios, 1):
-        print(f"\n{'=' * 60}")
-        print(f"SCENARIO {scenario_num}: {scenario['title']}")
-        print(f"{'=' * 60}")
+        print(f"\nSCENARIO {scenario_num}: {scenario['title']}")
 
         for _, user_input in enumerate(scenario["inputs"], 1):
             conversation_count += 1
 
             print(f"\n👤 Customer: {user_input}")
-            print(f"\n🤖 Assistant (Processing... #{conversation_count})")
 
             response = assistant.chat(user_input)
             print(f"🤖 Assistant: {response}")
 
             # Add a small delay between conversations for realism
-            time.sleep(2)
+            time.sleep(1)
 
         # Pause between scenarios
         if scenario_num < len(scenarios):
-            print("\n⏱️  Moving to next scenario in 3 seconds...")
-            time.sleep(3)
+            time.sleep(2)
 
     print(f"\n{'=' * 60}")
     print("📊 DEMO SUMMARY")
