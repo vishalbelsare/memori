@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 OpenAI Agent + Memori Integration Example
 
@@ -18,7 +17,6 @@ import os
 from textwrap import dedent
 
 from agents import Agent, Runner, function_tool
-from pydantic import BaseModel
 
 from memori import Memori, create_memory_tool
 
@@ -49,98 +47,52 @@ memory_tool = create_memory_tool(memory_system)
 print("🤖 Creating memory-enhanced OpenAI Agent...")
 
 
-class MemorySearchResult(BaseModel):
-    """Result model for memory search operations"""
-
-    query: str
-    results: str
-    found_memories: bool
-
-
 @function_tool
-def search_memory(query: str) -> MemorySearchResult:
+def search_memory(query: str) -> str:
     """Search the agent's memory for past conversations, user preferences, and information.
 
     Args:
-        query: What to search for in memory (e.g., "user preferences", "past conversations about AI", "my favorite topics")
+        query: What to search for in memory
 
     Returns:
-        MemorySearchResult: Search results from the agent's memory
+        str: Search results from the agent's memory
     """
     try:
         if not query.strip():
-            return MemorySearchResult(
-                query=query,
-                results="Please provide a search query",
-                found_memories=False,
-            )
+            return "Please provide a search query"
 
         print(f"[debug] Searching memory for: {query}")
 
         # Use the memory tool to search
         result = memory_tool.execute(query=query.strip())
-
-        found_memories = bool(
-            result
-            and "No relevant memories found" not in result
-            and "Error" not in result
-        )
-
-        return MemorySearchResult(
-            query=query,
-            results=result if result else "No relevant memories found",
-            found_memories=found_memories,
-        )
+        return result if result else "No relevant memories found"
 
     except Exception as e:
-        return MemorySearchResult(
-            query=query, results=f"Memory search error: {str(e)}", found_memories=False
-        )
-
-
-class UserPreference(BaseModel):
-    """Model for user preferences and information"""
-
-    category: str
-    preference: str
-    context: str
+        return f"Memory search error: {str(e)}"
 
 
 @function_tool
-def remember_user_info(category: str, preference: str, context: str) -> UserPreference:
+def remember_user_info(info: str) -> str:
     """Remember important information about the user for future conversations.
 
     Args:
-        category: Type of information (e.g., "preference", "skill", "interest", "goal")
-        preference: The specific preference or information to remember
-        context: Additional context about this information
+        info: The information to remember
 
     Returns:
-        UserPreference: Confirmation of what was remembered
+        str: Confirmation of what was remembered
     """
     try:
-        print(f"[debug] Remembering user info: {category} - {preference}")
+        print(f"[debug] Remembering user info: {info}")
 
-        # Store in memory system (this will be picked up automatically by Memori)
+        # Store in memory system
         memory_system.record_conversation(
-            user_input=f"User shared {category}: {preference}",
-            ai_output=f"I'll remember that you {preference}. {context}",
-            metadata={
-                "type": "user_preference",
-                "category": category,
-                "preference": preference,
-                "context": context,
-            },
+            user_input=f"User shared: {info}", ai_output=f"I'll remember that: {info}"
         )
 
-        return UserPreference(category=category, preference=preference, context=context)
+        return f"Remembered: {info}"
 
     except Exception as e:
-        return UserPreference(
-            category=category,
-            preference=f"Error storing preference: {str(e)}",
-            context=context,
-        )
+        return f"Error storing information: {str(e)}"
 
 
 # Create the OpenAI Agent with memory capabilities
@@ -155,13 +107,11 @@ agent = Agent(
            and any information from previous interactions. Always search your memory first
            when responding to questions about the user or past conversations.
 
-        2. remember_user_info: Use this to store important information about the user
-           such as their preferences, skills, interests, or goals for future reference.
+        2. remember_user_info: Use this to store important information about the user.
 
         Guidelines:
         - Always start by searching your memory for relevant context before responding
-        - When users share personal information, preferences, or important details,
-          use remember_user_info to store it
+        - When users share important information, use remember_user_info to store it
         - Be conversational and personalize responses based on remembered information
         - If this is the first conversation, introduce yourself and explain your memory capabilities
         - Reference past conversations naturally when relevant
