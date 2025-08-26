@@ -2,6 +2,8 @@
 
 An AI-powered shopping assistant using Azure AI Foundry + Memori integration.
 
+![Smart Shopping Experience Demo with Memori and Azure AI Foundry](./assets/Welcome-to-Smart-Shopping-Experience-Demo.png)
+
 ## 🎯 Demo Overview
 
 This demo showcases an intelligent shopping assistant that:
