@@ -15,9 +15,11 @@ litellm_memory = Memori(
 litellm_memory.enable()
 
 # Load test inputs from JSON file
+# Get the absolute path to test_inputs.json
+json_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "test_inputs.json")
 # Optional: specify limit to load only first N inputs (e.g., limit=5)
-test_inputs = load_inputs("tests/test_inputs.json", limit=10)  # Load only first 10 inputs
-# test_inputs = load_inputs("tests/test_inputs.json")  # Load all inputs
+test_inputs = load_inputs(json_path, limit=10)  # Load only first 10 inputs
+# test_inputs = load_inputs(json_path)  # Load all inputs
 
 for i, user_input in enumerate(test_inputs, 1):
     try:
