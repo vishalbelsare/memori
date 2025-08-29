@@ -12,7 +12,11 @@ from typing import Any, Dict, List, Optional
 from loguru import logger
 
 from ..utils.exceptions import DatabaseError
-from ..utils.pydantic_models import ProcessedLongTermMemory, ProcessedMemory, MemoryCategoryType, RetentionType
+from ..utils.pydantic_models import (
+    ProcessedLongTermMemory,
+    ProcessedMemory,
+    RetentionType,
+)
 
 
 class DatabaseManager:
@@ -209,7 +213,6 @@ class DatabaseManager:
             """
             )
 
-
             conn.commit()
             logger.info("Basic database schema created")
 
@@ -297,13 +300,12 @@ class DatabaseManager:
 
             return result
 
-
     def store_long_term_memory_enhanced(
         self, memory: ProcessedLongTermMemory, chat_id: str, namespace: str = "default"
     ) -> str:
         """Store a ProcessedLongTermMemory with enhanced schema"""
         memory_id = str(uuid.uuid4())
-        
+
         with self._get_connection() as conn:
             try:
                 # Create correct SQL query that matches the actual schema
@@ -321,15 +323,19 @@ class DatabaseManager:
                     (
                         memory_id,
                         chat_id,
-                        json.dumps(memory.model_dump(mode='json')),  # JSON-serializable format
+                        json.dumps(
+                            memory.model_dump(mode="json")
+                        ),  # JSON-serializable format
                         memory.importance_score,  # Use property method
                         memory.classification.value,
-                        'long_term',
+                        "long_term",
                         namespace,
                         datetime.now().isoformat(),
                         memory.content,  # searchable_content
                         memory.summary,
-                        0.5, 0.5, 0.5,  # novelty, relevance, actionability scores
+                        0.5,
+                        0.5,
+                        0.5,  # novelty, relevance, actionability scores
                         memory.classification.value,
                         memory.importance.value,  # Use .value for enum string
                         memory.topic,
@@ -347,19 +353,19 @@ class DatabaseManager:
                         memory.extraction_timestamp.isoformat(),
                         memory.classification_reason,
                         0,  # processed_for_duplicates
-                        0   # conscious_processed
-                    )
+                        0,  # conscious_processed
+                    ),
                 )
                 conn.commit()
                 logger.debug(f"Stored enhanced long-term memory {memory_id}")
                 return memory_id
-                
+
             except sqlite3.IntegrityError as e:
                 conn.rollback()
                 logger.error(f"Database constraint violation: {e}")
                 raise DatabaseError(f"Memory storage constraint violation: {e}")
             except sqlite3.OperationalError as e:
-                conn.rollback() 
+                conn.rollback()
                 logger.error(f"Database operational error: {e}")
                 raise DatabaseError(f"Memory storage operational error: {e}")
             except Exception as e:
@@ -452,8 +458,6 @@ class DatabaseManager:
                 memory.importance.actionability_score,
             ),
         )
-
-
 
     def search_memories(
         self,
@@ -574,16 +578,24 @@ class DatabaseManager:
                 LEFT JOIN short_term_memory st ON fts.memory_id = st.memory_id AND fts.memory_type = 'short_term'
                 LEFT JOIN long_term_memory lt ON fts.memory_id = lt.memory_id AND fts.memory_type = 'long_term'
                 WHERE memory_search_fts MATCH ? AND fts.namespace = ?"""
-            
+
             if category_clause:
-                sql_query = base_query + " " + category_clause + """
+                sql_query = (
+                    base_query
+                    + " "
+                    + category_clause
+                    + """
                 ORDER BY rank, importance_score DESC
                 LIMIT ?"""
+                )
             else:
-                sql_query = base_query + """
+                sql_query = (
+                    base_query
+                    + """
                 ORDER BY rank, importance_score DESC
                 LIMIT ?"""
-            
+                )
+
             cursor.execute(sql_query, params)
 
             return [dict(row) for row in cursor.fetchall()]
@@ -592,7 +604,6 @@ class DatabaseManager:
             logger.debug(f"FTS not available: {e}")
             return []
 
-
     def _execute_category_search(
         self, cursor, query: str, namespace: str, category_filter: List[str], limit: int
     ):
@@ -600,15 +611,19 @@ class DatabaseManager:
         category_placeholders = ",".join("?" * len(category_filter))
         params = [namespace] + category_filter + [f"%{query}%", f"%{query}%", limit]
 
-        sql_query = """
+        sql_query = (
+            """
             SELECT memory_id, processed_data, importance_score, created_at, summary,
                    category_primary, 'long_term' as memory_type
             FROM long_term_memory
-            WHERE namespace = ? AND category_primary IN (""" + category_placeholders + """)
+            WHERE namespace = ? AND category_primary IN ("""
+            + category_placeholders
+            + """)
               AND (searchable_content LIKE ? OR summary LIKE ?)
             ORDER BY importance_score DESC, created_at DESC
             LIMIT ?
             """
+        )
         cursor.execute(sql_query, params)
 
         return [dict(row) for row in cursor.fetchall()]
@@ -635,13 +650,17 @@ class DatabaseManager:
 
         params.append(limit)
 
-        sql_query = """
+        sql_query = (
+            """
             SELECT *, 'short_term' as memory_type FROM short_term_memory
             WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?)
-            AND (expires_at IS NULL OR expires_at > ?) """ + category_clause + """
+            AND (expires_at IS NULL OR expires_at > ?) """
+            + category_clause
+            + """
             ORDER BY importance_score DESC, created_at DESC
             LIMIT ?
             """
+        )
         cursor.execute(sql_query, params)
         results.extend([dict(row) for row in cursor.fetchall()])
 
@@ -651,12 +670,16 @@ class DatabaseManager:
             params.extend(category_filter)
         params.append(limit)
 
-        sql_query = """
+        sql_query = (
+            """
             SELECT *, 'long_term' as memory_type FROM long_term_memory
-            WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?) """ + category_clause + """
+            WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?) """
+            + category_clause
+            + """
             ORDER BY importance_score DESC, created_at DESC
             LIMIT ?
             """
+        )
         cursor.execute(sql_query, params)
         results.extend([dict(row) for row in cursor.fetchall()])
 
@@ -673,7 +696,6 @@ class DatabaseManager:
             return max(0, 1 - (days_old / 30))  # Full score for recent, 0 after 30 days
         except:
             return 0.0
-
 
     def _determine_storage_location(self, memory: ProcessedMemory) -> str:
         """Determine where to store the memory based on its properties"""

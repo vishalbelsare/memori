@@ -7,10 +7,13 @@ import json
 import threading
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import openai
 from loguru import logger
+
+if TYPE_CHECKING:
+    from ..core.providers import ProviderConfig
 
 from ..utils.pydantic_models import MemorySearchQuery
 
@@ -53,16 +56,29 @@ Your primary functions:
 
 Be strategic and comprehensive in your search planning."""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
+        provider_config: Optional["ProviderConfig"] = None,
+    ):
         """
-        Initialize Memory Search Engine
+        Initialize Memory Search Engine with LLM provider configuration
 
         Args:
-            api_key: OpenAI API key (if None, uses environment variable)
-            model: OpenAI model to use for query understanding
+            api_key: API key (deprecated, use provider_config)
+            model: Model to use for query understanding (defaults to 'gpt-4o' if not specified)
+            provider_config: Provider configuration for LLM client
         """
-        self.client = openai.OpenAI(api_key=api_key)
-        self.model = model
+        if provider_config:
+            # Use provider configuration to create client
+            self.client = provider_config.create_client()
+            # Use provided model, fallback to provider config model, then default to gpt-4o
+            self.model = model or provider_config.model or "gpt-4o"
+        else:
+            # Backward compatibility: use api_key directly
+            self.client = openai.OpenAI(api_key=api_key)
+            self.model = model or "gpt-4o"
 
         # Performance improvements
         self._query_cache = {}  # Cache for search plans
@@ -171,7 +187,10 @@ Be strategic and comprehensive in your search planning."""
                     search_plan, db_manager, namespace, limit
                 )
                 for result in keyword_results:
-                    if isinstance(result, dict) and result.get("memory_id") not in seen_memory_ids:
+                    if (
+                        isinstance(result, dict)
+                        and result.get("memory_id") not in seen_memory_ids
+                    ):
                         seen_memory_ids.add(result["memory_id"])
                         result["search_strategy"] = "keyword_search"
                         result["search_reasoning"] = (
@@ -188,7 +207,10 @@ Be strategic and comprehensive in your search planning."""
                     search_plan, db_manager, namespace, limit - len(all_results)
                 )
                 for result in category_results:
-                    if isinstance(result, dict) and result.get("memory_id") not in seen_memory_ids:
+                    if (
+                        isinstance(result, dict)
+                        and result.get("memory_id") not in seen_memory_ids
+                    ):
                         seen_memory_ids.add(result["memory_id"])
                         result["search_strategy"] = "category_filter"
                         result["search_reasoning"] = (
@@ -205,7 +227,10 @@ Be strategic and comprehensive in your search planning."""
                     search_plan, db_manager, namespace, limit - len(all_results)
                 )
                 for result in importance_results:
-                    if isinstance(result, dict) and result.get("memory_id") not in seen_memory_ids:
+                    if (
+                        isinstance(result, dict)
+                        and result.get("memory_id") not in seen_memory_ids
+                    ):
                         seen_memory_ids.add(result["memory_id"])
                         result["search_strategy"] = "importance_filter"
                         result["search_reasoning"] = (
@@ -230,8 +255,10 @@ Be strategic and comprehensive in your search planning."""
                 if isinstance(result, dict):
                     valid_results.append(result)
                 else:
-                    logger.warning(f"Filtering out non-dict search result: {type(result)}")
-            
+                    logger.warning(
+                        f"Filtering out non-dict search result: {type(result)}"
+                    )
+
             all_results = valid_results
 
             # Sort by relevance (importance score + recency)
@@ -289,7 +316,7 @@ Be strategic and comprehensive in your search planning."""
             if not isinstance(results, list):
                 logger.warning(f"Search returned non-list result: {type(results)}")
                 return []
-            
+
             # Filter out any non-dictionary items
             valid_results = []
             for result in results:
@@ -297,7 +324,7 @@ Be strategic and comprehensive in your search planning."""
                     valid_results.append(result)
                 else:
                     logger.warning(f"Search returned non-dict item: {type(result)}")
-            
+
             return valid_results
         except Exception as e:
             logger.error(f"Keyword search failed: {e}")
@@ -444,7 +471,10 @@ Be strategic and comprehensive in your search planning."""
                         continue
 
                     for result in results:
-                        if isinstance(result, dict) and result.get("memory_id") not in seen_memory_ids:
+                        if (
+                            isinstance(result, dict)
+                            and result.get("memory_id") not in seen_memory_ids
+                        ):
                             seen_memory_ids.add(result["memory_id"])
                             all_results.append(result)
 

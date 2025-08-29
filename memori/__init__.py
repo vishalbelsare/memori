@@ -9,9 +9,16 @@ __version__ = "1.0.0"
 __author__ = "Harshal More"
 __email__ = "harshalmore2468@gmail.com"
 
-# Memory agents
-from .agents.memory_agent import MemoryAgent
-from .agents.retrieval_agent import MemorySearchEngine
+# Memory agents (dynamically imported to avoid import errors)
+try:
+    from .agents.memory_agent import MemoryAgent
+    from .agents.retrieval_agent import MemorySearchEngine
+    _AGENTS_AVAILABLE = True
+except ImportError as e:
+    # Agents are not available, create placeholder classes
+    MemoryAgent = None
+    MemorySearchEngine = None
+    _AGENTS_AVAILABLE = False
 
 # Configuration system
 from .config import (
@@ -72,7 +79,8 @@ from .utils import (  # Pydantic models; Enhanced exceptions; Validators and hel
     get_logger,
 )
 
-__all__ = [
+# Build __all__ list dynamically based on available components
+_all_components = [
     # Core
     "Memori",
     "DatabaseManager",
@@ -82,9 +90,6 @@ __all__ = [
     "AgentSettings",
     "LoggingSettings",
     "ConfigManager",
-    # Agents
-    "MemoryAgent",
-    "MemorySearchEngine",
     # Database
     "SQLiteConnector",
     "PostgreSQLConnector",
@@ -138,3 +143,9 @@ __all__ = [
     "LoggingManager",
     "get_logger",
 ]
+
+# Add agents only if available
+if _AGENTS_AVAILABLE:
+    _all_components.extend(["MemoryAgent", "MemorySearchEngine"])
+
+__all__ = _all_components

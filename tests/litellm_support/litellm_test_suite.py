@@ -41,7 +41,7 @@ def run_test_scenario(test_name, conscious_ingest, auto_ingest, test_inputs):
         database_connect=f"sqlite:///{db_path}",
         conscious_ingest=conscious_ingest,
         auto_ingest=auto_ingest,
-        verbose=False  # Set to True if you want detailed logs
+        verbose=True  # Set to True if you want detailed logs
     )
     
     memory.enable()
