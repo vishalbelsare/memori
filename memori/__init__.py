@@ -21,12 +21,12 @@ from .config import (
     LoggingSettings,
     MemoriSettings,
 )
-from .core.database import DatabaseManager
 
-# Core components - Updated modular architecture  
-from .config.memory_manager import MemoryManager
+# Core components - Updated modular architecture
+from .config.memory_manager import MemoryManager  # Alias for new modular version
+from .config.memory_manager import MemoryManager as ModularMemori
+from .core.database import DatabaseManager
 from .core.memory import Memori  # Primary Memori class with backward compatibility
-from .config.memory_manager import MemoryManager as ModularMemori  # Alias for new modular version
 
 # Database system
 from .database.connectors import MySQLConnector, PostgreSQLConnector, SQLiteConnector

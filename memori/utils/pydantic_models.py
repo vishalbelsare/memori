@@ -21,22 +21,22 @@ class MemoryCategoryType(str, Enum):
 
 class MemoryClassification(str, Enum):
     """Enhanced memory classification for long-term storage"""
-    
-    ESSENTIAL = "essential"          # Core facts, preferences, skills
-    CONTEXTUAL = "contextual"        # Project context, ongoing work
-    CONVERSATIONAL = "conversational" # Regular chat, questions, discussions
-    REFERENCE = "reference"          # Code examples, technical references
-    PERSONAL = "personal"            # User details, relationships, life events
-    CONSCIOUS_INFO = "conscious-info" # Direct promotion to short-term context
+
+    ESSENTIAL = "essential"  # Core facts, preferences, skills
+    CONTEXTUAL = "contextual"  # Project context, ongoing work
+    CONVERSATIONAL = "conversational"  # Regular chat, questions, discussions
+    REFERENCE = "reference"  # Code examples, technical references
+    PERSONAL = "personal"  # User details, relationships, life events
+    CONSCIOUS_INFO = "conscious-info"  # Direct promotion to short-term context
 
 
 class MemoryImportanceLevel(str, Enum):
     """Memory importance levels"""
-    
-    CRITICAL = "critical"     # Must never be lost
-    HIGH = "high"            # Very important for context
-    MEDIUM = "medium"        # Useful to remember
-    LOW = "low"             # Nice to have context
+
+    CRITICAL = "critical"  # Must never be lost
+    HIGH = "high"  # Very important for context
+    MEDIUM = "medium"  # Useful to remember
+    LOW = "low"  # Nice to have context
 
 
 class RetentionType(str, Enum):
@@ -142,8 +142,6 @@ class MemoryImportance(BaseModel):
     )
 
 
-
-
 class MemorySearchQuery(BaseModel):
     """Structured query for memory search"""
 
@@ -232,100 +230,117 @@ class ConversationContext(BaseModel):
 
 class ProcessedMemory(BaseModel):
     """Legacy processed memory model for backward compatibility"""
-    
+
     content: str = Field(description="The actual memory content")
     summary: str = Field(description="Concise summary for search")
     searchable_content: str = Field(description="Optimized content for search")
     should_store: bool = Field(description="Whether this memory should be stored")
-    storage_reasoning: str = Field(description="Why this memory should or shouldn't be stored")
+    storage_reasoning: str = Field(
+        description="Why this memory should or shouldn't be stored"
+    )
     timestamp: datetime = Field(default_factory=datetime.now)
     processing_metadata: Optional[Dict[str, str]] = Field(default=None)
 
 
 class ProcessedLongTermMemory(BaseModel):
     """Enhanced long-term memory with classification and conscious context"""
-    
+
     # Core Memory Content
     content: str = Field(description="The actual memory content")
     summary: str = Field(description="Concise summary for search")
     classification: MemoryClassification = Field(description="Type classification")
     importance: MemoryImportanceLevel = Field(description="Importance level")
-    
+
     # Context Information
     topic: Optional[str] = Field(default=None, description="Main topic/subject")
-    entities: List[str] = Field(default_factory=list, description="People, places, technologies mentioned")
-    keywords: List[str] = Field(default_factory=list, description="Key terms for search")
-    
+    entities: List[str] = Field(
+        default_factory=list, description="People, places, technologies mentioned"
+    )
+    keywords: List[str] = Field(
+        default_factory=list, description="Key terms for search"
+    )
+
     # Conscious Context Flags
-    is_user_context: bool = Field(default=False, description="Contains user personal info")
+    is_user_context: bool = Field(
+        default=False, description="Contains user personal info"
+    )
     is_preference: bool = Field(default=False, description="User preference/opinion")
-    is_skill_knowledge: bool = Field(default=False, description="User's abilities/expertise")
+    is_skill_knowledge: bool = Field(
+        default=False, description="User's abilities/expertise"
+    )
     is_current_project: bool = Field(default=False, description="Current work context")
-    
+
     # Memory Management
-    duplicate_of: Optional[str] = Field(default=None, description="Links to original if duplicate")
-    supersedes: List[str] = Field(default_factory=list, description="Previous memories this replaces")
-    related_memories: List[str] = Field(default_factory=list, description="Connected memory IDs")
-    
+    duplicate_of: Optional[str] = Field(
+        default=None, description="Links to original if duplicate"
+    )
+    supersedes: List[str] = Field(
+        default_factory=list, description="Previous memories this replaces"
+    )
+    related_memories: List[str] = Field(
+        default_factory=list, description="Connected memory IDs"
+    )
+
     # Technical Metadata
     conversation_id: str = Field(description="Source conversation")
-    confidence_score: float = Field(default=0.8, description="AI confidence in extraction")
+    confidence_score: float = Field(
+        default=0.8, description="AI confidence in extraction"
+    )
     extraction_timestamp: datetime = Field(default_factory=datetime.now)
     last_accessed: Optional[datetime] = Field(default=None)
     access_count: int = Field(default=0)
-    
+
     # Classification Reasoning
     classification_reason: str = Field(description="Why this classification was chosen")
-    promotion_eligible: bool = Field(default=False, description="Should be promoted to short-term")
-    
+    promotion_eligible: bool = Field(
+        default=False, description="Should be promoted to short-term"
+    )
+
     @property
     def importance_score(self) -> float:
         """Convert importance level to numeric score"""
-        return {
-            "critical": 0.9,
-            "high": 0.7,
-            "medium": 0.5,
-            "low": 0.3
-        }.get(self.importance, 0.5)
+        return {"critical": 0.9, "high": 0.7, "medium": 0.5, "low": 0.3}.get(
+            self.importance, 0.5
+        )
 
 
 class UserContextProfile(BaseModel):
     """Permanent user context for conscious ingestion"""
-    
+
     # Core Identity
     name: Optional[str] = None
     pronouns: Optional[str] = None
     location: Optional[str] = None
     timezone: Optional[str] = None
-    
-    # Professional Context  
+
+    # Professional Context
     job_title: Optional[str] = None
     company: Optional[str] = None
     industry: Optional[str] = None
     experience_level: Optional[str] = None
     specializations: List[str] = Field(default_factory=list)
-    
+
     # Technical Stack
     primary_languages: List[str] = Field(default_factory=list)
     frameworks: List[str] = Field(default_factory=list)
     tools: List[str] = Field(default_factory=list)
     environment: Optional[str] = None
-    
+
     # Behavioral Preferences
     communication_style: Optional[str] = None
     technical_depth: Optional[str] = None
     response_preference: Optional[str] = None
-    
+
     # Current Context
     active_projects: List[str] = Field(default_factory=list)
     learning_goals: List[str] = Field(default_factory=list)
     domain_expertise: List[str] = Field(default_factory=list)
-    
+
     # Values & Constraints
     code_standards: List[str] = Field(default_factory=list)
     time_constraints: Optional[str] = None
     technology_preferences: List[str] = Field(default_factory=list)
-    
+
     # Metadata
     last_updated: datetime = Field(default_factory=datetime.now)
     version: int = 1

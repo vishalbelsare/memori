@@ -7,7 +7,7 @@ import json
 import threading
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import openai
 from loguru import logger
@@ -60,7 +60,7 @@ Be strategic and comprehensive in your search planning."""
         self,
         api_key: Optional[str] = None,
         model: Optional[str] = None,
-        provider_config: Optional['ProviderConfig'] = None
+        provider_config: Optional["ProviderConfig"] = None,
     ):
         """
         Initialize Memory Search Engine with LLM provider configuration
@@ -187,7 +187,10 @@ Be strategic and comprehensive in your search planning."""
                     search_plan, db_manager, namespace, limit
                 )
                 for result in keyword_results:
-                    if isinstance(result, dict) and result.get("memory_id") not in seen_memory_ids:
+                    if (
+                        isinstance(result, dict)
+                        and result.get("memory_id") not in seen_memory_ids
+                    ):
                         seen_memory_ids.add(result["memory_id"])
                         result["search_strategy"] = "keyword_search"
                         result["search_reasoning"] = (
@@ -204,7 +207,10 @@ Be strategic and comprehensive in your search planning."""
                     search_plan, db_manager, namespace, limit - len(all_results)
                 )
                 for result in category_results:
-                    if isinstance(result, dict) and result.get("memory_id") not in seen_memory_ids:
+                    if (
+                        isinstance(result, dict)
+                        and result.get("memory_id") not in seen_memory_ids
+                    ):
                         seen_memory_ids.add(result["memory_id"])
                         result["search_strategy"] = "category_filter"
                         result["search_reasoning"] = (
@@ -221,7 +227,10 @@ Be strategic and comprehensive in your search planning."""
                     search_plan, db_manager, namespace, limit - len(all_results)
                 )
                 for result in importance_results:
-                    if isinstance(result, dict) and result.get("memory_id") not in seen_memory_ids:
+                    if (
+                        isinstance(result, dict)
+                        and result.get("memory_id") not in seen_memory_ids
+                    ):
                         seen_memory_ids.add(result["memory_id"])
                         result["search_strategy"] = "importance_filter"
                         result["search_reasoning"] = (
@@ -246,8 +255,10 @@ Be strategic and comprehensive in your search planning."""
                 if isinstance(result, dict):
                     valid_results.append(result)
                 else:
-                    logger.warning(f"Filtering out non-dict search result: {type(result)}")
-            
+                    logger.warning(
+                        f"Filtering out non-dict search result: {type(result)}"
+                    )
+
             all_results = valid_results
 
             # Sort by relevance (importance score + recency)
@@ -305,7 +316,7 @@ Be strategic and comprehensive in your search planning."""
             if not isinstance(results, list):
                 logger.warning(f"Search returned non-list result: {type(results)}")
                 return []
-            
+
             # Filter out any non-dictionary items
             valid_results = []
             for result in results:
@@ -313,7 +324,7 @@ Be strategic and comprehensive in your search planning."""
                     valid_results.append(result)
                 else:
                     logger.warning(f"Search returned non-dict item: {type(result)}")
-            
+
             return valid_results
         except Exception as e:
             logger.error(f"Keyword search failed: {e}")
@@ -460,7 +471,10 @@ Be strategic and comprehensive in your search planning."""
                         continue
 
                     for result in results:
-                        if isinstance(result, dict) and result.get("memory_id") not in seen_memory_ids:
+                        if (
+                            isinstance(result, dict)
+                            and result.get("memory_id") not in seen_memory_ids
+                        ):
                             seen_memory_ids.add(result["memory_id"])
                             all_results.append(result)
 

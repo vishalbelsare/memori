@@ -17,7 +17,7 @@ class MemoryManager:
     """
     Modular memory management system that coordinates interceptors,
     memory processing, and context injection.
-    
+
     This class provides a clean interface for memory operations while
     maintaining backward compatibility with the existing Memori system.
     """
@@ -49,7 +49,7 @@ class MemoryManager:
     ):
         """
         Initialize the MemoryManager.
-        
+
         Args:
             database_connect: Database connection string
             template: Memory template to use
@@ -75,7 +75,7 @@ class MemoryManager:
         self.user_id = user_id
         self.verbose = verbose
         self.provider_config = provider_config
-        
+
         # Store additional configuration
         self.openai_api_key = openai_api_key
         self.api_key = api_key
@@ -87,13 +87,13 @@ class MemoryManager:
         self.azure_ad_token = azure_ad_token
         self.organization = organization
         self.kwargs = kwargs
-        
+
         self._session_id = str(uuid.uuid4())
         self._enabled = False
-        
+
         # Initialize interceptor manager - this will be passed the parent Memori instance
         self.interceptor_manager = None
-        
+
         logger.info(f"MemoryManager initialized with session: {self._session_id}")
 
     def set_memori_instance(self, memori_instance):
@@ -104,35 +104,43 @@ class MemoryManager:
     def enable(self, interceptors: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         Enable memory recording interceptors.
-        
+
         Args:
             interceptors: List of interceptor types to enable
-            
+
         Returns:
             Dict containing enablement results
         """
         if self._enabled:
-            return {"success": True, "message": "Already enabled", "enabled_interceptors": []}
-        
+            return {
+                "success": True,
+                "message": "Already enabled",
+                "enabled_interceptors": [],
+            }
+
         if interceptors is None:
-            interceptors = ['native', 'openai', 'anthropic', 'http']
-        
+            interceptors = ["native", "openai", "anthropic", "http"]
+
         if self.interceptor_manager is None:
-            logger.warning("InterceptorManager not initialized - cannot enable interceptors")
+            logger.warning(
+                "InterceptorManager not initialized - cannot enable interceptors"
+            )
             return {"success": False, "message": "InterceptorManager not initialized"}
-        
+
         try:
             results = self.interceptor_manager.enable(interceptors)
             self._enabled = True
-            
+
             logger.info(f"MemoryManager enabled with interceptors: {interceptors}")
             enabled_count = sum(1 for success in results.values() if success)
-            enabled_interceptors = [name for name, success in results.items() if success]
-            
+            enabled_interceptors = [
+                name for name, success in results.items() if success
+            ]
+
             return {
                 "success": True,
                 "message": f"Enabled {enabled_count} interceptors",
-                "enabled_interceptors": enabled_interceptors
+                "enabled_interceptors": enabled_interceptors,
             }
         except Exception as e:
             logger.error(f"Failed to enable MemoryManager: {e}")
@@ -141,27 +149,27 @@ class MemoryManager:
     def disable(self) -> Dict[str, Any]:
         """
         Disable memory recording interceptors.
-        
+
         Returns:
             Dict containing disable results
         """
         if not self._enabled:
             return {"success": True, "message": "Already disabled"}
-        
+
         if self.interceptor_manager is None:
             logger.warning("InterceptorManager not initialized")
             return {"success": False, "message": "InterceptorManager not initialized"}
-        
+
         try:
             results = self.interceptor_manager.disable()
             self._enabled = False
-            
+
             logger.info("MemoryManager disabled")
             disabled_count = sum(1 for success in results.values() if success)
-            
+
             return {
                 "success": True,
-                "message": f"MemoryManager disabled successfully ({disabled_count} interceptors)"
+                "message": f"MemoryManager disabled successfully ({disabled_count} interceptors)",
             }
         except Exception as e:
             logger.error(f"Failed to disable MemoryManager: {e}")
@@ -170,13 +178,13 @@ class MemoryManager:
     def get_status(self) -> Dict[str, Dict[str, Any]]:
         """
         Get status of all interceptors.
-        
+
         Returns:
             Dict containing interceptor status information
         """
         if self.interceptor_manager is None:
             return {}
-        
+
         try:
             return self.interceptor_manager.get_status()
         except Exception as e:
@@ -186,7 +194,7 @@ class MemoryManager:
     def get_health(self) -> Dict[str, Any]:
         """
         Get health check of the memory management system.
-        
+
         Returns:
             Dict containing health information
         """
@@ -204,19 +212,19 @@ class MemoryManager:
         }
 
     # === BACKWARD COMPATIBILITY PROPERTIES ===
-    
+
     @property
     def session_id(self) -> str:
         """Get session ID for backward compatibility."""
         return self._session_id
-    
+
     @property
     def enabled(self) -> bool:
         """Check if enabled for backward compatibility."""
         return self._enabled
-    
+
     # === PLACEHOLDER METHODS FOR FUTURE MODULAR COMPONENTS ===
-    
+
     def record_conversation(
         self,
         user_input: str,
@@ -226,13 +234,13 @@ class MemoryManager:
     ) -> str:
         """
         Record a conversation (placeholder for future implementation).
-        
+
         Returns:
             Placeholder conversation ID
         """
         logger.info(f"Recording conversation (placeholder): {user_input[:50]}...")
         return str(uuid.uuid4())
-    
+
     def search_memories(
         self,
         query: str,
@@ -243,13 +251,13 @@ class MemoryManager:
     ) -> List[Dict[str, Any]]:
         """
         Search memories (placeholder for future implementation).
-        
+
         Returns:
             Empty list (placeholder)
         """
         logger.info(f"Searching memories (placeholder): {query}")
         return []
-    
+
     def cleanup(self):
         """Cleanup resources."""
         try:

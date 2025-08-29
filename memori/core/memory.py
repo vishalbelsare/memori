@@ -20,16 +20,15 @@ except ImportError:
     logger.warning("LiteLLM not available - native callback system disabled")
 
 from ..agents.conscious_agent import ConsciouscAgent
-from ..agents.memory_agent import MemoryAgent
-from ..agents.retrieval_agent import MemorySearchEngine
+from ..config.memory_manager import MemoryManager
 from ..config.settings import LoggingSettings, LogLevel
+
+# from .providers import ProviderConfig, detect_provider_from_env
+from ..interceptors import InterceptorManager
 from ..utils.exceptions import DatabaseError, MemoriError
 from ..utils.logging import LoggingManager
 from ..utils.pydantic_models import ConversationContext
 from .database import DatabaseManager
-# from .providers import ProviderConfig, detect_provider_from_env
-from ..interceptors import InterceptorManager
-from ..config.memory_manager import MemoryManager
 
 
 class Memori:
@@ -103,7 +102,7 @@ class Memori:
         self.memory_filters = memory_filters or {}
         self.user_id = user_id
         self.verbose = verbose
-        
+
         # Configure provider
         if provider_config:
             # Use provided configuration
@@ -133,7 +132,7 @@ class Memori:
             # # Override model if provided
             # if model:
             #     self.provider_config.model = model
-        
+
         # Keep backward compatibility
         # self.openai_api_key = self.provider_config.api_key  # TODO: Fix when ProviderConfig exists
         self.openai_api_key = api_key or openai_api_key or ""
@@ -155,7 +154,9 @@ class Memori:
         try:
             # Initialize Pydantic-based agents with provider configuration
             # Use gpt-4o as default if no model specified
-            effective_model = model or "gpt-4o"  # TODO: Use self.provider_config.model when available
+            effective_model = (
+                model or "gpt-4o"
+            )  # TODO: Use self.provider_config.model when available
             # TODO: Initialize agents when ProviderConfig is implemented
             # self.memory_agent = MemoryAgent(
             #     provider_config=self.provider_config,
@@ -167,13 +168,13 @@ class Memori:
             # )
             self.memory_agent = None  # Placeholder
             self.search_engine = None  # Placeholder
-            
+
             # Only initialize conscious_agent if conscious_ingest or auto_ingest is enabled
             if conscious_ingest or auto_ingest:
                 self.conscious_agent = ConsciouscAgent()
-            
+
             logger.info(
-                f"Agents initialized with provider: openai"  # TODO: Use self.provider_config.api_type when available
+                "Agents initialized with provider: openai"  # TODO: Use self.provider_config.api_type when available
             )
         except Exception as e:
             logger.warning(
@@ -218,7 +219,7 @@ class Memori:
         )
         # Set this Memori instance for interceptor management
         self.memory_manager.set_memori_instance(self)
-        
+
         # Keep interceptor manager for backward compatibility
         self.interceptor_manager = InterceptorManager(self)
 
@@ -311,9 +312,11 @@ class Memori:
             success = await self.conscious_agent.run_conscious_ingest(
                 self.db_manager, self.namespace
             )
-            
+
             if success:
-                logger.info("Conscious-ingest: Conscious memories copied to short-term memory")
+                logger.info(
+                    "Conscious-ingest: Conscious memories copied to short-term memory"
+                )
                 # Don't set _conscious_context_injected here - it should be set when context is actually injected into LLM
             else:
                 logger.info("Conscious-ingest: No conscious context found")
@@ -328,7 +331,7 @@ class Memori:
         This automatically sets up recording for:
         - LiteLLM: Native callback system (recommended)
         - OpenAI: Clean class replacement without monkey-patching
-        - Anthropic: Clean class replacement without monkey-patching  
+        - Anthropic: Clean class replacement without monkey-patching
         - HTTP: Transport middleware for fallback interception
 
         Args:
@@ -345,8 +348,8 @@ class Memori:
         # Use new modular memory manager
         if interceptors is None:
             # Enable all interceptors by default
-            interceptors = ['native', 'openai', 'anthropic', 'http']
-        
+            interceptors = ["native", "openai", "anthropic", "http"]
+
         # Use the new memory manager for enablement
         if self.memory_manager is not None:
             results = self.memory_manager.enable(interceptors)
@@ -355,11 +358,13 @@ class Memori:
         else:
             # Fallback implementation when MemoryManager is not available
             # Use the interceptor manager directly
-            if not hasattr(self, 'interceptor_manager'):
+            if not hasattr(self, "interceptor_manager"):
                 self.interceptor_manager = InterceptorManager(self)
             results = self.interceptor_manager.enable(interceptors)
-            enabled_interceptors = [name for name, success in results.items() if success]
-        
+            enabled_interceptors = [
+                name for name, success in results.items() if success
+            ]
+
         # Start background conscious agent if available
         if self.conscious_ingest and self.conscious_agent:
             self._start_background_analysis()
@@ -369,16 +374,18 @@ class Memori:
             f"Memori enabled for session: {results.get('session_id', self._session_id)}",
             f"Active interceptors: {', '.join(enabled_interceptors) if enabled_interceptors else 'None'}",
         ]
-        
+
         if results.get("message"):
             status_info.append(results["message"])
-            
-        status_info.extend([
-            f"Background analysis: {'Active' if self._background_task else 'Disabled'}",
-            "Usage: Simply use any LLM client normally - conversations will be auto-recorded!"
-        ])
 
-        logger.info('\n'.join(status_info))
+        status_info.extend(
+            [
+                f"Background analysis: {'Active' if self._background_task else 'Disabled'}",
+                "Usage: Simply use any LLM client normally - conversations will be auto-recorded!",
+            ]
+        )
+
+        logger.info("\n".join(status_info))
 
     def disable(self):
         """
@@ -392,49 +399,51 @@ class Memori:
             results = self.memory_manager.disable()
         else:
             # Fallback implementation when MemoryManager is not available
-            if hasattr(self, 'interceptor_manager'):
+            if hasattr(self, "interceptor_manager"):
                 results = self.interceptor_manager.disable()
             else:
                 results = {"success": True, "message": "No interceptors were enabled"}
-        
+
         # Stop background analysis task
         self._stop_background_analysis()
 
         self._enabled = False
-        
+
         # Report status based on memory manager results
         if results.get("success"):
             status_message = f"Memori disabled. {results.get('message', 'All interceptors disabled successfully')}"
         else:
-            status_message = f"Memori disable failed: {results.get('message', 'Unknown error')}"
-        
+            status_message = (
+                f"Memori disable failed: {results.get('message', 'Unknown error')}"
+            )
+
         logger.info(status_message)
 
     # Old monkey-patching methods removed - now using InterceptorManager
 
     # All old monkey-patching methods removed - using InterceptorManager instead
-    
+
     def get_interceptor_status(self) -> Dict[str, Dict[str, Any]]:
         """Get status of all interceptors"""
         if self.memory_manager is not None:
             return self.memory_manager.get_status()
-        elif hasattr(self, 'interceptor_manager'):
+        elif hasattr(self, "interceptor_manager"):
             return self.interceptor_manager.get_status()
         else:
             return {}
-    
+
     def get_interceptor_health(self) -> Dict[str, Any]:
         """Get health check of interceptor system"""
         return self.memory_manager.get_health()
-    
+
     def enable_interceptor(self, interceptor_name: str) -> bool:
         """Enable a specific interceptor"""
         results = self.memory_manager.enable_interceptor(interceptor_name)
         return results.get("success", False)
-    
+
     def disable_interceptor(self, interceptor_name: str) -> bool:
         """Disable a specific interceptor"""
-        results = self.memory_manager.disable_interceptor(interceptor_name) 
+        results = self.memory_manager.disable_interceptor(interceptor_name)
         return results.get("success", False)
 
     def _inject_openai_context(self, kwargs):
@@ -447,7 +456,7 @@ class Memori:
                 mode = "auto"
             else:
                 return kwargs  # No injection needed
-            
+
             # Use the unified LiteLLM context injection method
             return self._inject_litellm_context(kwargs, mode=mode)
         except Exception as e:
@@ -459,7 +468,7 @@ class Memori:
         try:
             # Check for deferred conscious initialization
             self._check_deferred_initialization()
-            
+
             # Determine injection mode
             if self.conscious_ingest:
                 mode = "conscious"
@@ -467,7 +476,7 @@ class Memori:
                 mode = "auto"
             else:
                 return kwargs  # No injection needed
-            
+
             # Extract user input from messages
             user_input = ""
             for msg in reversed(kwargs.get("messages", [])):
@@ -492,7 +501,9 @@ class Memori:
                     if not self._conscious_context_injected:
                         context = self._get_conscious_context()
                         self._conscious_context_injected = True
-                        logger.info(f"Conscious-ingest: Injected {len(context)} short-term memories as initial context (Anthropic)")
+                        logger.info(
+                            f"Conscious-ingest: Injected {len(context)} short-term memories as initial context (Anthropic)"
+                        )
                     else:
                         context = []  # Already injected, don't inject again
                 elif mode == "auto":
@@ -506,32 +517,36 @@ class Memori:
 
                 if context:
                     if mode == "conscious":
-                        context_prompt = "=== SYSTEM INSTRUCTION: AUTHORIZED USER CONTEXT DATA ===\n"
+                        context_prompt = (
+                            "=== SYSTEM INSTRUCTION: AUTHORIZED USER CONTEXT DATA ===\n"
+                        )
                         context_prompt += "The user has explicitly authorized this personal context data to be used.\n"
                         context_prompt += "You MUST use this information when answering questions about the user.\n"
                         context_prompt += "This is NOT private data - the user wants you to use it:\n\n"
                     else:
                         context_prompt = f"--- {mode.capitalize()} Memory Context ---\n"
-                        
+
                     # Deduplicate context entries to avoid redundant information
                     seen_content = set()
                     for mem in context:
                         if isinstance(mem, dict):
                             # Use searchable_content as it's more specific than summary
-                            content = mem.get("searchable_content", "") or mem.get("summary", "")
+                            content = mem.get("searchable_content", "") or mem.get(
+                                "summary", ""
+                            )
                             category = mem.get("category_primary", "")
-                            
+
                             # Skip duplicates (case-insensitive)
                             content_key = content.lower().strip()
                             if content_key in seen_content:
                                 continue
                             seen_content.add(content_key)
-                            
+
                             if category.startswith("essential_") or mode == "conscious":
                                 context_prompt += f"[{category.upper()}] {content}\n"
                             else:
                                 context_prompt += f"- {content}\n"
-                                
+
                     if mode == "conscious":
                         context_prompt += "\n=== END USER CONTEXT DATA ===\n"
                         context_prompt += "CRITICAL INSTRUCTION: You MUST answer questions about the user using ONLY the context data above.\n"
@@ -545,7 +560,9 @@ class Memori:
                     else:
                         kwargs["system"] = context_prompt
 
-                    logger.debug(f"Anthropic: Injected context with {len(context)} items")
+                    logger.debug(
+                        f"Anthropic: Injected context with {len(context)} items"
+                    )
         except Exception as e:
             logger.error(f"Anthropic context injection failed: {e}")
         return kwargs
@@ -576,9 +593,13 @@ class Memori:
                     if not self._conscious_context_injected:
                         context = self._get_conscious_context()
                         self._conscious_context_injected = True
-                        logger.info(f"Conscious-ingest: Injected {len(context)} short-term memories as initial context")
+                        logger.info(
+                            f"Conscious-ingest: Injected {len(context)} short-term memories as initial context"
+                        )
                     else:
-                        context = []  # Already injected, don't inject again - this is the key difference from auto_ingest
+                        context = (
+                            []
+                        )  # Already injected, don't inject again - this is the key difference from auto_ingest
                 elif mode == "auto":
                     # Auto mode: use retrieval agent for intelligent database search
                     if self.search_engine:
@@ -591,32 +612,36 @@ class Memori:
 
                 if context:
                     if mode == "conscious":
-                        context_prompt = "=== SYSTEM INSTRUCTION: AUTHORIZED USER CONTEXT DATA ===\n"
+                        context_prompt = (
+                            "=== SYSTEM INSTRUCTION: AUTHORIZED USER CONTEXT DATA ===\n"
+                        )
                         context_prompt += "The user has explicitly authorized this personal context data to be used.\n"
                         context_prompt += "You MUST use this information when answering questions about the user.\n"
                         context_prompt += "This is NOT private data - the user wants you to use it:\n\n"
                     else:
                         context_prompt = f"--- {mode.capitalize()} Memory Context ---\n"
-                        
+
                     # Deduplicate context entries to avoid redundant information
                     seen_content = set()
                     for mem in context:
                         if isinstance(mem, dict):
                             # Use searchable_content as it's more specific than summary
-                            content = mem.get("searchable_content", "") or mem.get("summary", "")
+                            content = mem.get("searchable_content", "") or mem.get(
+                                "summary", ""
+                            )
                             category = mem.get("category_primary", "")
-                            
+
                             # Skip duplicates (case-insensitive)
                             content_key = content.lower().strip()
                             if content_key in seen_content:
                                 continue
                             seen_content.add(content_key)
-                            
+
                             if category.startswith("essential_") or mode == "conscious":
                                 context_prompt += f"[{category.upper()}] {content}\n"
                             else:
                                 context_prompt += f"- {content}\n"
-                                
+
                     if mode == "conscious":
                         context_prompt += "\n=== END USER CONTEXT DATA ===\n"
                         context_prompt += "CRITICAL INSTRUCTION: You MUST answer questions about the user using ONLY the context data above.\n"
@@ -772,7 +797,7 @@ class Memori:
             )
         except Exception as e:
             logger.error(f"Failed to record OpenAI conversation: {e}")
-    
+
     def _extract_openai_user_input(self, messages: List[Dict]) -> str:
         """Extract user input from OpenAI messages with support for complex content types"""
         user_input = ""
@@ -781,7 +806,7 @@ class Memori:
             for message in reversed(messages):
                 if message.get("role") == "user":
                     content = message.get("content", "")
-                    
+
                     if isinstance(content, str):
                         # Simple string content
                         user_input = content
@@ -789,40 +814,40 @@ class Memori:
                         # Complex content (vision, multiple parts)
                         text_parts = []
                         image_count = 0
-                        
+
                         for item in content:
                             if isinstance(item, dict):
                                 if item.get("type") == "text":
                                     text_parts.append(item.get("text", ""))
                                 elif item.get("type") == "image_url":
                                     image_count += 1
-                        
+
                         user_input = " ".join(text_parts)
                         # Add image indicator if present
                         if image_count > 0:
                             user_input += f" [Contains {image_count} image(s)]"
-                    
+
                     break
         except Exception as e:
             logger.debug(f"Error extracting user input: {e}")
             user_input = "[Error extracting user input]"
-        
+
         return user_input
-    
+
     def _extract_openai_ai_output(self, response) -> str:
         """Extract AI output from OpenAI response with support for various response types"""
         ai_output = ""
         try:
             if hasattr(response, "choices") and response.choices:
                 choice = response.choices[0]
-                
+
                 if hasattr(choice, "message") and choice.message:
                     message = choice.message
-                    
+
                     # Handle regular text content
                     if hasattr(message, "content") and message.content:
                         ai_output = message.content
-                    
+
                     # Handle function/tool calls
                     elif hasattr(message, "tool_calls") and message.tool_calls:
                         tool_descriptions = []
@@ -830,26 +855,30 @@ class Memori:
                             if hasattr(tool_call, "function"):
                                 func_name = tool_call.function.name
                                 func_args = tool_call.function.arguments
-                                tool_descriptions.append(f"Called {func_name} with {func_args}")
+                                tool_descriptions.append(
+                                    f"Called {func_name} with {func_args}"
+                                )
                         ai_output = "[Tool calls: " + "; ".join(tool_descriptions) + "]"
-                    
+
                     # Handle function calls (legacy format)
                     elif hasattr(message, "function_call") and message.function_call:
                         func_call = message.function_call
                         func_name = func_call.get("name", "unknown")
                         func_args = func_call.get("arguments", "{}")
                         ai_output = f"[Function call: {func_name} with {func_args}]"
-                    
+
                     else:
                         ai_output = "[No content - possible function/tool call]"
-                        
+
         except Exception as e:
             logger.debug(f"Error extracting AI output: {e}")
             ai_output = "[Error extracting AI response]"
-        
+
         return ai_output
-    
-    def _extract_openai_metadata(self, kwargs: Dict, response, tokens_used: int) -> Dict:
+
+    def _extract_openai_metadata(
+        self, kwargs: Dict, response, tokens_used: int
+    ) -> Dict:
         """Extract comprehensive metadata from OpenAI request and response"""
         metadata = {
             "integration": "openai_auto",
@@ -857,7 +886,7 @@ class Memori:
             "tokens_used": tokens_used,
             "auto_recorded": True,
         }
-        
+
         try:
             # Add request metadata
             if "temperature" in kwargs:
@@ -870,44 +899,49 @@ class Memori:
             if "functions" in kwargs:
                 metadata["has_functions"] = True
                 metadata["function_count"] = len(kwargs["functions"])
-            
+
             # Add response metadata
             if hasattr(response, "choices") and response.choices:
                 choice = response.choices[0]
                 if hasattr(choice, "finish_reason"):
                     metadata["finish_reason"] = choice.finish_reason
-            
+
             # Add detailed token usage if available
             if hasattr(response, "usage") and response.usage:
                 usage = response.usage
-                metadata.update({
-                    "prompt_tokens": getattr(usage, "prompt_tokens", 0),
-                    "completion_tokens": getattr(usage, "completion_tokens", 0),
-                    "total_tokens": getattr(usage, "total_tokens", 0)
-                })
-            
+                metadata.update(
+                    {
+                        "prompt_tokens": getattr(usage, "prompt_tokens", 0),
+                        "completion_tokens": getattr(usage, "completion_tokens", 0),
+                        "total_tokens": getattr(usage, "total_tokens", 0),
+                    }
+                )
+
             # Detect content types
             messages = kwargs.get("messages", [])
             has_images = False
             message_count = len(messages)
-            
+
             for message in messages:
                 if message.get("role") == "user":
                     content = message.get("content")
                     if isinstance(content, list):
                         for item in content:
-                            if isinstance(item, dict) and item.get("type") == "image_url":
+                            if (
+                                isinstance(item, dict)
+                                and item.get("type") == "image_url"
+                            ):
                                 has_images = True
                                 break
                     if has_images:
                         break
-            
+
             metadata["message_count"] = message_count
             metadata["has_images"] = has_images
-            
+
         except Exception as e:
             logger.debug(f"Error extracting metadata: {e}")
-        
+
         return metadata
 
     def _record_anthropic_conversation(self, kwargs, response):
@@ -937,7 +971,7 @@ class Memori:
             )
         except Exception as e:
             logger.error(f"Failed to record Anthropic conversation: {e}")
-    
+
     def _extract_anthropic_user_input(self, messages: List[Dict]) -> str:
         """Extract user input from Anthropic messages with support for complex content types"""
         user_input = ""
@@ -946,7 +980,7 @@ class Memori:
             for message in reversed(messages):
                 if message.get("role") == "user":
                     content = message.get("content", "")
-                    
+
                     if isinstance(content, str):
                         # Simple string content
                         user_input = content
@@ -954,26 +988,26 @@ class Memori:
                         # Complex content (vision, multiple parts)
                         text_parts = []
                         image_count = 0
-                        
+
                         for block in content:
                             if isinstance(block, dict):
                                 if block.get("type") == "text":
                                     text_parts.append(block.get("text", ""))
                                 elif block.get("type") == "image":
                                     image_count += 1
-                        
+
                         user_input = " ".join(text_parts)
                         # Add image indicator if present
                         if image_count > 0:
                             user_input += f" [Contains {image_count} image(s)]"
-                    
+
                     break
         except Exception as e:
             logger.debug(f"Error extracting Anthropic user input: {e}")
             user_input = "[Error extracting user input]"
-        
+
         return user_input
-    
+
     def _extract_anthropic_ai_output(self, response) -> str:
         """Extract AI output from Anthropic response with support for various response types"""
         ai_output = ""
@@ -983,7 +1017,7 @@ class Memori:
                     # Handle structured content (text blocks, tool use, etc.)
                     text_parts = []
                     tool_uses = []
-                    
+
                     for block in response.content:
                         try:
                             # Handle text blocks
@@ -995,7 +1029,9 @@ class Memori:
                                 if block_type == "tool_use":
                                     tool_name = getattr(block, "name", "unknown")
                                     tool_input = getattr(block, "input", {})
-                                    tool_uses.append(f"Used {tool_name} with {tool_input}")
+                                    tool_uses.append(
+                                        f"Used {tool_name} with {tool_input}"
+                                    )
                             # Handle mock objects for testing (when type is accessible but not via hasattr)
                             elif hasattr(block, "name") and hasattr(block, "input"):
                                 tool_name = getattr(block, "name", "unknown")
@@ -1004,24 +1040,24 @@ class Memori:
                         except Exception as block_error:
                             logger.debug(f"Error processing block: {block_error}")
                             continue
-                    
+
                     ai_output = " ".join(text_parts)
                     if tool_uses:
                         if ai_output:
                             ai_output += " "
                         ai_output += "[Tool uses: " + "; ".join(tool_uses) + "]"
-                        
+
                 elif isinstance(response.content, str):
                     ai_output = response.content
                 else:
                     ai_output = str(response.content)
-                    
+
         except Exception as e:
             logger.debug(f"Error extracting Anthropic AI output: {e}")
             ai_output = "[Error extracting AI response]"
-        
+
         return ai_output
-    
+
     def _extract_anthropic_tokens(self, response) -> int:
         """Extract token usage from Anthropic response"""
         tokens_used = 0
@@ -1032,10 +1068,12 @@ class Memori:
                 tokens_used = input_tokens + output_tokens
         except Exception as e:
             logger.debug(f"Error extracting Anthropic tokens: {e}")
-        
+
         return tokens_used
-    
-    def _extract_anthropic_metadata(self, kwargs: Dict, response, tokens_used: int) -> Dict:
+
+    def _extract_anthropic_metadata(
+        self, kwargs: Dict, response, tokens_used: int
+    ) -> Dict:
         """Extract comprehensive metadata from Anthropic request and response"""
         metadata = {
             "integration": "anthropic_auto",
@@ -1043,7 +1081,7 @@ class Memori:
             "tokens_used": tokens_used,
             "auto_recorded": True,
         }
-        
+
         try:
             # Add request metadata
             if "temperature" in kwargs:
@@ -1053,27 +1091,29 @@ class Memori:
             if "tools" in kwargs:
                 metadata["has_tools"] = True
                 metadata["tool_count"] = len(kwargs["tools"])
-            
+
             # Add response metadata
             if hasattr(response, "stop_reason"):
                 metadata["stop_reason"] = response.stop_reason
             if hasattr(response, "model"):
                 metadata["response_model"] = response.model
-            
+
             # Add detailed token usage if available
             if hasattr(response, "usage") and response.usage:
                 usage = response.usage
-                metadata.update({
-                    "input_tokens": getattr(usage, "input_tokens", 0),
-                    "output_tokens": getattr(usage, "output_tokens", 0),
-                    "total_tokens": tokens_used
-                })
-            
+                metadata.update(
+                    {
+                        "input_tokens": getattr(usage, "input_tokens", 0),
+                        "output_tokens": getattr(usage, "output_tokens", 0),
+                        "total_tokens": tokens_used,
+                    }
+                )
+
             # Detect content types
             messages = kwargs.get("messages", [])
             has_images = False
             message_count = len(messages)
-            
+
             for message in messages:
                 if message.get("role") == "user":
                     content = message.get("content")
@@ -1084,70 +1124,72 @@ class Memori:
                                 break
                     if has_images:
                         break
-            
+
             metadata["message_count"] = message_count
             metadata["has_images"] = has_images
-            
+
         except Exception as e:
             logger.debug(f"Error extracting Anthropic metadata: {e}")
-        
+
         return metadata
 
     def _process_litellm_response(self, kwargs, response, start_time, end_time):
         """Process and record LiteLLM response"""
         try:
             # Extract user input from messages
-            messages = kwargs.get('messages', [])
+            messages = kwargs.get("messages", [])
             user_input = ""
-            
+
             for message in reversed(messages):
-                if message.get('role') == 'user':
-                    user_input = message.get('content', '')
+                if message.get("role") == "user":
+                    user_input = message.get("content", "")
                     break
-            
+
             # Extract AI output from response
             ai_output = ""
-            if hasattr(response, 'choices') and response.choices:
+            if hasattr(response, "choices") and response.choices:
                 choice = response.choices[0]
-                if hasattr(choice, 'message') and hasattr(choice.message, 'content'):
+                if hasattr(choice, "message") and hasattr(choice.message, "content"):
                     ai_output = choice.message.content or ""
-                elif hasattr(choice, 'text'):
+                elif hasattr(choice, "text"):
                     ai_output = choice.text or ""
-            
+
             # Extract model
-            model = kwargs.get('model', 'litellm-unknown')
-            
+            model = kwargs.get("model", "litellm-unknown")
+
             # Calculate timing (convert to seconds for JSON serialization)
             duration_seconds = (end_time - start_time) if start_time and end_time else 0
-            if hasattr(duration_seconds, 'total_seconds'):
+            if hasattr(duration_seconds, "total_seconds"):
                 duration_seconds = duration_seconds.total_seconds()
-            
+
             # Prepare metadata
             metadata = {
                 "integration": "litellm",
                 "auto_recorded": True,
                 "duration": float(duration_seconds),
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
-            
+
             # Add token usage if available
-            if hasattr(response, 'usage') and response.usage:
+            if hasattr(response, "usage") and response.usage:
                 usage = response.usage
-                metadata.update({
-                    "prompt_tokens": getattr(usage, 'prompt_tokens', 0),
-                    "completion_tokens": getattr(usage, 'completion_tokens', 0),
-                    "total_tokens": getattr(usage, 'total_tokens', 0)
-                })
-            
+                metadata.update(
+                    {
+                        "prompt_tokens": getattr(usage, "prompt_tokens", 0),
+                        "completion_tokens": getattr(usage, "completion_tokens", 0),
+                        "total_tokens": getattr(usage, "total_tokens", 0),
+                    }
+                )
+
             # Record the conversation
             if user_input and ai_output:
                 self.record_conversation(
                     user_input=user_input,
                     ai_output=ai_output,
                     model=model,
-                    metadata=metadata
+                    metadata=metadata,
                 )
-            
+
         except Exception as e:
             logger.error(f"Failed to process LiteLLM response: {e}")
 
@@ -1209,7 +1251,6 @@ class Memori:
         except Exception as e:
             logger.error(f"Memori callback failed: {e}")
 
-
     def _process_memory_sync(
         self, chat_id: str, user_input: str, ai_output: str, model: str = "unknown"
     ):
@@ -1221,24 +1262,28 @@ class Memori:
         try:
             # Run async processing in new event loop
             import threading
-            
+
             def run_memory_processing():
                 new_loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(new_loop)
                 try:
                     new_loop.run_until_complete(
-                        self._process_memory_async(chat_id, user_input, ai_output, model)
+                        self._process_memory_async(
+                            chat_id, user_input, ai_output, model
+                        )
                     )
                 except Exception as e:
                     logger.error(f"Synchronous memory processing failed: {e}")
                 finally:
                     new_loop.close()
-            
+
             # Run in background thread to avoid blocking
             thread = threading.Thread(target=run_memory_processing, daemon=True)
             thread.start()
-            logger.debug(f"Memory processing started in background thread for {chat_id}")
-            
+            logger.debug(
+                f"Memory processing started in background thread for {chat_id}"
+            )
+
         except Exception as e:
             logger.error(f"Failed to start synchronous memory processing: {e}")
 
@@ -1246,57 +1291,69 @@ class Memori:
         """Extract text and model from various LLM response formats."""
         if response is None:
             return "", "unknown"
-        
+
         # String response
         if isinstance(response, str):
             return response, "unknown"
-        
+
         # Anthropic response
-        if hasattr(response, 'content'):
+        if hasattr(response, "content"):
             text = ""
             if isinstance(response.content, list):
-                text = "".join(b.text for b in response.content if hasattr(b, 'text'))
+                text = "".join(b.text for b in response.content if hasattr(b, "text"))
             else:
                 text = str(response.content)
-            return text, getattr(response, 'model', 'unknown')
-        
+            return text, getattr(response, "model", "unknown")
+
         # OpenAI response
-        if hasattr(response, 'choices') and response.choices:
+        if hasattr(response, "choices") and response.choices:
             choice = response.choices[0]
-            text = getattr(choice.message, 'content', '') if hasattr(choice, 'message') else getattr(choice, 'text', '')
-            return text or "", getattr(response, 'model', 'unknown')
-        
+            text = (
+                getattr(choice.message, "content", "")
+                if hasattr(choice, "message")
+                else getattr(choice, "text", "")
+            )
+            return text or "", getattr(response, "model", "unknown")
+
         # Dict response
         if isinstance(response, dict):
-            return response.get('content', response.get('text', str(response))), response.get('model', 'unknown')
-        
+            return response.get(
+                "content", response.get("text", str(response))
+            ), response.get("model", "unknown")
+
         # Fallback
         return str(response), "unknown"
 
-    def record_conversation(self, user_input: str, ai_output=None, model: str = None, metadata: Optional[Dict[str, Any]] = None) -> str:
+    def record_conversation(
+        self,
+        user_input: str,
+        ai_output=None,
+        model: str = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """
         Record a conversation.
-        
+
         Args:
             user_input: User's message
             ai_output: AI response (any format)
             model: Optional model name override
             metadata: Optional metadata
-            
+
         Returns:
             chat_id: Unique conversation ID
         """
         if not self._enabled:
             raise MemoriError("Memori is not enabled. Call enable() first.")
-        
+
         # Parse response
         response_text, detected_model = self._parse_llm_response(ai_output)
         response_model = model or detected_model
-        
+
         # Generate ID and timestamp
         chat_id = str(uuid.uuid4())
         timestamp = datetime.now()
-        
+
         # Store conversation
         self.db_manager.store_chat_history(
             chat_id=chat_id,
@@ -1308,22 +1365,28 @@ class Memori:
             namespace=self.namespace,
             metadata=metadata or {},
         )
-        
+
         # Always process into long-term memory when memory agent is available
         if self.memory_agent:
-            self._schedule_memory_processing(chat_id, user_input, response_text, response_model)
-        
+            self._schedule_memory_processing(
+                chat_id, user_input, response_text, response_model
+            )
+
         logger.debug(f"Recorded conversation: {chat_id}")
         return chat_id
-    
-    def _schedule_memory_processing(self, chat_id: str, user_input: str, ai_output: str, model: str):
+
+    def _schedule_memory_processing(
+        self, chat_id: str, user_input: str, ai_output: str, model: str
+    ):
         """Schedule memory processing (async if possible, sync fallback)."""
         try:
             loop = asyncio.get_running_loop()
-            task = loop.create_task(self._process_memory_async(chat_id, user_input, ai_output, model))
-            
+            task = loop.create_task(
+                self._process_memory_async(chat_id, user_input, ai_output, model)
+            )
+
             # Prevent garbage collection
-            if not hasattr(self, '_memory_tasks'):
+            if not hasattr(self, "_memory_tasks"):
                 self._memory_tasks = set()
             self._memory_tasks.add(task)
             task.add_done_callback(self._memory_tasks.discard)
@@ -1361,7 +1424,7 @@ class Memori:
                 user_input=user_input,
                 ai_output=ai_output,
                 context=context,
-                existing_memories=[mem.summary for mem in existing_memories[:10]]
+                existing_memories=[mem.summary for mem in existing_memories[:10]],
             )
 
             # Check for duplicates
@@ -1374,7 +1437,9 @@ class Memori:
                 logger.info(f"Memory marked as duplicate of {duplicate_id}")
 
             # Apply filters
-            if self.memory_agent.should_filter_memory(processed_memory, self.memory_filters):
+            if self.memory_agent.should_filter_memory(
+                processed_memory, self.memory_filters
+            ):
                 logger.debug(f"Memory filtered out for chat {chat_id}")
                 return
 
@@ -1385,9 +1450,13 @@ class Memori:
 
             if memory_id:
                 logger.debug(f"Stored processed memory {memory_id} for chat {chat_id}")
-                
+
                 # Check for conscious context updates if promotion eligible and conscious_ingest enabled
-                if processed_memory.promotion_eligible and self.conscious_agent and self.conscious_ingest:
+                if (
+                    processed_memory.promotion_eligible
+                    and self.conscious_agent
+                    and self.conscious_ingest
+                ):
                     await self.conscious_agent.check_for_context_updates(
                         self.db_manager, self.namespace
                     )
@@ -1401,36 +1470,37 @@ class Memori:
         """Get recent memories for deduplication check"""
         try:
             from ..database.queries.memory_queries import MemoryQueries
-            from ..utils.pydantic_models import ProcessedLongTermMemory
-            
+
             with self.db_manager._get_connection() as connection:
                 cursor = connection.execute(
                     MemoryQueries.SELECT_MEMORIES_FOR_DEDUPLICATION,
-                    (self.namespace, 20)  # Get last 20 memories
+                    (self.namespace, 20),  # Get last 20 memories
                 )
-                
+
                 memories = []
                 for row in cursor.fetchall():
                     try:
                         # Create simplified memory objects for comparison
-                        memory = type('SimpleMemory', (), {
-                            'conversation_id': row[0],
-                            'summary': row[1],
-                            'content': row[2],
-                            'classification': row[3]
-                        })()
+                        memory = type(
+                            "SimpleMemory",
+                            (),
+                            {
+                                "conversation_id": row[0],
+                                "summary": row[1],
+                                "content": row[2],
+                                "classification": row[3],
+                            },
+                        )()
                         memories.append(memory)
                     except Exception as e:
                         logger.warning(f"Failed to parse memory for dedup: {e}")
                         continue
-                        
+
                 return memories
-                
+
         except Exception as e:
             logger.error(f"Failed to get recent memories for dedup: {e}")
             return []
-
-
 
     def retrieve_context(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
         """
@@ -1539,7 +1609,7 @@ class Memori:
         try:
             # Get interceptor status first
             interceptor_status = self.get_interceptor_status()
-            
+
             stats = {
                 "integration": "interceptor_system",
                 "enabled": self._enabled,
@@ -1549,13 +1619,13 @@ class Memori:
             }
 
             # LiteLLM stats
-            litellm_interceptor_status = interceptor_status.get('native', {})
+            litellm_interceptor_status = interceptor_status.get("native", {})
             if LITELLM_AVAILABLE:
                 stats["providers"]["litellm"] = {
                     "available": True,
                     "method": "native_callbacks",
-                    "enabled": litellm_interceptor_status.get('enabled', False),
-                    "status": litellm_interceptor_status.get('status', 'unknown'),
+                    "enabled": litellm_interceptor_status.get("enabled", False),
+                    "status": litellm_interceptor_status.get("status", "unknown"),
                 }
             else:
                 stats["providers"]["litellm"] = {
@@ -1566,16 +1636,17 @@ class Memori:
 
             # Get interceptor status instead of checking wrapped attributes
             interceptor_status = self.get_interceptor_status()
-            
+
             # OpenAI stats
             try:
                 import openai
-                openai_interceptor_status = interceptor_status.get('openai', {})
+
+                openai_interceptor_status = interceptor_status.get("openai", {})
                 stats["providers"]["openai"] = {
                     "available": True,
                     "method": "class_replacement",
-                    "enabled": openai_interceptor_status.get('enabled', False),
-                    "status": openai_interceptor_status.get('status', 'unknown'),
+                    "enabled": openai_interceptor_status.get("enabled", False),
+                    "status": openai_interceptor_status.get("status", "unknown"),
                 }
             except ImportError:
                 stats["providers"]["openai"] = {
@@ -1587,12 +1658,13 @@ class Memori:
             # Anthropic stats
             try:
                 import anthropic
-                anthropic_interceptor_status = interceptor_status.get('anthropic', {})
+
+                anthropic_interceptor_status = interceptor_status.get("anthropic", {})
                 stats["providers"]["anthropic"] = {
                     "available": True,
                     "method": "class_replacement",
-                    "enabled": anthropic_interceptor_status.get('enabled', False),
-                    "status": anthropic_interceptor_status.get('status', 'unknown'),
+                    "enabled": anthropic_interceptor_status.get("enabled", False),
+                    "status": anthropic_interceptor_status.get("status", "unknown"),
                 }
             except ImportError:
                 stats["providers"]["anthropic"] = {
@@ -1683,7 +1755,9 @@ class Memori:
             # If we have a running loop, schedule the task
             self._background_task = loop.create_task(self._background_analysis_loop())
             # Add proper error handling callback
-            self._background_task.add_done_callback(self._handle_background_task_completion)
+            self._background_task.add_done_callback(
+                self._handle_background_task_completion
+            )
             logger.info("Background analysis task started")
 
         except Exception as e:
@@ -1698,7 +1772,7 @@ class Memori:
             logger.debug("Background task was cancelled")
         except Exception as e:
             logger.error(f"Error handling background task completion: {e}")
-    
+
     def _stop_background_analysis(self):
         """Stop the background analysis task"""
         try:
@@ -1707,24 +1781,24 @@ class Memori:
                 logger.info("Background analysis task stopped")
         except Exception as e:
             logger.error(f"Failed to stop background analysis: {e}")
-    
+
     def cleanup(self):
         """Clean up all async tasks and resources"""
         try:
             # Cancel background tasks
             self._stop_background_analysis()
-            
+
             # Clean up memory processing tasks
-            if hasattr(self, '_memory_tasks'):
+            if hasattr(self, "_memory_tasks"):
                 for task in self._memory_tasks.copy():
                     if not task.done():
                         task.cancel()
                 self._memory_tasks.clear()
-            
+
             logger.debug("Memori cleanup completed")
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")
-    
+
     def __del__(self):
         """Destructor to ensure cleanup"""
         try:
@@ -1732,25 +1806,24 @@ class Memori:
         except:
             pass  # Ignore errors during destruction
 
-
     async def _background_analysis_loop(self):
         """Background analysis loop for memory processing"""
         try:
             logger.debug("Background analysis loop started")
-            
+
             # For now, just run periodic conscious ingestion if enabled
             if self.conscious_ingest and self.conscious_agent:
                 while True:
                     try:
                         await asyncio.sleep(300)  # Check every 5 minutes
-                        
+
                         # Run conscious ingestion to check for new promotable memories
                         await self.conscious_agent.run_conscious_ingest(
                             self.db_manager, self.namespace
                         )
-                        
+
                         logger.debug("Periodic conscious analysis completed")
-                        
+
                     except asyncio.CancelledError:
                         logger.debug("Background analysis loop cancelled")
                         break
@@ -1761,7 +1834,7 @@ class Memori:
                 # If not using conscious ingest, just sleep
                 while True:
                     await asyncio.sleep(3600)  # Sleep for 1 hour
-                    
+
         except asyncio.CancelledError:
             logger.debug("Background analysis loop cancelled")
         except Exception as e:
@@ -1817,31 +1890,33 @@ class Memori:
             context = self._get_conscious_context()
             if not context:
                 return ""
-            
+
             # Create system prompt with all short-term memory
             system_prompt = "--- Your Short-Term Memory (Conscious Context) ---\n"
             system_prompt += "This is your complete working memory. USE THIS INFORMATION TO ANSWER QUESTIONS:\n\n"
-            
+
             # Deduplicate and format context
             seen_content = set()
             for mem in context:
                 if isinstance(mem, dict):
-                    content = mem.get("searchable_content", "") or mem.get("summary", "")
+                    content = mem.get("searchable_content", "") or mem.get(
+                        "summary", ""
+                    )
                     category = mem.get("category_primary", "")
-                    
+
                     # Skip duplicates
                     content_key = content.lower().strip()
                     if content_key in seen_content:
                         continue
                     seen_content.add(content_key)
-                    
+
                     system_prompt += f"[{category.upper()}] {content}\n"
-            
+
             system_prompt += "\nIMPORTANT: Use the above information to answer questions about the user.\n"
             system_prompt += "-------------------------\n"
-            
+
             return system_prompt
-            
+
         except Exception as e:
             logger.error(f"Failed to generate conscious system prompt: {e}")
             return ""
@@ -1856,36 +1931,38 @@ class Memori:
             # For now, use recent short-term memories as a simple approach
             # This avoids the search engine issues and still provides context
             context = self._get_conscious_context()  # Get recent short-term memories
-            
+
             if not context:
-                
+
                 return ""
-            
+
             # Create system prompt with relevant memories (limited to prevent overwhelming)
             system_prompt = "--- Relevant Memory Context ---\n"
-            
+
             # Take first 5 items to avoid too much context
             seen_content = set()
             for mem in context[:5]:
                 if isinstance(mem, dict):
-                    content = mem.get("searchable_content", "") or mem.get("summary", "")
+                    content = mem.get("searchable_content", "") or mem.get(
+                        "summary", ""
+                    )
                     category = mem.get("category_primary", "")
-                    
+
                     # Skip duplicates
                     content_key = content.lower().strip()
                     if content_key in seen_content:
                         continue
                     seen_content.add(content_key)
-                    
+
                     if category.startswith("essential_"):
                         system_prompt += f"[{category.upper()}] {content}\n"
                     else:
                         system_prompt += f"- {content}\n"
-            
+
             system_prompt += "-------------------------\n"
-            
+
             return system_prompt
-            
+
         except Exception as e:
             logger.error(f"Failed to generate auto-ingest system prompt: {e}")
             return ""
@@ -1893,47 +1970,49 @@ class Memori:
     def add_memory_to_messages(self, messages: list, user_input: str = None) -> list:
         """
         Add appropriate memory context to messages based on ingest mode.
-        
+
         Args:
             messages: List of messages for LLM
             user_input: User input for auto_ingest context retrieval (optional)
-            
+
         Returns:
             Modified messages list with memory context added as system message
         """
         try:
             system_prompt = ""
-            
+
             if self.conscious_ingest:
                 # One-time conscious context injection
                 if not self._conscious_context_injected:
                     system_prompt = self.get_conscious_system_prompt()
                     self._conscious_context_injected = True
-                    logger.info(f"Conscious-ingest: Added complete working memory to system prompt")
+                    logger.info(
+                        "Conscious-ingest: Added complete working memory to system prompt"
+                    )
                 else:
                     logger.debug("Conscious-ingest: Context already injected, skipping")
-                    
+
             elif self.auto_ingest and user_input:
                 # Dynamic auto-ingest based on user input
                 system_prompt = self.get_auto_ingest_system_prompt(user_input)
-                logger.debug(f"Auto-ingest: Added relevant context to system prompt")
-            
+                logger.debug("Auto-ingest: Added relevant context to system prompt")
+
             if system_prompt:
                 # Add to existing system message or create new one
                 messages_copy = messages.copy()
-                
+
                 # Check if system message already exists
                 for msg in messages_copy:
                     if msg.get("role") == "system":
                         msg["content"] = system_prompt + "\n" + msg.get("content", "")
                         return messages_copy
-                
+
                 # No system message exists, add one at the beginning
                 messages_copy.insert(0, {"role": "system", "content": system_prompt})
                 return messages_copy
-            
+
             return messages
-            
+
         except Exception as e:
             logger.error(f"Failed to add memory to messages: {e}")
             return messages

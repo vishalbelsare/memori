@@ -21,7 +21,7 @@ import openai
 client = openai.OpenAI(api_key="...")
 client.chat.completions.create(...)  # ✅ Auto-recorded
 
-# Direct Anthropic (clean class replacement) 
+# Direct Anthropic (clean class replacement)
 import anthropic
 client = anthropic.Anthropic(api_key="...")
 client.messages.create(...)  # ✅ Auto-recorded
