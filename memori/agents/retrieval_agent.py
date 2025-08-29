@@ -75,10 +75,16 @@ Be strategic and comprehensive in your search planning."""
             self.client = provider_config.create_client()
             # Use provided model, fallback to provider config model, then default to gpt-4o
             self.model = model or provider_config.model or "gpt-4o"
+            logger.debug(f"Search engine initialized with model: {self.model}")
+            self.provider_config = provider_config
         else:
             # Backward compatibility: use api_key directly
             self.client = openai.OpenAI(api_key=api_key)
             self.model = model or "gpt-4o"
+            self.provider_config = None
+        
+        # Determine if we're using a local/custom endpoint that might not support structured outputs
+        self._supports_structured_outputs = self._detect_structured_output_support()
 
         # Performance improvements
         self._query_cache = {}  # Cache for search plans
@@ -118,28 +124,42 @@ Be strategic and comprehensive in your search planning."""
             if context:
                 prompt += f"\nAdditional context: {context}"
 
-            # Call OpenAI Structured Outputs
-            completion = self.client.beta.chat.completions.parse(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": self.SYSTEM_PROMPT},
-                    {
-                        "role": "user",
-                        "content": f"Analyze and plan memory search for this query:\n\n{prompt}",
-                    },
-                ],
-                response_format=MemorySearchQuery,
-                temperature=0.1,
-            )
+            # Try structured outputs first, fall back to manual parsing
+            search_query = None
+            
+            if self._supports_structured_outputs:
+                try:
+                    # Call OpenAI Structured Outputs
+                    completion = self.client.beta.chat.completions.parse(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": self.SYSTEM_PROMPT},
+                            {
+                                "role": "user",
+                                "content": f"Analyze and plan memory search for this query:\n\n{prompt}",
+                            },
+                        ],
+                        response_format=MemorySearchQuery,
+                        temperature=0.1,
+                    )
 
-            # Handle potential refusal
-            if completion.choices[0].message.refusal:
-                logger.warning(
-                    f"Search planning refused: {completion.choices[0].message.refusal}"
-                )
-                return self._create_fallback_query(query)
+                    # Handle potential refusal
+                    if completion.choices[0].message.refusal:
+                        logger.warning(
+                            f"Search planning refused: {completion.choices[0].message.refusal}"
+                        )
+                        return self._create_fallback_query(query)
 
-            search_query = completion.choices[0].message.parsed
+                    search_query = completion.choices[0].message.parsed
+                    
+                except Exception as e:
+                    logger.warning(f"Structured outputs failed for search planning, falling back to manual parsing: {e}")
+                    self._supports_structured_outputs = False  # Disable for future calls
+                    search_query = None
+            
+            # Fallback to manual parsing if structured outputs failed or not supported
+            if search_query is None:
+                search_query = self._plan_search_with_fallback_parsing(query, prompt)
 
             # Cache the result
             with self._cache_lock:
@@ -366,6 +386,156 @@ Be strategic and comprehensive in your search planning."""
                 continue
 
         return filtered_results[:limit]
+    
+    def _detect_structured_output_support(self) -> bool:
+        """
+        Detect if the current provider/endpoint supports OpenAI structured outputs
+        
+        Returns:
+            True if structured outputs are likely supported, False otherwise
+        """
+        try:
+            # Check if we have a provider config with custom base_url
+            if self.provider_config and hasattr(self.provider_config, 'base_url'):
+                base_url = self.provider_config.base_url
+                if base_url:
+                    # Local/custom endpoints typically don't support beta features
+                    if 'localhost' in base_url or '127.0.0.1' in base_url:
+                        logger.debug(f"Detected local endpoint ({base_url}), disabling structured outputs")
+                        return False
+                    # Custom endpoints that aren't OpenAI
+                    if 'api.openai.com' not in base_url:
+                        logger.debug(f"Detected custom endpoint ({base_url}), disabling structured outputs")
+                        return False
+            
+            # Check for Azure endpoints (they may or may not support beta features)
+            if self.provider_config and hasattr(self.provider_config, 'api_type'):
+                if self.provider_config.api_type == 'azure':
+                    logger.debug("Detected Azure endpoint, enabling structured outputs (may need manual verification)")
+                    return True  # Azure may support it, let it try and fallback if needed
+                elif self.provider_config.api_type in ['custom', 'openai_compatible']:
+                    logger.debug(f"Detected {self.provider_config.api_type} endpoint, disabling structured outputs")
+                    return False
+            
+            # Default: assume OpenAI endpoint supports structured outputs
+            logger.debug("Assuming OpenAI endpoint, enabling structured outputs")
+            return True
+            
+        except Exception as e:
+            logger.debug(f"Error detecting structured output support: {e}, defaulting to enabled")
+            return True
+    
+    def _plan_search_with_fallback_parsing(self, query: str, prompt: str) -> MemorySearchQuery:
+        """
+        Plan search strategy using regular chat completions with manual JSON parsing
+        
+        This method works with any OpenAI-compatible API that supports chat completions
+        but doesn't support structured outputs (like Ollama, local models, etc.)
+        """
+        try:
+            # Enhanced system prompt for JSON output
+            json_system_prompt = self.SYSTEM_PROMPT + "\n\nIMPORTANT: You MUST respond with a valid JSON object that matches this exact schema:\n"
+            json_system_prompt += self._get_search_query_json_schema()
+            json_system_prompt += "\n\nRespond ONLY with the JSON object, no additional text or formatting."
+            
+            # Call regular chat completions
+            completion = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": json_system_prompt},
+                    {
+                        "role": "user",
+                        "content": f"Analyze and plan memory search for this query:\n\n{prompt}",
+                    },
+                ],
+                temperature=0.1,
+                max_tokens=1000,  # Ensure enough tokens for full response
+            )
+            
+            # Extract and parse JSON response
+            response_text = completion.choices[0].message.content
+            if not response_text:
+                raise ValueError("Empty response from model")
+            
+            # Clean up response (remove markdown formatting if present)
+            response_text = response_text.strip()
+            if response_text.startswith('```json'):
+                response_text = response_text[7:]
+            if response_text.startswith('```'):
+                response_text = response_text[3:]
+            if response_text.endswith('```'):
+                response_text = response_text[:-3]
+            response_text = response_text.strip()
+            
+            # Parse JSON
+            try:
+                parsed_data = json.loads(response_text)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON response for search planning: {e}")
+                logger.debug(f"Raw response: {response_text}")
+                return self._create_fallback_query(query)
+            
+            # Convert to MemorySearchQuery object with validation and defaults
+            search_query = self._create_search_query_from_dict(parsed_data, query)
+            
+            logger.debug(f"Successfully parsed search query using fallback method")
+            return search_query
+            
+        except Exception as e:
+            logger.error(f"Fallback search planning failed: {e}")
+            return self._create_fallback_query(query)
+    
+    def _get_search_query_json_schema(self) -> str:
+        """
+        Get JSON schema description for manual search query parsing
+        """
+        return '''{
+  "query_text": "string - Original query text",
+  "intent": "string - Interpreted intent of the query",
+  "entity_filters": ["array of strings - Specific entities to search for"],
+  "category_filters": ["array of strings - Memory categories: fact, preference, skill, context, rule"],
+  "time_range": "string or null - Time range for search (e.g., last_week)",
+  "min_importance": "number - Minimum importance score (0.0-1.0)",
+  "search_strategy": ["array of strings - Recommended search strategies"],
+  "expected_result_types": ["array of strings - Expected types of results"]
+}'''
+    
+    def _create_search_query_from_dict(self, data: Dict[str, Any], original_query: str) -> MemorySearchQuery:
+        """
+        Create MemorySearchQuery from dictionary with proper validation and defaults
+        """
+        try:
+            # Import here to avoid circular imports
+            from ..utils.pydantic_models import MemoryCategoryType
+            
+            # Validate and convert category filters
+            category_filters = []
+            raw_categories = data.get('category_filters', [])
+            if isinstance(raw_categories, list):
+                for cat_str in raw_categories:
+                    try:
+                        category = MemoryCategoryType(cat_str.lower())
+                        category_filters.append(category)
+                    except ValueError:
+                        logger.debug(f"Invalid category filter '{cat_str}', skipping")
+            
+            # Create search query object with proper validation
+            search_query = MemorySearchQuery(
+                query_text=data.get('query_text', original_query),
+                intent=data.get('intent', 'General search (fallback)'),
+                entity_filters=data.get('entity_filters', []),
+                category_filters=category_filters,
+                time_range=data.get('time_range'),
+                min_importance=max(0.0, min(1.0, float(data.get('min_importance', 0.0)))),
+                search_strategy=data.get('search_strategy', ['keyword_search']),
+                expected_result_types=data.get('expected_result_types', ['any'])
+            )
+            
+            return search_query
+            
+        except Exception as e:
+            logger.error(f"Error creating search query from dict: {e}")
+            return self._create_fallback_query(original_query)
 
     def _execute_importance_search(
         self, search_plan: MemorySearchQuery, db_manager, namespace: str, limit: int

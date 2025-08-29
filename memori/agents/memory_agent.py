@@ -5,6 +5,7 @@ This agent processes conversations and extracts structured information with
 enhanced classification and conscious context detection.
 """
 
+import json
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
@@ -47,11 +48,17 @@ class MemoryAgent:
             self.async_client = provider_config.create_async_client()
             # Use provided model, fallback to provider config model, then default to gpt-4o
             self.model = model or provider_config.model or "gpt-4o"
+            logger.debug(f"Memory agent initialized with model: {self.model}")
+            self.provider_config = provider_config
         else:
             # Backward compatibility: use api_key directly
             self.client = openai.OpenAI(api_key=api_key)
             self.async_client = openai.AsyncOpenAI(api_key=api_key)
             self.model = model or "gpt-4o"
+            self.provider_config = None
+        
+        # Determine if we're using a local/custom endpoint that might not support structured outputs
+        self._supports_structured_outputs = self._detect_structured_output_support()
 
     SYSTEM_PROMPT = """You are an advanced Memory Processing Agent responsible for analyzing conversations and extracting structured information with intelligent classification and conscious context detection.
 
@@ -172,32 +179,48 @@ CONVERSATION CONTEXT:
 - Topic Thread: {context.topic_thread or 'General conversation'}
 """
 
-            # Call OpenAI Structured Outputs (async)
-            completion = await self.async_client.beta.chat.completions.parse(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {
-                        "role": "user",
-                        "content": f"Process this conversation for enhanced memory storage:\n\n{conversation_text}\n{context_info}",
-                    },
-                ],
-                response_format=ProcessedLongTermMemory,
-                temperature=0.1,  # Low temperature for consistent processing
-            )
+            # Try structured outputs first, fall back to manual parsing
+            processed_memory = None
+            
+            if self._supports_structured_outputs:
+                try:
+                    # Call OpenAI Structured Outputs (async)
+                    completion = await self.async_client.beta.chat.completions.parse(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {
+                                "role": "user",
+                                "content": f"Process this conversation for enhanced memory storage:\n\n{conversation_text}\n{context_info}",
+                            },
+                        ],
+                        response_format=ProcessedLongTermMemory,
+                        temperature=0.1,  # Low temperature for consistent processing
+                    )
 
-            # Handle potential refusal
-            if completion.choices[0].message.refusal:
-                logger.warning(
-                    f"Memory processing refused for chat {chat_id}: {completion.choices[0].message.refusal}"
-                )
-                return self._create_empty_long_term_memory(
-                    chat_id, "Processing refused for safety reasons"
-                )
+                    # Handle potential refusal
+                    if completion.choices[0].message.refusal:
+                        logger.warning(
+                            f"Memory processing refused for chat {chat_id}: {completion.choices[0].message.refusal}"
+                        )
+                        return self._create_empty_long_term_memory(
+                            chat_id, "Processing refused for safety reasons"
+                        )
 
-            processed_memory = completion.choices[0].message.parsed
-            processed_memory.conversation_id = chat_id
-            processed_memory.extraction_timestamp = datetime.now()
+                    processed_memory = completion.choices[0].message.parsed
+                    processed_memory.conversation_id = chat_id
+                    processed_memory.extraction_timestamp = datetime.now()
+                    
+                except Exception as e:
+                    logger.warning(f"Structured outputs failed for {chat_id}, falling back to manual parsing: {e}")
+                    self._supports_structured_outputs = False  # Disable for future calls
+                    processed_memory = None
+            
+            # Fallback to manual parsing if structured outputs failed or not supported
+            if processed_memory is None:
+                processed_memory = await self._process_with_fallback_parsing(
+                    chat_id, system_prompt, conversation_text, context_info
+                )
 
             logger.debug(
                 f"Processed conversation {chat_id}: "
@@ -295,6 +318,181 @@ CONVERSATION CONTEXT:
         union = len(words1.union(words2))
 
         return intersection / union if union > 0 else 0.0
+    
+    def _detect_structured_output_support(self) -> bool:
+        """
+        Detect if the current provider/endpoint supports OpenAI structured outputs
+        
+        Returns:
+            True if structured outputs are likely supported, False otherwise
+        """
+        try:
+            # Check if we have a provider config with custom base_url
+            if self.provider_config and hasattr(self.provider_config, 'base_url'):
+                base_url = self.provider_config.base_url
+                if base_url:
+                    # Local/custom endpoints typically don't support beta features
+                    if 'localhost' in base_url or '127.0.0.1' in base_url:
+                        logger.debug(f"Detected local endpoint ({base_url}), disabling structured outputs")
+                        return False
+                    # Custom endpoints that aren't OpenAI
+                    if 'api.openai.com' not in base_url:
+                        logger.debug(f"Detected custom endpoint ({base_url}), disabling structured outputs")
+                        return False
+            
+            # Check for Azure endpoints (they may or may not support beta features)
+            if self.provider_config and hasattr(self.provider_config, 'api_type'):
+                if self.provider_config.api_type == 'azure':
+                    logger.debug("Detected Azure endpoint, enabling structured outputs (may need manual verification)")
+                    return True  # Azure may support it, let it try and fallback if needed
+                elif self.provider_config.api_type in ['custom', 'openai_compatible']:
+                    logger.debug(f"Detected {self.provider_config.api_type} endpoint, disabling structured outputs")
+                    return False
+            
+            # Default: assume OpenAI endpoint supports structured outputs
+            logger.debug("Assuming OpenAI endpoint, enabling structured outputs")
+            return True
+            
+        except Exception as e:
+            logger.debug(f"Error detecting structured output support: {e}, defaulting to enabled")
+            return True
+    
+    async def _process_with_fallback_parsing(
+        self, 
+        chat_id: str, 
+        system_prompt: str, 
+        conversation_text: str, 
+        context_info: str
+    ) -> ProcessedLongTermMemory:
+        """
+        Process conversation using regular chat completions with manual JSON parsing
+        
+        This method works with any OpenAI-compatible API that supports chat completions
+        but doesn't support structured outputs (like Ollama, local models, etc.)
+        """
+        try:
+            # Enhanced system prompt for JSON output
+            json_system_prompt = system_prompt + "\n\nIMPORTANT: You MUST respond with a valid JSON object that matches this exact schema:\n"
+            json_system_prompt += self._get_json_schema_prompt()
+            json_system_prompt += "\n\nRespond ONLY with the JSON object, no additional text or formatting."
+            
+            # Call regular chat completions
+            completion = await self.async_client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": json_system_prompt},
+                    {
+                        "role": "user",
+                        "content": f"Process this conversation for enhanced memory storage:\n\n{conversation_text}\n{context_info}",
+                    },
+                ],
+                temperature=0.1,  # Low temperature for consistent processing
+                max_tokens=2000,  # Ensure enough tokens for full response
+            )
+            
+            # Extract and parse JSON response
+            response_text = completion.choices[0].message.content
+            if not response_text:
+                raise ValueError("Empty response from model")
+            
+            # Clean up response (remove markdown formatting if present)
+            response_text = response_text.strip()
+            if response_text.startswith('```json'):
+                response_text = response_text[7:]
+            if response_text.startswith('```'):
+                response_text = response_text[3:]
+            if response_text.endswith('```'):
+                response_text = response_text[:-3]
+            response_text = response_text.strip()
+            
+            # Parse JSON
+            try:
+                parsed_data = json.loads(response_text)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON response for {chat_id}: {e}")
+                logger.debug(f"Raw response: {response_text}")
+                return self._create_empty_long_term_memory(chat_id, f"JSON parsing failed: {e}")
+            
+            # Convert to ProcessedLongTermMemory object with validation and defaults
+            processed_memory = self._create_memory_from_dict(parsed_data, chat_id)
+            
+            logger.debug(f"Successfully parsed memory using fallback method for {chat_id}")
+            return processed_memory
+            
+        except Exception as e:
+            logger.error(f"Fallback memory processing failed for {chat_id}: {e}")
+            return self._create_empty_long_term_memory(chat_id, f"Fallback processing failed: {str(e)}")
+    
+    def _get_json_schema_prompt(self) -> str:
+        """
+        Get JSON schema description for manual parsing
+        """
+        return '''{
+  "content": "string - The actual memory content",
+  "summary": "string - Concise summary for search",
+  "classification": "string - One of: essential, contextual, conversational, reference, personal, conscious-info",
+  "importance": "string - One of: critical, high, medium, low",
+  "topic": "string or null - Main topic/subject",
+  "entities": ["array of strings - People, places, technologies mentioned"],
+  "keywords": ["array of strings - Key terms for search"],
+  "is_user_context": "boolean - Contains user personal info",
+  "is_preference": "boolean - User preference/opinion",
+  "is_skill_knowledge": "boolean - User's abilities/expertise",
+  "is_current_project": "boolean - Current work context",
+  "classification_reason": "string - Why this classification was chosen",
+  "confidence_score": "number - AI confidence in extraction (0.0-1.0)",
+  "promotion_eligible": "boolean - Should be promoted to short-term"
+}'''
+    
+    def _create_memory_from_dict(self, data: Dict[str, Any], chat_id: str) -> ProcessedLongTermMemory:
+        """
+        Create ProcessedLongTermMemory from dictionary with proper validation and defaults
+        """
+        try:
+            # Import here to avoid circular imports
+            from ..utils.pydantic_models import MemoryClassification, MemoryImportanceLevel
+            
+            # Validate and convert classification
+            classification_str = data.get('classification', 'conversational').lower().replace('_', '-')
+            try:
+                classification = MemoryClassification(classification_str)
+            except ValueError:
+                logger.warning(f"Invalid classification '{classification_str}', using 'conversational'")
+                classification = MemoryClassification.CONVERSATIONAL
+            
+            # Validate and convert importance
+            importance_str = data.get('importance', 'medium').lower()
+            try:
+                importance = MemoryImportanceLevel(importance_str)
+            except ValueError:
+                logger.warning(f"Invalid importance '{importance_str}', using 'medium'")
+                importance = MemoryImportanceLevel.MEDIUM
+            
+            # Create memory object with proper validation
+            processed_memory = ProcessedLongTermMemory(
+                content=data.get('content', 'No content extracted'),
+                summary=data.get('summary', 'No summary available'),
+                classification=classification,
+                importance=importance,
+                topic=data.get('topic'),
+                entities=data.get('entities', []),
+                keywords=data.get('keywords', []),
+                is_user_context=bool(data.get('is_user_context', False)),
+                is_preference=bool(data.get('is_preference', False)),
+                is_skill_knowledge=bool(data.get('is_skill_knowledge', False)),
+                is_current_project=bool(data.get('is_current_project', False)),
+                conversation_id=chat_id,
+                confidence_score=float(data.get('confidence_score', 0.7)),
+                classification_reason=data.get('classification_reason', 'Extracted via fallback parsing'),
+                promotion_eligible=bool(data.get('promotion_eligible', False)),
+                extraction_timestamp=datetime.now()
+            )
+            
+            return processed_memory
+            
+        except Exception as e:
+            logger.error(f"Error creating memory from dict: {e}")
+            return self._create_empty_long_term_memory(chat_id, f"Memory creation failed: {str(e)}")
 
     def should_filter_memory(
         self, memory: ProcessedLongTermMemory, filters: Optional[Dict[str, Any]] = None

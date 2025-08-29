@@ -1,5 +1,3 @@
-from openai import OpenAI
-from memori import Memori
 import sys
 import os
 import time
@@ -7,12 +5,20 @@ import shutil
 
 # Fix imports to work from any directory
 if __name__ == "__main__":
-    # When running as script, ensure we can import from tests directory
+    # When running as script, ensure we can import from project root
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    tests_dir = os.path.dirname(os.path.dirname(script_dir))
+    tests_dir = os.path.dirname(script_dir)  # tests/openai
+    tests_root = os.path.dirname(tests_dir)  # tests/
+    project_root = os.path.dirname(tests_root)  # memori/
+    
+    # Add both project root and tests directory to path
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
     if tests_dir not in sys.path:
         sys.path.insert(0, tests_dir)
 
+from openai import OpenAI
+from memori import Memori
 from tests.utils.test_utils import load_inputs
 
 
@@ -42,7 +48,7 @@ def run_test_scenario(test_name, conscious_ingest, auto_ingest, test_inputs):
         database_connect=f"sqlite:///{db_path}",
         conscious_ingest=conscious_ingest,
         auto_ingest=auto_ingest,
-        verbose=False  # Set to True if you want detailed logs
+        verbose=True  # Set to True if you want detailed logs
     )
     
     memory.enable()

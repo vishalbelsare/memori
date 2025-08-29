@@ -163,8 +163,11 @@ class Memori:
             from ..agents.memory_agent import MemoryAgent
             from ..agents.retrieval_agent import MemorySearchEngine
             
-            # Use gpt-4o as default if no model specified
-            effective_model = model or "gpt-4o"
+            # Use provider model or fallback to gpt-4o
+            if self.provider_config and hasattr(self.provider_config, 'model') and self.provider_config.model:
+                effective_model = model or self.provider_config.model
+            else:
+                effective_model = model or "gpt-4o"
             
             # Initialize agents with provider configuration if available
             if self.provider_config:
@@ -346,7 +349,8 @@ class Memori:
         """
         Enable universal memory recording using LiteLLM's native callback system.
 
-        This automatically sets up recording for LiteLLM completion calls.
+        This automatically sets up recording for LiteLLM completion calls and enables
+        automatic interception of OpenAI calls when using the standard OpenAI client.
 
         Args:
             interceptors: Legacy parameter (ignored) - only LiteLLM native callbacks are used
@@ -357,6 +361,13 @@ class Memori:
 
         self._enabled = True
         self._session_id = str(uuid.uuid4())
+
+        # Register for automatic OpenAI interception
+        try:
+            from ..integrations.openai_integration import register_memori_instance
+            register_memori_instance(self)
+        except ImportError:
+            logger.debug("OpenAI integration not available for automatic interception")
 
         # Use LiteLLM native callback system only
         if interceptors is None:
@@ -385,6 +396,7 @@ class Memori:
             [
                 f"Background analysis: {'Active' if self._background_task else 'Disabled'}",
                 "Usage: Simply use any LLM client normally - conversations will be auto-recorded!",
+                "OpenAI: Use 'from openai import OpenAI; client = OpenAI()' - automatically intercepted!",
             ]
         )
 
@@ -392,10 +404,17 @@ class Memori:
 
     def disable(self):
         """
-        Disable memory recording by unregistering LiteLLM callbacks.
+        Disable memory recording by unregistering LiteLLM callbacks and OpenAI interception.
         """
         if not self._enabled:
             return
+
+        # Unregister from automatic OpenAI interception
+        try:
+            from ..integrations.openai_integration import unregister_memori_instance
+            unregister_memori_instance(self)
+        except ImportError:
+            logger.debug("OpenAI integration not available for automatic interception")
 
         # Use memory manager for clean disable
         results = self.memory_manager.disable()
@@ -1990,3 +2009,55 @@ class Memori:
         except Exception as e:
             logger.error(f"Failed to get essential conversations: {e}")
             return []
+
+    def create_openai_client(self, **kwargs):
+        """
+        Create an OpenAI client with automatic memory recording.
+        
+        This method creates a MemoriOpenAIInterceptor that automatically records
+        all OpenAI API calls to memory using the inheritance-based approach.
+        
+        Args:
+            **kwargs: Additional arguments passed to OpenAI client (e.g., api_key)
+                     These override any settings from the Memori provider config
+        
+        Returns:
+            MemoriOpenAIInterceptor instance that works as a drop-in replacement
+            for the standard OpenAI client
+            
+        Example:
+            memori = Memori(api_key="sk-...")
+            memori.enable()
+            
+            # Create interceptor client
+            client = memori.create_openai_client()
+            
+            # Use exactly like standard OpenAI client
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": "Hello!"}]
+            )
+            # Conversation is automatically recorded
+        """
+        try:
+            from ..integrations.openai_integration import create_openai_client
+            return create_openai_client(self, self.provider_config, **kwargs)
+        except ImportError as e:
+            logger.error(f"Failed to import OpenAI integration: {e}")
+            raise ImportError("OpenAI integration not available. Install with: pip install openai") from e
+
+    def create_openai_wrapper(self, **kwargs):
+        """
+        Create a legacy OpenAI wrapper (backward compatibility).
+        
+        DEPRECATED: Use create_openai_client() instead for better integration.
+        
+        Returns:
+            MemoriOpenAI wrapper instance
+        """
+        try:
+            from ..integrations.openai_integration import MemoriOpenAI
+            return MemoriOpenAI(self, **kwargs)
+        except ImportError as e:
+            logger.error(f"Failed to import OpenAI integration: {e}")
+            raise ImportError("OpenAI integration not available. Install with: pip install openai") from e
