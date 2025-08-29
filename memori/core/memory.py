@@ -20,7 +20,8 @@ except ImportError:
     logger.warning("LiteLLM not available - native callback system disabled")
 
 from ..agents.conscious_agent import ConsciouscAgent
-from ..config.memory_manager import MemoryManager
+from ..config.universal_memory_manager import UniversalMemoryManager as MemoryManager
+from ..core.providers_base import ProviderType
 from ..config.settings import LoggingSettings, LogLevel
 
 from .providers import ProviderConfig, detect_provider_from_env
@@ -1990,3 +1991,194 @@ class Memori:
         except Exception as e:
             logger.error(f"Failed to get essential conversations: {e}")
             return []
+    
+    # ========================
+    # Three-Tier Architecture Support
+    # ========================
+    
+    def openai_client(self, api_key: Optional[str] = None, **kwargs):
+        """
+        Wrapper Pattern (Best Practice): Get a wrapped OpenAI client that automatically records conversations.
+        
+        Usage:
+            client = memori.openai_client()
+            response = client.chat.completions.create(...)  # Automatically recorded
+            
+        Args:
+            api_key: OpenAI API key (optional, uses provider config if available)
+            **kwargs: Additional arguments passed to OpenAI client
+            
+        Returns:
+            Wrapped OpenAI client with automatic conversation recording
+        """
+        try:
+            # Use the unified pattern manager if available
+            if hasattr(self, 'pattern_manager') and self.pattern_manager:
+                # Merge API key with kwargs
+                client_kwargs = kwargs.copy()
+                if api_key:
+                    client_kwargs['api_key'] = api_key
+                elif self.provider_config and hasattr(self.provider_config, 'api_key'):
+                    client_kwargs['api_key'] = self.provider_config.api_key
+                elif self.openai_api_key:
+                    client_kwargs['api_key'] = self.openai_api_key
+                
+                return self.pattern_manager.create_wrapped_client(ProviderType.OPENAI, **client_kwargs)
+            
+            # Fallback to legacy integration
+            from ..integrations.openai_integration import MemoriOpenAI
+            
+            # Use provided api_key or fall back to provider config
+            effective_api_key = api_key
+            if not effective_api_key and self.provider_config:
+                effective_api_key = getattr(self.provider_config, 'api_key', None)
+            if not effective_api_key:
+                effective_api_key = self.openai_api_key
+                
+            return MemoriOpenAI(self, api_key=effective_api_key, **kwargs)
+            
+        except ImportError as e:
+            raise MemoriError(f"OpenAI integration not available: {e}")
+        except Exception as e:
+            raise MemoriError(f"Failed to create OpenAI client: {e}")
+    
+    def anthropic_client(self, api_key: Optional[str] = None, **kwargs):
+        """
+        Wrapper Pattern (Best Practice): Get a wrapped Anthropic client that automatically records conversations.
+        
+        Usage:
+            client = memori.anthropic_client()
+            response = client.messages.create(...)  # Automatically recorded
+            
+        Args:
+            api_key: Anthropic API key (optional)
+            **kwargs: Additional arguments passed to Anthropic client
+            
+        Returns:
+            Wrapped Anthropic client with automatic conversation recording
+        """
+        try:
+            # Use the unified pattern manager if available
+            if hasattr(self, 'pattern_manager') and self.pattern_manager:
+                # Merge API key with kwargs
+                client_kwargs = kwargs.copy()
+                if api_key:
+                    client_kwargs['api_key'] = api_key
+                
+                return self.pattern_manager.create_wrapped_client(ProviderType.ANTHROPIC, **client_kwargs)
+            
+            # Fallback to legacy integration
+            from ..integrations.anthropic_integration import MemoriAnthropic
+            return MemoriAnthropic(self, api_key=api_key, **kwargs)
+            
+        except ImportError as e:
+            raise MemoriError(f"Anthropic integration not available: {e}")
+        except Exception as e:
+            raise MemoriError(f"Failed to create Anthropic client: {e}")
+    
+    def record(self, response: Any = None, user_input: str = "", model: str = "manual", provider_type: str = "openai", **kwargs) -> str:
+        """
+        Manual Recording Pattern (Manual Utility): Manually record any LLM interaction.
+        
+        Usage:
+            response = some_llm_library.generate("Hello")
+            memori.record(response=response, user_input="Hello", provider_type="openai")
+            
+        Args:
+            response: The LLM response (any format)
+            user_input: The user's input prompt
+            model: Model name (defaults to "manual")
+            provider_type: Provider type ("openai", "anthropic", "litellm") for better parsing
+            **kwargs: Additional metadata
+            
+        Returns:
+            Conversation ID
+        """
+        if not self._enabled:
+            raise MemoriError("Memori is not enabled. Call enable() first.")
+        
+        try:
+            # Use the unified pattern manager if available
+            if hasattr(self, 'pattern_manager') and self.pattern_manager:
+                # Add model and other metadata to kwargs
+                enhanced_kwargs = kwargs.copy()
+                enhanced_kwargs.update({
+                    "model": model,
+                    "manual_recording": True,
+                    **kwargs
+                })
+                
+                return self.pattern_manager.record_manual_response(
+                    provider_type, response, user_input, **enhanced_kwargs
+                )
+            
+            # Fallback to legacy manual recording
+            # Parse the response
+            ai_output, detected_model = self._parse_llm_response(response)
+            effective_model = model or detected_model
+            
+            # Create metadata
+            metadata = {
+                "integration": "manual_recording",
+                "api_type": "manual",
+                "auto_recorded": False,
+                "provider_type": provider_type,
+                **kwargs
+            }
+            
+            # Record the conversation
+            return self.record_conversation(
+                user_input=user_input,
+                ai_output=ai_output,
+                model=effective_model,
+                metadata=metadata
+            )
+            
+        except Exception as e:
+            logger.error(f"Manual recording failed: {e}")
+            # Fallback to legacy recording to maintain compatibility
+            ai_output, detected_model = self._parse_llm_response(response)
+            effective_model = model or detected_model
+            
+            metadata = {
+                "integration": "manual_recording_fallback",
+                "api_type": "manual",
+                "auto_recorded": False,
+                "provider_type": provider_type,
+                "error": str(e),
+                **kwargs
+            }
+            
+            return self.record_conversation(
+                user_input=user_input,
+                ai_output=ai_output,
+                model=effective_model,
+                metadata=metadata
+            )
+    
+    def litellm_client(self, **kwargs):
+        """
+        Wrapper Pattern (Best Practice): Get a wrapped LiteLLM client that automatically records conversations.
+        
+        Usage:
+            client = memori.litellm_client()
+            response = client.completion(model="gpt-4", messages=[...])  # Automatically recorded
+            
+        Args:
+            **kwargs: Configuration passed to LiteLLM client
+            
+        Returns:
+            Wrapped LiteLLM client with automatic conversation recording
+        """
+        try:
+            # Use the unified pattern manager if available
+            if hasattr(self, 'pattern_manager') and self.pattern_manager:
+                return self.pattern_manager.create_wrapped_client(ProviderType.LITELLM, **kwargs)
+            
+            # Fallback for when pattern manager is not available
+            raise MemoriError("LiteLLM client requires unified pattern manager")
+            
+        except ImportError as e:
+            raise MemoriError(f"LiteLLM integration not available: {e}")
+        except Exception as e:
+            raise MemoriError(f"Failed to create LiteLLM client: {e}")
