@@ -23,8 +23,10 @@ from .config import (
 )
 from .core.database import DatabaseManager
 
-# Core components
-from .core.memory import Memori
+# Core components - Updated modular architecture  
+from .config.memory_manager import MemoryManager
+from .core.memory import Memori  # Primary Memori class with backward compatibility
+from .config.memory_manager import MemoryManager as ModularMemori  # Alias for new modular version
 
 # Database system
 from .database.connectors import MySQLConnector, PostgreSQLConnector, SQLiteConnector
@@ -75,6 +77,8 @@ from .utils import (  # Pydantic models; Enhanced exceptions; Validators and hel
 __all__ = [
     # Core
     "Memori",
+    "MemoryManager",
+    "ModularMemori",
     "DatabaseManager",
     # Configuration
     "MemoriSettings",

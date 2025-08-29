@@ -7,10 +7,13 @@ import json
 import threading
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 import openai
 from loguru import logger
+
+if TYPE_CHECKING:
+    from ..core.providers import ProviderConfig
 
 from ..utils.pydantic_models import MemorySearchQuery
 
@@ -53,16 +56,29 @@ Your primary functions:
 
 Be strategic and comprehensive in your search planning."""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
+        provider_config: Optional['ProviderConfig'] = None
+    ):
         """
-        Initialize Memory Search Engine
+        Initialize Memory Search Engine with LLM provider configuration
 
         Args:
-            api_key: OpenAI API key (if None, uses environment variable)
-            model: OpenAI model to use for query understanding
+            api_key: API key (deprecated, use provider_config)
+            model: Model to use for query understanding (defaults to 'gpt-4o' if not specified)
+            provider_config: Provider configuration for LLM client
         """
-        self.client = openai.OpenAI(api_key=api_key)
-        self.model = model
+        if provider_config:
+            # Use provider configuration to create client
+            self.client = provider_config.create_client()
+            # Use provided model, fallback to provider config model, then default to gpt-4o
+            self.model = model or provider_config.model or "gpt-4o"
+        else:
+            # Backward compatibility: use api_key directly
+            self.client = openai.OpenAI(api_key=api_key)
+            self.model = model or "gpt-4o"
 
         # Performance improvements
         self._query_cache = {}  # Cache for search plans

@@ -35,11 +35,12 @@ graph LR
 ```python
 from memori import Memori
 
-# Initialize
+# Initialize with new provider configuration
 memori = Memori(
     database_connect="sqlite:///my_project.db",
     conscious_ingest=True,
-    openai_api_key="sk-..."
+    api_key="sk-...",  # Use api_key instead of openai_api_key
+    model="gpt-4"      # Optional: specify model (defaults to gpt-4o)
 )
 
 # Enable recording
@@ -103,8 +104,37 @@ memori = Memori(
     database_connect="sqlite:///memori.db",  # Database connection
     conscious_ingest=True,                   # Enable smart context injection
     namespace="default",                     # Memory namespace
-    openai_api_key="sk-..."                 # OpenAI API key
+    api_key="sk-...",                       # API key (replaces openai_api_key)
+    model="gpt-4-turbo"                     # Optional: specify model
 )
+```
+
+### Multi-Provider Configuration
+
+```python
+# Azure OpenAI
+memori = Memori(
+    api_type=\"azure\",
+    api_key=\"your-azure-key\",
+    azure_endpoint=\"https://your-resource.openai.azure.com\",
+    azure_deployment=\"your-deployment\",
+    api_version=\"2024-02-01\",
+    model=\"gpt-4\",
+    conscious_ingest=True
+)
+
+# Custom OpenAI-compatible endpoint
+memori = Memori(
+    api_type=\"custom\",
+    base_url=\"http://localhost:11434/v1\",
+    api_key=\"optional-key\",
+    model=\"llama2\",
+    conscious_ingest=True
+)
+
+# Auto-detect from environment variables
+# Set OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT, or OPENAI_BASE_URL
+memori = Memori(conscious_ingest=True)  # Auto-detects provider
 ```
 
 ### Advanced Configuration
@@ -120,7 +150,8 @@ memori = Memori(
         "importance_threshold": 0.4,
         "categories": ["fact", "preference", "skill"]
     },
-    openai_api_key="sk-..."
+    api_key="sk-...",
+    model="gpt-4"  # Optional model selection
 )
 ```
 

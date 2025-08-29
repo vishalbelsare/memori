@@ -146,7 +146,8 @@ auto_ingest=True  # Continuous intelligent memory retrieval
 memori = Memori(
     database_connect="sqlite:///my_memory.db",
     conscious_ingest=True,  # 🧠 Short-term working memory
-    openai_api_key="sk-..."
+    api_key="sk-...",  # Use api_key instead of openai_api_key
+    model="gpt-4"  # Optional: specify model (defaults to gpt-4o)
 )
 ```
 
@@ -162,7 +163,8 @@ memori = Memori(
 memori = Memori(
     database_connect="sqlite:///my_memory.db", 
     auto_ingest=True,  # 🔍 Smart database search
-    openai_api_key="sk-..."
+    api_key="sk-...",
+    model="gpt-4-turbo"  # Optional: choose your model
 )
 ```
 
@@ -178,7 +180,7 @@ memori = Memori(
 memori = Memori(
     conscious_ingest=True,  # Working memory once
     auto_ingest=True,       # Dynamic search every call
-    openai_api_key="sk-..."
+    api_key="sk-..."
 )
 ```
 
@@ -208,7 +210,7 @@ memori = Memori(
 
 ## 🔧 Configuration
 
-### Simple Setup
+### Simple Setup (OpenAI)
 ```python
 from memori import Memori
 
@@ -217,22 +219,50 @@ memori = Memori(
     database_connect="sqlite:///my_memory.db",
     template="basic", 
     conscious_ingest=True,  # One-shot context injection
-    openai_api_key="sk-..."
+    api_key="sk-...",       # OpenAI API key
+    model="gpt-4"           # Optional: specify model (defaults to gpt-4o)
 )
 
 # Auto mode - Dynamic database search
 memori = Memori(
     database_connect="sqlite:///my_memory.db",
     auto_ingest=True,  # Continuous memory retrieval
-    openai_api_key="sk-..."
+    api_key="sk-..."   # OpenAI API key
 )
 
 # Combined mode - Best of both worlds
 memori = Memori(
     conscious_ingest=True,  # Working memory + 
     auto_ingest=True,       # Dynamic search
-    openai_api_key="sk-..."
+    api_key="sk-..."        # OpenAI API key
 )
+```
+
+### Multi-Provider Support
+```python
+# Azure OpenAI
+memori = Memori(
+    api_type="azure",
+    api_key="your-azure-key",
+    azure_endpoint="https://your-resource.openai.azure.com",
+    azure_deployment="your-deployment",
+    api_version="2024-02-01",
+    model="gpt-4",  # Optional
+    conscious_ingest=True
+)
+
+# Custom OpenAI-compatible endpoint (Ollama, LocalAI, etc.)
+memori = Memori(
+    api_type="custom",
+    base_url="http://localhost:11434/v1",
+    api_key="optional-key",
+    model="llama2",
+    conscious_ingest=True
+)
+
+# Environment-based auto-detection
+# Set OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT, or OPENAI_BASE_URL
+memori = Memori(conscious_ingest=True)  # Auto-detects provider
 ```
 
 ### Advanced Configuration
@@ -254,7 +284,8 @@ Create `memori.json`:
     "connection_string": "postgresql://user:pass@localhost/memori"
   },
   "agents": {
-    "openai_api_key": "sk-...",
+    "api_key": "sk-...",  # OpenAI API key
+    "model": "gpt-4",     # Optional model
     "conscious_ingest": true,
     "auto_ingest": false
   },
@@ -264,6 +295,47 @@ Create `memori.json`:
   }
 }
 ```
+
+### Provider Configuration Priority
+
+Model and provider selection follows this priority order:
+
+1. **Direct parameters** (highest priority)
+2. **Environment variables**  
+3. **Default fallback** (gpt-4o)
+
+```python
+# Method 1: Direct parameter overrides everything
+memori = Memori(model="gpt-3.5-turbo")
+
+# Method 2: Environment variables  
+# export OPENAI_MODEL="gpt-4-turbo"
+memori = Memori()  # Uses gpt-4-turbo from environment
+
+# Method 3: Override environment
+# Even if OPENAI_MODEL is set, this takes priority
+memori = Memori(model="claude-3-opus")
+```
+
+**Environment Variables:**
+```bash
+# OpenAI
+export OPENAI_API_KEY="sk-..."
+export OPENAI_MODEL="gpt-4-turbo"
+export OPENAI_ORGANIZATION="org-..."
+
+# Azure
+export AZURE_OPENAI_ENDPOINT="https://your.openai.azure.com"  
+export AZURE_OPENAI_API_KEY="..."
+export AZURE_OPENAI_DEPLOYMENT="..."
+export OPENAI_API_VERSION="2024-02-01"
+
+# Custom endpoint
+export OPENAI_BASE_URL="http://localhost:11434/v1"
+export LLM_MODEL="llama2"
+```
+
+📖 **[Full Provider Configuration Guide →](docs/provider_configuration.md)**
 
 ## 🔌 Universal Integration
 

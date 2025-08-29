@@ -1,267 +1,135 @@
 #!/usr/bin/env python3
 """
-Test script for the new conscious_ingest functionality
+Test conscious_ingest context injection feature
 
-This script demonstrates how the conscious agent works:
-1. Records conversations in long-term memory
-2. Analyzes patterns to extract essential personal facts
-3. Stores facts in short-term memory for immediate context
-4. Prioritizes essential facts in context injection
+This test verifies that:
+1. conscious_ingest=True copies conscious-info memories to short-term memory
+2. conscious_ingest=True injects ALL short-term memory summaries as initial context
+3. Context is only injected once at startup (different from auto_ingest)
 """
 
-import os
+import asyncio
 import sys
-import time
-
-# Add the memori package to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "."))
-
-
 from memori import Memori
 
-
-def simulate_conversations(memori: Memori):
-    """Simulate conversations to build up memory patterns"""
-
-    print("\n=== Simulating Conversations to Build Memory ===")
-
-    conversations = [
-        # Identity and basic info
-        (
-            "Hi, I'm Harshal",
-            "Hello Harshal! Nice to meet you. How can I help you today?",
-        ),
-        ("I'm a software developer", "Great! What kind of development do you work on?"),
-        (
-            "I work on AI and machine learning projects",
-            "That's fascinating! AI and ML are exciting fields.",
-        ),
-        # Preferences
-        (
-            "I love eating mangoes",
-            "Mangoes are delicious! They're one of the best tropical fruits.",
-        ),
-        (
-            "My favorite programming language is Python",
-            "Python is excellent for AI and data science!",
-        ),
-        (
-            "I prefer working late at night",
-            "Many developers are night owls. When do you usually work?",
-        ),
-        (
-            "I typically sleep around 2am",
-            "That's quite late! Do you find you're most productive at night?",
-        ),
-        # Work patterns and habits
-        (
-            "I'm currently working on the Memoriai project",
-            "That sounds like an interesting project! What does it do?",
-        ),
-        (
-            "It's a memory layer for AI agents",
-            "That's really cool! Memory systems are crucial for AI.",
-        ),
-        (
-            "I usually code for 6-8 hours per day",
-            "That's a good amount of focused coding time.",
-        ),
-        ("I drink coffee every morning", "Coffee is essential for many developers!"),
-        # Skills and expertise
-        (
-            "I'm experienced with FastAPI and Django",
-            "Both are excellent Python web frameworks!",
-        ),
-        (
-            "I know machine learning and deep learning",
-            "Those are valuable skills in today's market.",
-        ),
-        (
-            "I use PostgreSQL for most of my databases",
-            "PostgreSQL is a robust choice for databases.",
-        ),
-        # Relationships and context
-        (
-            "I work remotely from home",
-            "Remote work has become very common. Do you enjoy it?",
-        ),
-        (
-            "My team uses Slack for communication",
-            "Slack is great for team collaboration.",
-        ),
-        (
-            "I'm learning about vector databases",
-            "Vector databases are becoming important for AI applications.",
-        ),
-        # Reinforcement - repeat key facts
-        (
-            "Actually, let me clarify - my name is Harshal More",
-            "Thank you for the clarification, Harshal More!",
-        ),
-        (
-            "I really love mangoes, they're my favorite fruit",
-            "I remember you mentioning mangoes before!",
-        ),
-        (
-            "I stay up until 2am most nights working",
-            "That late night schedule seems to work well for you.",
-        ),
-        (
-            "Python is definitely my go-to language",
-            "Python is perfect for your AI and ML work.",
-        ),
-    ]
-
-    print(f"Recording {len(conversations)} conversations...")
-
-    for i, (user_input, ai_output) in enumerate(conversations, 1):
-        try:
-            memori.record_conversation(
-                user_input=user_input, ai_output=ai_output, model="test-model"
-            )
-            print(f"  {i:2d}. Recorded: '{user_input[:50]}...'")
-            time.sleep(0.1)  # Small delay to simulate real conversations
-
-        except Exception as e:
-            print(f"  ERROR recording conversation {i}: {e}")
-
-    print(f"\n[OK] Recorded {len(conversations)} conversations")
-
-
-def test_memory_retrieval(memori: Memori):
-    """Test memory retrieval to see what's stored"""
-
-    print("\n=== Testing Memory Retrieval ===")
-
-    # Test queries
-    test_queries = [
-        "Who am I?",
-        "What do I like to eat?",
-        "What's my sleep schedule?",
-        "What programming language do I prefer?",
-        "What project am I working on?",
-    ]
-
-    for query in test_queries:
-        print(f"\nQuery: '{query}'")
-        context = memori.retrieve_context(query, limit=3)
-
-        if context:
-            for i, item in enumerate(context, 1):
-                summary = item.get(
-                    "summary", item.get("searchable_content", "No summary")
-                )
-                category = item.get("category_primary", "unknown")
-                print(f"  {i}. [{category}] {summary}")
-        else:
-            print("  No context found")
-
-
-def test_essential_facts(memori: Memori):
-    """Test extraction of essential facts"""
-
-    print("\n=== Testing Essential Facts Extraction ===")
-
-    # Get current essential facts
-    facts = memori.get_essential_facts(limit=10)
-
-    if facts:
-        print(f"Found {len(facts)} essential facts:")
-        for i, fact in enumerate(facts, 1):
-            summary = fact.get("summary", fact.get("searchable_content", "No summary"))
-            print(f"  {i}. {summary}")
+async def test_conscious_ingest_context_injection():
+    """Test conscious context injection functionality"""
+    print("=== Testing Conscious Ingest Context Injection ===\n")
+    
+    # Initialize Memori with conscious_ingest=True
+    memori = Memori(
+        database_connect="sqlite:///patch-4.db",
+        namespace="default",
+        conscious_ingest=True,  # This should inject all short-term memory as initial context
+        auto_ingest=False       # Ensure auto_ingest is off for this test
+    )
+    
+    # Enable Memori 
+    memori.enable()
+    print("✅ Memori enabled with conscious_ingest=True")
+    
+    # Wait a moment for conscious agent initialization
+    await asyncio.sleep(2)
+    
+    # Check short-term memory contents
+    print("\n--- Short-Term Memory Contents ---")
+    context = memori._get_conscious_context()
+    print(f"Found {len(context)} items in short-term memory:")
+    
+    for i, item in enumerate(context, 1):
+        summary = item.get('summary', '')[:100]
+        category = item.get('category_primary', 'unknown')
+        print(f"  {i}. [{category.upper()}] {summary}...")
+    
+    # Test context injection flag state
+    print(f"\n--- Context Injection State ---")
+    print(f"conscious_context_injected: {memori._conscious_context_injected}")
+    print(f"conscious_ingest: {memori.conscious_ingest}")
+    print(f"auto_ingest: {memori.auto_ingest}")
+    
+    # Simulate LiteLLM context injection 
+    print(f"\n--- Testing Context Injection ---")
+    
+    # First call - should inject context
+    test_params_1 = {
+        "model": "gpt-4",
+        "messages": [
+            {"role": "user", "content": "Hello, what do you know about me?"}
+        ]
+    }
+    
+    print("🔄 First LLM call (should inject all short-term memory):")
+    injected_params_1 = memori._inject_litellm_context(test_params_1.copy(), mode="conscious")
+    
+    # Check if context was injected
+    system_message = None
+    for msg in injected_params_1.get("messages", []):
+        if msg.get("role") == "system":
+            system_message = msg.get("content", "")
+            break
+    
+    if system_message:
+        print(f"✅ Context injected! System message length: {len(system_message)} characters")
+        print("📋 System message preview:")
+        print(system_message[:300] + "..." if len(system_message) > 300 else system_message)
     else:
-        print("No essential facts found yet.")
-        print(
-            "Note: Essential facts are extracted by the conscious agent running in the background."
-        )
-        print("This may take a few minutes after recording conversations.")
-
-
-def trigger_conscious_analysis(memori: Memori):
-    """Manually trigger conscious analysis for immediate results"""
-
-    print("\n=== Triggering Conscious Analysis ===")
-
-    if hasattr(memori, "trigger_conscious_analysis"):
-        print("Manually triggering conscious agent analysis...")
-        task = memori.trigger_conscious_analysis()
-
-        if task:
-            print("Analysis triggered successfully!")
-            print("Waiting for analysis to complete...")
-            time.sleep(5)  # Give it time to run
-        else:
-            print("Analysis triggered in background thread")
-            time.sleep(10)  # Give more time for background execution
+        print("❌ No system message found!")
+    
+    print(f"📊 Context injection flag after first call: {memori._conscious_context_injected}")
+    
+    # Second call - should NOT inject context again
+    test_params_2 = {
+        "model": "gpt-4", 
+        "messages": [
+            {"role": "user", "content": "What's my name again?"}
+        ]
+    }
+    
+    print("\n🔄 Second LLM call (should NOT inject context again):")
+    injected_params_2 = memori._inject_litellm_context(test_params_2.copy(), mode="conscious")
+    
+    # Check if context was NOT injected
+    system_message_2 = None
+    for msg in injected_params_2.get("messages", []):
+        if msg.get("role") == "system":
+            system_message_2 = msg.get("content", "")
+            break
+    
+    if not system_message_2:
+        print("✅ No context injected on second call (as expected)")
     else:
-        print("Conscious analysis trigger not available")
-
-
-def main():
-    """Main test function"""
-
-    print("=== Testing New Conscious Ingest Functionality ===")
-    print("\nThis test demonstrates the new conscious_ingest behavior:")
-    print("1. Long-term memory stores detailed conversations")
-    print("2. ConsciouscAgent analyzes patterns in the background")
-    print("3. Essential facts are extracted to short-term memory")
-    print("4. Context injection prioritizes essential facts")
-
-    # Create Memori instance with conscious ingestion enabled
-    print("\n=== Initializing Memori with Conscious Ingestion ===")
-
-    try:
-        memori = Memori(
-            database_connect="sqlite:///test_conscious.db",
-            conscious_ingest=True,
-            verbose=True,
-            user_id="harshal_test",
-        )
-
-        memori.enable()
-        print("[OK] Memori initialized successfully")
-
-    except Exception as e:
-        print(f"[ERROR] Failed to initialize Memori: {e}")
-        return
-
-    try:
-        # Step 1: Simulate conversations to build memory
-        simulate_conversations(memori)
-
-        # Step 2: Test memory retrieval (should show long-term memories)
-        test_memory_retrieval(memori)
-
-        # Step 3: Trigger conscious analysis manually
-        trigger_conscious_analysis(memori)
-
-        # Step 4: Test essential facts extraction
-        test_essential_facts(memori)
-
-        # Step 5: Test context retrieval with essential facts priority
-        print("\n=== Testing Context with Essential Facts Priority ===")
-        test_memory_retrieval(memori)
-
-        print("\n=== Test Complete ===")
-        print("\nThe new conscious_ingest workflow:")
-        print("✓ Conversations stored in long-term memory")
-        print("✓ Background conscious agent analyzes patterns")
-        print("✓ Essential facts extracted to short-term memory")
-        print("✓ Context injection prioritizes essential facts")
-        print("✓ Personal facts (name, preferences, habits) readily available")
-
-    except KeyboardInterrupt:
-        print("\n[INTERRUPTED] Test stopped by user")
-    except Exception as e:
-        print(f"\n[ERROR] Test failed: {e}")
-    finally:
-        try:
-            memori.disable()
-            print("\n[OK] Memori disabled")
-        except Exception:
-            pass
-
+        print(f"❌ Context was unexpectedly injected again! Length: {len(system_message_2)}")
+    
+    print(f"📊 Context injection flag after second call: {memori._conscious_context_injected}")
+    
+    # Summary
+    print(f"\n=== Test Summary ===")
+    print(f"✅ Short-term memory items: {len(context)}")
+    print(f"✅ First call context injection: {'SUCCESS' if system_message else 'FAILED'}")
+    print(f"✅ Second call no injection: {'SUCCESS' if not system_message_2 else 'FAILED'}")
+    print(f"✅ Conscious context flag management: {'SUCCESS' if memori._conscious_context_injected else 'FAILED'}")
+    
+    # Comparison with auto_ingest behavior
+    print(f"\n=== Comparison: Auto Ingest vs Conscious Ingest ===")
+    print("🔄 Testing auto_ingest mode (for comparison):")
+    
+    # Reset flag for comparison
+    memori._conscious_context_injected = False
+    auto_params = memori._inject_litellm_context(test_params_1.copy(), mode="auto") 
+    
+    auto_system_message = None
+    for msg in auto_params.get("messages", []):
+        if msg.get("role") == "system":
+            auto_system_message = msg.get("content", "")
+            break
+    
+    print(f"📊 Auto-ingest context length: {len(auto_system_message) if auto_system_message else 0}")
+    print(f"📊 Conscious-ingest context length: {len(system_message) if system_message else 0}")
+    
+    if system_message and auto_system_message:
+        print(f"📊 Conscious context is {len(system_message)/len(auto_system_message):.1f}x larger than auto context")
+    
+    print("\n🎉 Test completed!")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(test_conscious_ingest_context_injection())

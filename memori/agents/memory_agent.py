@@ -8,10 +8,13 @@ enhanced classification and conscious context detection.
 import asyncio
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 import openai
 from loguru import logger
+
+if TYPE_CHECKING:
+    from ..core.providers import ProviderConfig
 
 from ..utils.pydantic_models import (
     ConversationContext,
@@ -27,17 +30,31 @@ class MemoryAgent:
     Async Memory Agent for processing conversations with enhanced classification
     """
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o"):
+    def __init__(
+        self, 
+        api_key: Optional[str] = None, 
+        model: Optional[str] = None,
+        provider_config: Optional['ProviderConfig'] = None
+    ):
         """
-        Initialize Memory Agent with OpenAI configuration
+        Initialize Memory Agent with LLM provider configuration
 
         Args:
-            api_key: OpenAI API key (if None, uses environment variable)
-            model: OpenAI model to use for structured output (gpt-4o recommended)
+            api_key: API key (deprecated, use provider_config)
+            model: Model to use for structured output (defaults to 'gpt-4o' if not specified)
+            provider_config: Provider configuration for LLM client
         """
-        self.client = openai.OpenAI(api_key=api_key)
-        self.async_client = openai.AsyncOpenAI(api_key=api_key)
-        self.model = model
+        if provider_config:
+            # Use provider configuration to create clients
+            self.client = provider_config.create_client()
+            self.async_client = provider_config.create_async_client()
+            # Use provided model, fallback to provider config model, then default to gpt-4o
+            self.model = model or provider_config.model or "gpt-4o"
+        else:
+            # Backward compatibility: use api_key directly
+            self.client = openai.OpenAI(api_key=api_key)
+            self.async_client = openai.AsyncOpenAI(api_key=api_key)
+            self.model = model or "gpt-4o"
 
     SYSTEM_PROMPT = """You are an advanced Memory Processing Agent responsible for analyzing conversations and extracting structured information with intelligent classification and conscious context detection.
 

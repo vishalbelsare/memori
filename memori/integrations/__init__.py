@@ -16,19 +16,19 @@ memori.enable()  # 🎉 That's it!
 from litellm import completion
 completion(model="gpt-4o", messages=[...])  # ✅ Auto-recorded
 
-# Direct OpenAI (auto-wrapping)
+# Direct OpenAI (clean class replacement)
 import openai
 client = openai.OpenAI(api_key="...")
 client.chat.completions.create(...)  # ✅ Auto-recorded
 
-# Direct Anthropic (auto-wrapping)
+# Direct Anthropic (clean class replacement) 
 import anthropic
 client = anthropic.Anthropic(api_key="...")
 client.messages.create(...)  # ✅ Auto-recorded
 ```
 
-The universal system automatically detects and records ALL LLM providers
-without requiring wrapper classes or complex setup.
+The new interceptor system uses native callbacks and clean class replacement
+without monkey-patching for production-ready conversation recording.
 """
 
 from typing import Any, Dict, List
@@ -55,7 +55,7 @@ try:
         if name in ["MemoriOpenAI", "MemoriAnthropic"]:
             logger.warning(
                 f"🚨 {name} wrapper classes are deprecated!\n"
-                f"✅ NEW SIMPLE WAY: Use memori.enable() and import {name.replace('Memori', '').lower()} normally"
+                f"✅ NEW SIMPLE WAY: Use memori.enable() with the new interceptor system and import {name.replace('Memori', '').lower()} normally"
             )
             if name == "MemoriOpenAI":
                 return MemoriOpenAI

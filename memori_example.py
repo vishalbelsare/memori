@@ -19,10 +19,10 @@ load_dotenv()  # Load environment variables from .env file
 # Create memory system with conscious-ingest mode
 # This mode promotes essential memories to short-term storage at startup
 office_work = Memori(
-    database_connect="sqlite:///office_memory.db",
+    database_connect="sqlite:///xoffice_memory.db",
     conscious_ingest=True,  # 🧠 Enable short-term working memory
     verbose=True,  # See the conscious agent in action
-    openai_api_key="your-openai-key",  # Required for conscious agent
+    # openai_api_key="your-openai-key",  # Required for conscious agent
 )
 
 # Enable universal memory recording
