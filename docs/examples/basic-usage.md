@@ -26,14 +26,14 @@ def main():
     # Initialize your workspace memory with conscious ingestion
     office_work = Memori(
         database_connect="sqlite:///office_memory.db",
-        conscious_ingest=True,  # 🔥 Enable AI-powered background analysis
+        conscious_ingest=True,  # Enable AI-powered background analysis
         verbose=True,  # Show what's happening behind the scenes
         openai_api_key=None  # Uses OPENAI_API_KEY from environment
     )
     
     # Enable memory recording
     office_work.enable()
-    print("✅ Memory enabled - all conversations will be recorded!")
+    print("Memory enabled - all conversations will be recorded!")
     
     # First conversation - establishing context
     print("\n--- First conversation ---")
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 ```python
 office_work = Memori(
     database_connect="sqlite:///office_memory.db",
-    conscious_ingest=True,  # 🔥 The magic happens here
+    conscious_ingest=True,  # The magic happens here
     verbose=True,  # Show background activity
     openai_api_key=None  # Uses environment variable
 )
@@ -97,9 +97,9 @@ office_work = Memori(
 **What `conscious_ingest=True` enables:**
 
 - 🧠 **Background Analysis**: AI analyzes memory patterns every 6 hours
-- 🎯 **Essential Memory Promotion**: Key personal facts promoted to immediate access
-- 📝 **Smart Context Injection**: 3-5 most relevant memories automatically included
-- 🔄 **Continuous Learning**: System adapts to your preferences and patterns
+- **Essential Memory Promotion**: Key personal facts promoted to immediate access
+- **Smart Context Injection**: 3-5 most relevant memories automatically included
+- **Continuous Learning**: System adapts to your preferences and patterns
 
 **Intelligence Layers:**
 
@@ -137,7 +137,7 @@ Each conversation builds on the previous with AI-powered selection:
 
 ```
 🧠 Memori - Your AI's Second Memory
-✅ Memory enabled - all conversations will be recorded!
+Memory enabled - all conversations will be recorded!
 
 --- First conversation ---
 Assistant: Great! FastAPI with PostgreSQL is an excellent stack for building modern APIs...
