@@ -27,7 +27,7 @@ from .providers import ProviderConfig, detect_provider_from_env
 from ..utils.exceptions import DatabaseError, MemoriError
 from ..utils.logging import LoggingManager
 from ..utils.pydantic_models import ConversationContext
-from .database import DatabaseManager
+from ..database.sqlalchemy_manager import SQLAlchemyDatabaseManager as DatabaseManager
 
 
 class Memori:

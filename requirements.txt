@@ -13,9 +13,12 @@ python-dotenv>=1.0.0
 # Utilities
 click>=8.0.0
 
+# Database ORM and drivers
+sqlalchemy>=*
+
 # Optional: Database drivers (install as needed)
 # psycopg2-binary>=2.9.0  # PostgreSQL
-# PyMySQL>=1.0.0          # MySQL
+# mysql-connector-python>=8.0.0  # MySQL
 
 # Optional: AI/LLM integrations (install as needed)
 # openai>=1.0.0

@@ -17,20 +17,101 @@ class PostgreSQLConnector:
         self.connection_string = connection_string
         self._psycopg2 = None
         self._setup_psycopg2()
+        self._ensure_database_exists()
 
     def _setup_psycopg2(self):
         """Setup psycopg2 connection"""
         try:
             import psycopg2
             import psycopg2.extras
+            from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
             self._psycopg2 = psycopg2
             self._extras = psycopg2.extras
+            self.ISOLATION_LEVEL_AUTOCOMMIT = ISOLATION_LEVEL_AUTOCOMMIT
         except ImportError:
             raise DatabaseError(
                 "psycopg2 is required for PostgreSQL support. "
                 "Install it with: pip install psycopg2-binary"
             )
+
+    def _parse_connection_string(self):
+        """Parse connection string to extract components"""
+        import re
+        
+        # Parse PostgreSQL connection string
+        # Format: postgresql://user:password@host:port/database
+        # or: postgresql+psycopg2://user:password@host:port/database
+        pattern = r'postgresql(?:\+psycopg2)?://(?:([^:]+)(?::([^@]+))?@)?([^:/]+)(?::(\d+))?/(.+)'
+        match = re.match(pattern, self.connection_string)
+        
+        if not match:
+            raise DatabaseError(f"Invalid PostgreSQL connection string: {self.connection_string}")
+        
+        user, password, host, port, database = match.groups()
+        
+        return {
+            'user': user or 'postgres',
+            'password': password or '',
+            'host': host or 'localhost',
+            'port': port or '5432',
+            'database': database
+        }
+
+    def _ensure_database_exists(self):
+        """Ensure the database exists, create if it doesn't"""
+        params = self._parse_connection_string()
+        
+        try:
+            # Connect to default 'postgres' database to check/create target database
+            admin_conn_params = {
+                'host': params['host'],
+                'port': params['port'],
+                'user': params['user'],
+                'database': 'postgres'
+            }
+            
+            if params['password']:
+                admin_conn_params['password'] = params['password']
+            
+            conn = self._psycopg2.connect(**admin_conn_params)
+            conn.set_isolation_level(self.ISOLATION_LEVEL_AUTOCOMMIT)
+            cursor = conn.cursor()
+            
+            # Check if database exists
+            cursor.execute(
+                "SELECT 1 FROM pg_database WHERE datname = %s",
+                (params['database'],)
+            )
+            
+            if not cursor.fetchone():
+                # Database doesn't exist, create it
+                # Use SQL identifier for database name (can't use parameter substitution for DDL)
+                from psycopg2 import sql
+                cursor.execute(
+                    sql.SQL("CREATE DATABASE {}").format(
+                        sql.Identifier(params['database'])
+                    )
+                )
+                logger.info(f"Created PostgreSQL database: {params['database']}")
+                
+                # Set UTF-8 encoding
+                cursor.execute(
+                    sql.SQL("ALTER DATABASE {} SET client_encoding TO 'UTF8'").format(
+                        sql.Identifier(params['database'])
+                    )
+                )
+            
+            cursor.close()
+            conn.close()
+            
+        except self._psycopg2.OperationalError as e:
+            # If we can't connect to postgres database, try connecting directly
+            # This might work if the target database already exists
+            logger.warning(f"Could not connect to postgres database: {e}")
+            logger.info("Attempting direct connection to target database...")
+        except Exception as e:
+            logger.warning(f"Could not ensure database exists: {e}")
 
     def get_connection(self):
         """Get PostgreSQL connection"""
