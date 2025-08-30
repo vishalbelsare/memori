@@ -236,9 +236,9 @@ class MemoryQueries(BaseQueries):
     SELECT_MEMORIES_FOR_DEDUPLICATION = """
         SELECT memory_id, summary, searchable_content, classification, created_at
         FROM long_term_memory
-        WHERE namespace = ? AND processed_for_duplicates = 0
+        WHERE namespace = :namespace AND processed_for_duplicates = 0
         ORDER BY created_at DESC
-        LIMIT ?
+        LIMIT :limit
     """
 
     UPDATE_DUPLICATE_STATUS = """

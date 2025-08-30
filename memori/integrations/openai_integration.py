@@ -170,12 +170,38 @@ class OpenAIInterceptor:
             if (memori_instance.is_enabled and 
                 (memori_instance.conscious_ingest or memori_instance.auto_ingest)):
                 try:
-                    json_data = getattr(options, 'json_data', None) or {}
-                    if 'messages' in json_data:
-                        # This is a chat completion request
+                    # Get json_data from options - handle multiple attribute name possibilities
+                    json_data = None
+                    for attr_name in ['json_data', '_json_data', 'data']:
+                        if hasattr(options, attr_name):
+                            json_data = getattr(options, attr_name, None)
+                            if json_data:
+                                break
+                    
+                    if not json_data:
+                        # Try to reconstruct from other options attributes
+                        json_data = {}
+                        if hasattr(options, 'messages'):
+                            json_data['messages'] = options.messages
+                        elif hasattr(options, '_messages'):
+                            json_data['messages'] = options._messages
+                    
+                    if json_data and 'messages' in json_data:
+                        # This is a chat completion request - inject context
+                        logger.debug(f"OpenAI: Injecting context for {client_type} with {len(json_data['messages'])} messages")
                         updated_data = memori_instance._inject_openai_context({'messages': json_data['messages']})
-                        if hasattr(options, 'json_data') and updated_data.get('messages'):
-                            options.json_data.update(updated_data)
+                        
+                        if updated_data.get('messages'):
+                            # Update the options with modified messages
+                            if hasattr(options, 'json_data') and options.json_data:
+                                options.json_data['messages'] = updated_data['messages']
+                            elif hasattr(options, 'messages'):
+                                options.messages = updated_data['messages']
+                            
+                            logger.debug(f"OpenAI: Successfully injected context for {client_type}")
+                    else:
+                        logger.debug(f"OpenAI: No messages found in options for {client_type}, skipping context injection")
+                        
                 except Exception as e:
                     logger.error(f"Context injection failed for {client_type}: {e}")
         
@@ -367,3 +393,44 @@ class MemoriOpenAIInterceptor(MemoriOpenAI):
             "memori.enable() then use OpenAI() client directly."
         )
         super().__init__(memori_instance, **kwargs)
+
+
+def create_openai_client(memori_instance, provider_config=None, **kwargs):
+    """
+    Create an OpenAI client that automatically records to memori.
+    
+    This is the recommended way to create OpenAI clients with memori integration.
+    
+    Args:
+        memori_instance: Memori instance to record conversations to
+        provider_config: Provider configuration (optional)
+        **kwargs: Additional arguments for OpenAI client
+        
+    Returns:
+        OpenAI client instance with automatic recording
+    """
+    try:
+        import openai
+        
+        # Register the memori instance for automatic interception
+        register_memori_instance(memori_instance)
+        
+        # Use provider config if available, otherwise use kwargs
+        if provider_config:
+            client_kwargs = provider_config.to_openai_kwargs()
+            client_kwargs.update(kwargs)  # Allow kwargs to override config
+        else:
+            client_kwargs = kwargs
+            
+        # Create standard OpenAI client - it will be automatically intercepted
+        client = openai.OpenAI(**client_kwargs)
+        
+        logger.info("Created OpenAI client with automatic memori recording")
+        return client
+        
+    except ImportError as e:
+        logger.error(f"Failed to import OpenAI: {e}")
+        raise ImportError("OpenAI package required: pip install openai") from e
+    except Exception as e:
+        logger.error(f"Failed to create OpenAI client: {e}")
+        raise

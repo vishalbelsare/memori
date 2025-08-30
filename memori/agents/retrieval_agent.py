@@ -136,7 +136,7 @@ Be strategic and comprehensive in your search planning."""
                             {"role": "system", "content": self.SYSTEM_PROMPT},
                             {
                                 "role": "user",
-                                "content": f"Analyze and plan memory search for this query:\n\n{prompt}",
+                                "content": prompt,
                             },
                         ],
                         response_format=MemorySearchQuery,
@@ -159,7 +159,7 @@ Be strategic and comprehensive in your search planning."""
             
             # Fallback to manual parsing if structured outputs failed or not supported
             if search_query is None:
-                search_query = self._plan_search_with_fallback_parsing(query, prompt)
+                search_query = self._plan_search_with_fallback_parsing(query)
 
             # Cache the result
             with self._cache_lock:
@@ -194,6 +194,7 @@ Be strategic and comprehensive in your search planning."""
         try:
             # Plan the search
             search_plan = self.plan_search(query)
+            logger.debug(f"Search plan for '{query}': strategies={search_plan.search_strategy}, entities={search_plan.entity_filters}")
 
             all_results = []
             seen_memory_ids = set()
@@ -203,9 +204,12 @@ Be strategic and comprehensive in your search planning."""
                 search_plan.entity_filters
                 or "keyword_search" in search_plan.search_strategy
             ):
+                logger.debug(f"Executing keyword search for: {search_plan.entity_filters}")
                 keyword_results = self._execute_keyword_search(
                     search_plan, db_manager, namespace, limit
                 )
+                logger.debug(f"Keyword search returned {len(keyword_results)} results")
+                
                 for result in keyword_results:
                     if (
                         isinstance(result, dict)
@@ -223,9 +227,12 @@ Be strategic and comprehensive in your search planning."""
                 search_plan.category_filters
                 or "category_filter" in search_plan.search_strategy
             ):
+                logger.debug(f"Executing category search for: {[c.value for c in search_plan.category_filters]}")
                 category_results = self._execute_category_search(
                     search_plan, db_manager, namespace, limit - len(all_results)
                 )
+                logger.debug(f"Category search returned {len(category_results)} results")
+                
                 for result in category_results:
                     if (
                         isinstance(result, dict)
@@ -243,9 +250,12 @@ Be strategic and comprehensive in your search planning."""
                 search_plan.min_importance > 0.0
                 or "importance_filter" in search_plan.search_strategy
             ):
+                logger.debug(f"Executing importance search with min_importance: {search_plan.min_importance}")
                 importance_results = self._execute_importance_search(
                     search_plan, db_manager, namespace, limit - len(all_results)
                 )
+                logger.debug(f"Importance search returned {len(importance_results)} results")
+                
                 for result in importance_results:
                     if (
                         isinstance(result, dict)
@@ -260,9 +270,12 @@ Be strategic and comprehensive in your search planning."""
 
             # If no specific strategies worked, do a general search
             if not all_results:
+                logger.debug("No results from specific strategies, executing general search")
                 general_results = db_manager.search_memories(
                     query=search_plan.query_text, namespace=namespace, limit=limit
                 )
+                logger.debug(f"General search returned {len(general_results)} results")
+                
                 for result in general_results:
                     if isinstance(result, dict):
                         result["search_strategy"] = "general_search"
@@ -374,7 +387,13 @@ Be strategic and comprehensive in your search planning."""
             # Extract category from processed_data if it's stored as JSON
             try:
                 if "processed_data" in result:
-                    processed_data = json.loads(result["processed_data"])
+                    processed_data = result["processed_data"]
+                    # Handle both dict and JSON string formats
+                    if isinstance(processed_data, str):
+                        processed_data = json.loads(processed_data)
+                    elif not isinstance(processed_data, dict):
+                        continue  # Skip if neither dict nor string
+                    
                     memory_category = processed_data.get("category", {}).get(
                         "primary_category", ""
                     )
@@ -382,7 +401,7 @@ Be strategic and comprehensive in your search planning."""
                         filtered_results.append(result)
                 elif result.get("category") in categories:
                     filtered_results.append(result)
-            except (json.JSONDecodeError, KeyError):
+            except (json.JSONDecodeError, KeyError, AttributeError):
                 continue
 
         return filtered_results[:limit]
@@ -425,7 +444,7 @@ Be strategic and comprehensive in your search planning."""
             logger.debug(f"Error detecting structured output support: {e}, defaulting to enabled")
             return True
     
-    def _plan_search_with_fallback_parsing(self, query: str, prompt: str) -> MemorySearchQuery:
+    def _plan_search_with_fallback_parsing(self, query: str) -> MemorySearchQuery:
         """
         Plan search strategy using regular chat completions with manual JSON parsing
         
@@ -433,6 +452,9 @@ Be strategic and comprehensive in your search planning."""
         but doesn't support structured outputs (like Ollama, local models, etc.)
         """
         try:
+            # Prepare the prompt from raw query
+            prompt = f"User query: {query}"
+            
             # Enhanced system prompt for JSON output
             json_system_prompt = self.SYSTEM_PROMPT + "\n\nIMPORTANT: You MUST respond with a valid JSON object that matches this exact schema:\n"
             json_system_prompt += self._get_search_query_json_schema()
@@ -444,8 +466,8 @@ Be strategic and comprehensive in your search planning."""
                 messages=[
                     {"role": "system", "content": json_system_prompt},
                     {
-                        "role": "user",
-                        "content": f"Analyze and plan memory search for this query:\n\n{prompt}",
+                        "role": "user", 
+                        "content": prompt,
                     },
                 ],
                 temperature=0.1,
@@ -770,7 +792,20 @@ def smart_memory_search(query: str, memori_instance, limit: int = 5) -> str:
                 if "processed_data" in result:
                     import json
 
-                    processed_data = json.loads(result["processed_data"])
+                    processed_data = result["processed_data"]
+                    # Handle both dict and JSON string formats
+                    if isinstance(processed_data, str):
+                        processed_data = json.loads(processed_data)
+                    elif isinstance(processed_data, dict):
+                        pass  # Already a dict, use as-is
+                    else:
+                        # Fallback to basic result fields
+                        summary = result.get(
+                            "summary", result.get("searchable_content", "")[:100] + "..."
+                        )
+                        category = result.get("category_primary", "unknown")
+                        continue
+                        
                     summary = processed_data.get("summary", "")
                     category = processed_data.get("category", {}).get(
                         "primary_category", ""

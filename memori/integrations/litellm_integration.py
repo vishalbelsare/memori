@@ -253,6 +253,8 @@ class LiteLLMCallbackManager:
             
             # Use the existing context injection methods from the Memori instance
             if self.memori_instance.conscious_ingest or self.memori_instance.auto_ingest:
+                logger.debug("LiteLLM: Starting context injection")
+                
                 # Determine mode
                 if self.memori_instance.conscious_ingest:
                     mode = "conscious"
@@ -261,11 +263,30 @@ class LiteLLMCallbackManager:
                 else:
                     mode = "auto"  # fallback
                 
+                # Extract user input first to debug what we're working with
+                messages = kwargs.get('messages', [])
+                user_input = ""
+                for msg in reversed(messages):
+                    if msg.get('role') == 'user':
+                        user_input = msg.get('content', '')
+                        break
+                
+                logger.debug(f"LiteLLM: Injecting context in {mode} mode for input: {user_input[:100]}...")
+                
                 # Use the existing _inject_litellm_context method
                 kwargs = self.memori_instance._inject_litellm_context(kwargs, mode=mode)
                 
+                # Verify injection worked
+                updated_messages = kwargs.get('messages', [])
+                if len(updated_messages) > len(messages):
+                    logger.debug(f"LiteLLM: Context injection successful, message count increased from {len(messages)} to {len(updated_messages)}")
+                else:
+                    logger.debug("LiteLLM: Context injection completed, no new messages added (may be intended)")
+                
         except Exception as e:
             logger.error(f"Context injection failed in LiteLLM wrapper: {e}")
+            import traceback
+            logger.debug(f"LiteLLM injection stack trace: {traceback.format_exc()}")
         
         return kwargs
     

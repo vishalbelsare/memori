@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, Optional
 
+from loguru import logger
+
 
 class ProviderType(Enum):
     """Supported LLM provider types"""
@@ -194,39 +196,23 @@ class ProviderConfig:
 
 def detect_provider_from_env() -> ProviderConfig:
     """
-    Detect provider configuration from environment variables.
+    Create provider configuration from environment variables WITHOUT automatic detection.
     
-    Checks for Azure, OpenAI, and custom provider environment variables
-    and returns appropriate configuration.
+    This function ONLY uses standard OpenAI configuration by default.
+    It does NOT automatically detect or prioritize Azure or custom providers.
+    
+    Only use specific providers if explicitly configured via Memori constructor parameters.
     
     Returns:
-        ProviderConfig instance based on detected environment
+        Standard OpenAI ProviderConfig instance (never auto-detects other providers)
     """
     import os
     
-    # Get model from environment (optional)
-    model = os.getenv("OPENAI_MODEL") or os.getenv("LLM_MODEL")
+    # Get model from environment (optional, defaults to gpt-4o if not set)
+    model = os.getenv("OPENAI_MODEL") or os.getenv("LLM_MODEL") or "gpt-4o"
     
-    # Check for Azure configuration
-    if os.getenv("AZURE_OPENAI_ENDPOINT") or os.getenv("AZURE_OPENAI_API_KEY"):
-        return ProviderConfig.from_azure(
-            api_key=os.getenv("AZURE_OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY"),
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT"),
-            api_version=os.getenv("OPENAI_API_VERSION"),
-            azure_ad_token=os.getenv("AZURE_OPENAI_AD_TOKEN"),
-            model=model
-        )
-    
-    # Check for custom endpoint
-    if os.getenv("OPENAI_BASE_URL"):
-        return ProviderConfig.from_custom(
-            base_url=os.getenv("OPENAI_BASE_URL"),
-            api_key=os.getenv("OPENAI_API_KEY"),
-            model=model
-        )
-    
-    # Default to standard OpenAI
+    # ALWAYS default to standard OpenAI - no automatic detection
+    logger.info("Provider configuration: Using standard OpenAI (no auto-detection)")
     return ProviderConfig.from_openai(
         api_key=os.getenv("OPENAI_API_KEY"),
         organization=os.getenv("OPENAI_ORGANIZATION"),

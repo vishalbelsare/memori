@@ -102,42 +102,59 @@ class Memori:
         self.user_id = user_id
         self.verbose = verbose
 
-        # Configure provider
+        # Configure provider based on explicit settings ONLY - no auto-detection
         if provider_config:
             # Use provided configuration
             self.provider_config = provider_config
+            logger.info(f"Using provided ProviderConfig with api_type: {provider_config.api_type}")
         elif any([api_type, base_url, azure_endpoint]):
-            # Build configuration from individual parameters using providers module
+            # Build configuration from individual parameters - explicit provider selection
             try:
                 from .providers import ProviderConfig
-                self.provider_config = ProviderConfig(
-                    api_key=api_key or openai_api_key,
-                    api_type=api_type,
-                    base_url=base_url,
-                    azure_endpoint=azure_endpoint,
-                    azure_deployment=azure_deployment,
-                    api_version=api_version,
-                    azure_ad_token=azure_ad_token,
-                    organization=organization,
-                    project=project,
-                    model=model,
-                )
+                if azure_endpoint:
+                    # Explicitly configured Azure
+                    self.provider_config = ProviderConfig.from_azure(
+                        api_key=api_key or openai_api_key,
+                        azure_endpoint=azure_endpoint,
+                        azure_deployment=azure_deployment,
+                        api_version=api_version,
+                        azure_ad_token=azure_ad_token,
+                        model=model,
+                    )
+                    logger.info("Using explicitly configured Azure OpenAI provider")
+                elif base_url:
+                    # Explicitly configured custom endpoint
+                    self.provider_config = ProviderConfig.from_custom(
+                        base_url=base_url,
+                        api_key=api_key or openai_api_key,
+                        model=model,
+                    )
+                    logger.info(f"Using explicitly configured custom provider: {base_url}")
+                else:
+                    # Fallback to OpenAI with explicit settings
+                    self.provider_config = ProviderConfig.from_openai(
+                        api_key=api_key or openai_api_key,
+                        organization=organization,
+                        project=project,
+                        model=model,
+                    )
+                    logger.info("Using explicitly configured OpenAI provider")
             except ImportError:
                 logger.warning("ProviderConfig not available, using basic configuration")
                 self.provider_config = None
         else:
-            # Try to detect from environment or use default OpenAI
+            # Default to standard OpenAI - NO environment detection
             try:
-                from .providers import detect_provider_from_env
-                self.provider_config = detect_provider_from_env()
-                # Override with provided API key if available
-                if api_key or openai_api_key:
-                    self.provider_config.api_key = api_key or openai_api_key
-                # Override model if provided
-                if model:
-                    self.provider_config.model = model
+                from .providers import ProviderConfig
+                self.provider_config = ProviderConfig.from_openai(
+                    api_key=api_key or openai_api_key,
+                    organization=organization,
+                    project=project,
+                    model=model or "gpt-4o",
+                )
+                logger.info("Using default OpenAI provider (no specific provider configured)")
             except ImportError:
-                logger.warning("Provider detection not available, using basic configuration")
+                logger.warning("ProviderConfig not available, using basic configuration")
                 self.provider_config = None
 
         # Keep backward compatibility
@@ -216,6 +233,7 @@ class Memori:
         self._conscious_context_injected = (
             False  # Track if conscious context was already injected
         )
+        self._in_context_retrieval = False  # Recursion guard for context retrieval
 
         # User context for memory processing
         self._user_context = {
@@ -711,25 +729,25 @@ class Memori:
         Used only at program startup when conscious_ingest=True.
         """
         try:
+            from sqlalchemy import text
+            
             with self.db_manager._get_connection() as conn:
-                cursor = conn.cursor()
-
                 # Get ALL short-term memories (no limit) ordered by importance and recency
                 # This gives the complete conscious context as single initial injection
-                cursor.execute(
-                    """
+                result = conn.execute(
+                    text("""
                     SELECT memory_id, processed_data, importance_score,
                            category_primary, summary, searchable_content,
                            created_at, access_count
                     FROM short_term_memory
-                    WHERE namespace = ? AND (expires_at IS NULL OR expires_at > ?)
+                    WHERE namespace = :namespace AND (expires_at IS NULL OR expires_at > :current_time)
                     ORDER BY importance_score DESC, created_at DESC
-                """,
-                    (self.namespace, datetime.now()),
+                    """),
+                    {"namespace": self.namespace, "current_time": datetime.now()}
                 )
 
                 memories = []
-                for row in cursor.fetchall():
+                for row in result:
                     memories.append(
                         {
                             "memory_id": row[0],
@@ -759,24 +777,61 @@ class Memori:
         Searches through entire database for relevant memories.
         """
         try:
+            # Check for recursion guard to prevent infinite loops
+            if hasattr(self, '_in_context_retrieval') and self._in_context_retrieval:
+                logger.debug("Auto-ingest: Recursion detected, using direct database search")
+                return self.db_manager.search_memories(
+                    query=user_input,
+                    namespace=self.namespace,
+                    limit=5
+                )
+            
             if not self.search_engine:
-                logger.warning("Auto-ingest: No search engine available")
-                return []
+                logger.warning("Auto-ingest: No search engine available, falling back to direct database search")
+                # Fallback to direct database search
+                return self.db_manager.search_memories(
+                    query=user_input,
+                    namespace=self.namespace,
+                    limit=5
+                )
 
-            # Use retrieval agent for intelligent search
-            results = self.search_engine.execute_search(
+            # Set recursion guard
+            self._in_context_retrieval = True
+            
+            try:
+                # First, try using the retrieval agent for intelligent search
+                results = self.search_engine.execute_search(
+                    query=user_input,
+                    db_manager=self.db_manager,
+                    namespace=self.namespace,
+                    limit=5,
+                )
+                
+                if results:
+                    logger.debug(f"Auto-ingest: Retrieved {len(results)} relevant memories via search engine")
+                    return results
+                else:
+                    logger.debug("Auto-ingest: Search engine returned 0 results, trying direct database search")
+                    
+            except Exception as search_error:
+                logger.warning(f"Auto-ingest: Search engine failed ({search_error}), falling back to direct search")
+
+            # Fallback to direct database search
+            results = self.db_manager.search_memories(
                 query=user_input,
-                db_manager=self.db_manager,
                 namespace=self.namespace,
-                limit=5,
+                limit=5
             )
-
-            logger.debug(f"Auto-ingest: Retrieved {len(results)} relevant memories")
+            
+            logger.debug(f"Auto-ingest: Retrieved {len(results)} relevant memories via direct database search")
             return results
 
         except Exception as e:
             logger.error(f"Failed to get auto-ingest context: {e}")
             return []
+        finally:
+            # Clear recursion guard
+            self._in_context_retrieval = False
 
     def _record_openai_conversation(self, kwargs, response):
         """Record OpenAI conversation with enhanced content parsing"""
@@ -1425,15 +1480,16 @@ class Memori:
         """Get recent memories for deduplication check"""
         try:
             from ..database.queries.memory_queries import MemoryQueries
+            from sqlalchemy import text
 
             with self.db_manager._get_connection() as connection:
-                cursor = connection.execute(
-                    MemoryQueries.SELECT_MEMORIES_FOR_DEDUPLICATION,
-                    (self.namespace, 20),  # Get last 20 memories
+                result = connection.execute(
+                    text(MemoryQueries.SELECT_MEMORIES_FOR_DEDUPLICATION),
+                    {"namespace": self.namespace, "limit": 20}  # Get last 20 memories
                 )
 
                 memories = []
-                for row in cursor.fetchall():
+                for row in result:
                     try:
                         # Create simplified memory objects for comparison
                         memory = type(
@@ -1977,21 +2033,23 @@ class Memori:
     def get_essential_conversations(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get essential conversations from short-term memory"""
         try:
+            from sqlalchemy import text
+            
             # Get all conversations marked as essential
             with self.db_manager._get_connection() as connection:
                 query = """
                 SELECT memory_id, summary, category_primary, importance_score,
                        created_at, searchable_content, processed_data
                 FROM short_term_memory
-                WHERE namespace = ? AND category_primary LIKE 'essential_%'
+                WHERE namespace = :namespace AND category_primary LIKE 'essential_%'
                 ORDER BY importance_score DESC, created_at DESC
-                LIMIT ?
+                LIMIT :limit
                 """
 
-                cursor = connection.execute(query, (self.namespace, limit))
+                result = connection.execute(text(query), {"namespace": self.namespace, "limit": limit})
 
                 essential_conversations = []
-                for row in cursor.fetchall():
+                for row in result:
                     essential_conversations.append(
                         {
                             "memory_id": row[0],

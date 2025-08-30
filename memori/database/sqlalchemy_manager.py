@@ -222,11 +222,10 @@ class SQLAlchemyDatabaseManager:
             logger.warning(f"PostgreSQL FTS setup failed: {e}")
     
     def _get_search_service(self) -> SearchService:
-        """Get search service instance"""
-        if not self._search_service:
-            session = self.SessionLocal()
-            self._search_service = SearchService(session, self.database_type)
-        return self._search_service
+        """Get search service instance with fresh session"""
+        # Always create a new session to avoid stale connections
+        session = self.SessionLocal()
+        return SearchService(session, self.database_type)
     
     def store_chat_history(
         self,
@@ -362,11 +361,18 @@ class SQLAlchemyDatabaseManager:
         """Search memories using the cross-database search service"""
         try:
             search_service = self._get_search_service()
-            return search_service.search_memories(query, namespace, category_filter, limit)
+            try:
+                results = search_service.search_memories(query, namespace, category_filter, limit)
+                logger.debug(f"Search for '{query}' returned {len(results)} results")
+                return results
+            finally:
+                # Ensure session is properly closed
+                search_service.session.close()
             
         except Exception as e:
-            logger.error(f"Memory search failed: {e}")
-            raise DatabaseError(f"Memory search failed: {e}")
+            logger.error(f"Memory search failed for query '{query}': {e}")
+            # Return empty list instead of raising exception to avoid breaking auto_ingest
+            return []
     
     def get_memory_stats(self, namespace: str = "default") -> Dict[str, Any]:
         """Get comprehensive memory statistics"""
@@ -473,6 +479,27 @@ class SQLAlchemyDatabaseManager:
             except SQLAlchemyError as e:
                 session.rollback()
                 raise DatabaseError(f"Failed to clear memory: {e}")
+    
+    def _get_connection(self):
+        """
+        Compatibility method for legacy code that expects raw database connections.
+        
+        Returns a context manager that provides a SQLAlchemy connection
+        similar to the old DatabaseManager._get_connection() method.
+        
+        This is used by memory.py for direct SQL queries.
+        """
+        from contextlib import contextmanager
+        
+        @contextmanager
+        def connection_context():
+            conn = self.engine.connect()
+            try:
+                yield conn
+            finally:
+                conn.close()
+        
+        return connection_context()
     
     def close(self):
         """Close database connections"""
