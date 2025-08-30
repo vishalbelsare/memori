@@ -1,6 +1,6 @@
 # Features
 
-## 🧠 Conscious Ingestion System
+## Conscious Ingestion System
 
 ### AI-Powered Memory Management
 - **Background Analysis**: Automatic analysis of conversation patterns every 6 hours
@@ -20,7 +20,7 @@ graph TD
     F --> H[Structured Storage]
 ```
 
-## 🗄️ Memory Types & Categories
+## Memory Types & Categories
 
 ### Automatic Categorization
 | Category | Description | Examples |
@@ -36,7 +36,7 @@ graph TD
 - **Long-term**: Important information, learned skills, preferences
 - **Permanent**: Critical rules, core preferences, essential facts
 
-## 🔌 Universal Integration
+## Universal Integration
 
 ### Works with ANY LLM Library
 === "LiteLLM (Recommended)"
@@ -80,7 +80,7 @@ graph TD
     response = client.messages.create(...)
     ```
 
-## 🏗️ Production Architecture
+## Production Architecture
 
 ### Modular Design
 ```
@@ -100,7 +100,7 @@ memori/
 - **MySQL**: Enterprise database support
 - **Connection Pooling**: Optimized performance with connection management
 
-## ⚡ Performance Features
+## Performance Features
 
 ### Token Optimization
 - **Essential Memory Priority**: Most important info always included
@@ -111,13 +111,13 @@ memori/
 ### Efficiency Metrics
 ```
 Traditional Context Injection:
-❌ 2000+ tokens of conversation history
+2000+ tokens of conversation history
 
 Conscious Ingestion:
-✅ 200-500 tokens of essential + relevant facts
+200-500 tokens of essential + relevant facts
 ```
 
-## 🛡️ Security & Reliability
+## Security & Reliability
 
 ### Data Protection
 - **Input Sanitization**: Protection against injection attacks
@@ -131,7 +131,7 @@ Conscious Ingestion:
 - **Error Handling**: Comprehensive exception handling with context
 - **Monitoring**: Built-in logging and performance metrics
 
-## 🎯 Developer Experience
+## Developer Experience
 
 ### Simple Setup
 ```python
@@ -164,7 +164,7 @@ tools = [memory_tool]
 completion(model="gpt-4", messages=[...], tools=tools)
 ```
 
-## 📊 Memory Analytics
+## Memory Analytics
 
 ### Real-time Statistics
 ```python
@@ -188,7 +188,7 @@ memori = Memori(
 )
 ```
 
-## 🚀 Extensibility
+## Extensibility
 
 ### Custom Agents
 - Create specialized agents for specific domains
@@ -202,7 +202,7 @@ memori = Memori(
 - Integration with external systems
 - Event-driven architecture
 
-## 📈 Scalability
+## Scalability
 
 ### Enterprise Features
 - **Multi-tenant Support**: Separate memory spaces with namespaces
@@ -216,7 +216,7 @@ memori = Memori(
 - **Adaptive Analysis**: Dynamic frequency based on usage patterns
 - **Caching**: Smart caching for frequently accessed memories
 
-## 🔄 Future Roadmap
+## Future Roadmap
 
 ### Planned Features
 - **Multi-model Support**: Claude, Gemini structured outputs

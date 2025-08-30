@@ -152,7 +152,7 @@ Before implementing a new feature:
 2. **Open a discussion** - Propose the feature first
 3. **Wait for approval** - Ensure it aligns with project goals
 
-### 📚 Documentation
+### Documentation
 
 Documentation improvements are always welcome:
 - Fix typos and grammar

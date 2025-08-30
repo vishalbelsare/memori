@@ -40,18 +40,18 @@ response = completion(
 )
 ```
 
-## ✨ Key Features
+## Key Features
 
-- **🎯 Universal Integration**: Works with ANY LLM library (LiteLLM, OpenAI, Anthropic)
-- **🧠 Intelligent Processing**: Pydantic-based memory with entity extraction
-- **🔄 Auto-Context Injection**: Relevant memories automatically added to conversations  
-- **📊 Multiple Memory Types**: Short-term, long-term, rules, and entity relationships
-- **🔍 Advanced Search**: Full-text search with semantic ranking
-- **⚙️ Production-Ready**: Comprehensive error handling, logging, and configuration
-- **🗄️ Database Support**: SQLite, PostgreSQL, MySQL
-- **🛡️ Type Safety**: Full Pydantic validation and type checking
+- **Universal Integration**: Works with ANY LLM library (LiteLLM, OpenAI, Anthropic)
+- **Intelligent Processing**: Pydantic-based memory with entity extraction
+- **Auto-Context Injection**: Relevant memories automatically added to conversations  
+- **Multiple Memory Types**: Short-term, long-term, rules, and entity relationships
+- **Advanced Search**: Full-text search with semantic ranking
+- **Production-Ready**: Comprehensive error handling, logging, and configuration
+- **Database Support**: SQLite, PostgreSQL, MySQL
+- **Type Safety**: Full Pydantic validation and type checking
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -104,10 +104,10 @@ response2 = completion(
     }]
 )
 print("Assistant:", response2.choices[0].message.content)
-print("\n💡 Notice: Memori automatically knows about your FastAPI Python project!")
+print("\n Notice: Memori automatically knows about your FastAPI Python project!")
 ```
 
-## 📋 Memory Types
+## Memory Types
 
 | Type | Purpose | Retention | Use Case |
 |------|---------|-----------|----------|
@@ -116,7 +116,7 @@ print("\n💡 Notice: Memori automatically knows about your FastAPI Python proje
 | **Rules** | User preferences/constraints | Permanent | "I prefer Python", "Use pytest" |
 | **Entities** | People, projects, technologies | Tracked | Relationship mapping |
 
-## 🔌 Universal Integration
+## Universal Integration
 
 Works with **ANY** LLM library:
 
@@ -140,7 +140,7 @@ client.messages.create(...)
 # All automatically recorded and contextualized!
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Simple Setup
 ```python
@@ -165,7 +165,7 @@ memori = Memori()
 memori.enable()
 ```
 
-## 📚 Next Steps
+## Next Steps
 
 - [Installation Guide](getting-started/installation.md) - Detailed setup instructions
 - [Quick Start](getting-started/quick-start.md) - Get running in 3 minutes  
