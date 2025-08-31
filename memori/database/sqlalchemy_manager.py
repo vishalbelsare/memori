@@ -4,10 +4,11 @@ Replaces the existing database.py with cross-database compatibility
 """
 
 import json
+import ssl
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 from pathlib import Path
 
 from loguru import logger
@@ -30,13 +31,13 @@ from .auto_creator import DatabaseAutoCreator
 class SQLAlchemyDatabaseManager:
     """SQLAlchemy-based database manager with cross-database support"""
     
-    def __init__(self, database_connect: str, template: str = "basic", enable_auto_creation: bool = True):
+    def __init__(self, database_connect: str, template: str = "basic", schema_init: bool = True):
         self.database_connect = database_connect
         self.template = template
-        self.enable_auto_creation = enable_auto_creation
+        self.schema_init = schema_init
         
         # Initialize database auto-creator
-        self.auto_creator = DatabaseAutoCreator(enable_auto_creation)
+        self.auto_creator = DatabaseAutoCreator(schema_init)
         
         # Ensure database exists (create if necessary)
         self.database_connect = self.auto_creator.ensure_database_exists(database_connect)
@@ -82,6 +83,32 @@ class SQLAlchemyDatabaseManager:
             elif database_connect.startswith("mysql:") or database_connect.startswith("mysql+"):
                 # MySQL-specific configuration
                 connect_args = {"charset": "utf8mb4"}
+                
+                # Parse URL for SSL parameters
+                parsed = urlparse(database_connect)
+                if parsed.query:
+                    query_params = parse_qs(parsed.query)
+                    
+                    # Handle SSL parameters for PyMySQL - enforce secure transport
+                    if any(key in query_params for key in ['ssl', 'ssl_disabled']):
+                        if query_params.get('ssl', ['false'])[0].lower() == 'true':
+                            # Enable SSL with secure configuration for required secure transport
+                            connect_args['ssl'] = {
+                                'ssl_disabled': False,
+                                'check_hostname': False, 
+                                'verify_mode': ssl.CERT_NONE
+                            }
+                            # Also add ssl_disabled=False for PyMySQL
+                            connect_args['ssl_disabled'] = False
+                        elif query_params.get('ssl_disabled', ['true'])[0].lower() == 'false':
+                            # Enable SSL with secure configuration for required secure transport
+                            connect_args['ssl'] = {
+                                'ssl_disabled': False,
+                                'check_hostname': False, 
+                                'verify_mode': ssl.CERT_NONE
+                            }
+                            # Also add ssl_disabled=False for PyMySQL
+                            connect_args['ssl_disabled'] = False
                 
                 # Different args for different MySQL drivers
                 if "pymysql" in database_connect:

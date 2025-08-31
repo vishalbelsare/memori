@@ -64,7 +64,7 @@ class Memori:
         project: Optional[str] = None,
         model: Optional[str] = None,  # Allow custom model selection
         provider_config: Optional[Any] = None,  # ProviderConfig when available
-        enable_auto_creation: bool = True,  # Enable automatic database creation
+        schema_init: bool = True,  # Initialize database schema and create tables
         database_prefix: Optional[str] = None,  # Database name prefix
         database_suffix: Optional[str] = None,  # Database name suffix  
     ):
@@ -108,7 +108,7 @@ class Memori:
         self.memory_filters = memory_filters or {}
         self.user_id = user_id
         self.verbose = verbose
-        self.enable_auto_creation = enable_auto_creation
+        self.schema_init = schema_init
         self.database_prefix = database_prefix
         self.database_suffix = database_suffix
 
@@ -176,7 +176,7 @@ class Memori:
         self._setup_logging()
 
         # Initialize database manager
-        self.db_manager = DatabaseManager(database_connect, template, enable_auto_creation)
+        self.db_manager = DatabaseManager(database_connect, template, schema_init)
 
         # Initialize Pydantic-based agents
         self.memory_agent = None
@@ -307,6 +307,10 @@ class Memori:
 
     def _setup_database(self):
         """Setup database tables based on template"""
+        if not self.schema_init:
+            logger.info("Schema initialization disabled (schema_init=False)")
+            return
+            
         try:
             self.db_manager.initialize_schema()
             logger.info("Database schema initialized successfully")

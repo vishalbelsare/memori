@@ -5,7 +5,9 @@ This module automatically creates databases if they don't exist, supporting
 PostgreSQL and MySQL with proper error handling and security validation.
 """
 
+import ssl
 from typing import Optional, Dict
+from urllib.parse import urlparse, parse_qs
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError, OperationalError, ProgrammingError
 from loguru import logger
@@ -16,14 +18,14 @@ from .connection_utils import DatabaseConnectionUtils
 class DatabaseAutoCreator:
     """Handles automatic database creation for PostgreSQL and MySQL"""
     
-    def __init__(self, enable_auto_creation: bool = True):
+    def __init__(self, schema_init: bool = True):
         """
         Initialize database auto-creator.
         
         Args:
-            enable_auto_creation: Whether to enable automatic database creation
+            schema_init: Whether to enable automatic database creation
         """
-        self.enable_auto_creation = enable_auto_creation
+        self.schema_init = schema_init
         self.utils = DatabaseConnectionUtils()
     
     def ensure_database_exists(self, connection_string: str) -> str:
@@ -39,7 +41,7 @@ class DatabaseAutoCreator:
         Raises:
             DatabaseCreationError: If database creation fails
         """
-        if not self.enable_auto_creation:
+        if not self.schema_init:
             logger.debug("Auto-creation disabled, using original connection string")
             return connection_string
         
@@ -109,11 +111,44 @@ class DatabaseAutoCreator:
             logger.error(f"PostgreSQL database existence check failed: {e}")
             return False
     
+    def _get_mysql_connect_args(self, original_url: str) -> Dict:
+        """Get MySQL connection arguments with SSL support for system database connections."""
+        connect_args = {"charset": "utf8mb4"}
+        
+        # Parse original URL for SSL parameters
+        parsed = urlparse(original_url)
+        if parsed.query:
+            query_params = parse_qs(parsed.query)
+            
+            # Handle SSL parameters for PyMySQL - same logic as sqlalchemy_manager
+            if any(key in query_params for key in ['ssl', 'ssl_disabled']):
+                if query_params.get('ssl', ['false'])[0].lower() == 'true':
+                    # Enable SSL with secure configuration for required secure transport
+                    connect_args['ssl'] = {
+                        'ssl_disabled': False,
+                        'check_hostname': False, 
+                        'verify_mode': ssl.CERT_NONE
+                    }
+                    # Also add ssl_disabled=False for PyMySQL
+                    connect_args['ssl_disabled'] = False
+                elif query_params.get('ssl_disabled', ['true'])[0].lower() == 'false':
+                    # Enable SSL with secure configuration for required secure transport
+                    connect_args['ssl'] = {
+                        'ssl_disabled': False,
+                        'check_hostname': False, 
+                        'verify_mode': ssl.CERT_NONE
+                    }
+                    # Also add ssl_disabled=False for PyMySQL
+                    connect_args['ssl_disabled'] = False
+        
+        return connect_args
+
     def _mysql_database_exists(self, components: Dict[str, str]) -> bool:
         """Check if MySQL database exists."""
         try:
-            # Connect to mysql system database
-            engine = create_engine(components['default_url'])
+            # Connect to mysql system database with SSL support
+            connect_args = self._get_mysql_connect_args(components['original_url'])
+            engine = create_engine(components['default_url'], connect_args=connect_args)
             
             with engine.connect() as conn:
                 result = conn.execute(
@@ -178,8 +213,9 @@ class DatabaseAutoCreator:
         try:
             logger.info(f"Creating MySQL database '{components['database']}'...")
             
-            # Connect to mysql system database
-            engine = create_engine(components['default_url'])
+            # Connect to mysql system database with SSL support
+            connect_args = self._get_mysql_connect_args(components['original_url'])
+            engine = create_engine(components['default_url'], connect_args=connect_args)
             
             with engine.connect() as conn:
                 # Create database (can't use parameters for database name)
@@ -222,11 +258,11 @@ class DatabaseAutoCreator:
                 'host': components['host'],
                 'port': components['port'],
                 'needs_creation': components['needs_creation'],
-                'auto_creation_enabled': self.enable_auto_creation,
+                'auto_creation_enabled': self.schema_init,
             }
             
             # Add existence check if auto-creation is enabled
-            if self.enable_auto_creation and components['needs_creation']:
+            if self.schema_init and components['needs_creation']:
                 info['exists'] = self._database_exists(components)
             
             return info

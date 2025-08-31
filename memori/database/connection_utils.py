@@ -68,7 +68,10 @@ class DatabaseConnectionUtils:
             
             # Create default database URL for system operations
             default_db = cls.DEFAULT_DATABASES.get(engine)
-            default_url = f"{base_url}/{default_db}" if default_db else base_url
+            
+            # Preserve query parameters (especially SSL settings) for system database connections
+            query_string = f"?{parsed.query}" if parsed.query else ""
+            default_url = f"{base_url}/{default_db}{query_string}" if default_db else f"{base_url}{query_string}"
             
             return {
                 'engine': engine,
@@ -127,8 +130,9 @@ class DatabaseConnectionUtils:
         if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_-]*$', database_name):
             return False
             
-        # Reserved words check (basic)
-        reserved_words = ['mysql', 'postgres', 'information_schema', 'performance_schema', 'sys']
+        # Reserved words check (only for database creation, not connection)
+        # Note: 'postgres' is a valid system database to connect to in PostgreSQL
+        reserved_words = ['mysql', 'information_schema', 'performance_schema', 'sys']
         if database_name.lower() in reserved_words:
             return False
             
