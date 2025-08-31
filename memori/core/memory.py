@@ -64,6 +64,9 @@ class Memori:
         project: Optional[str] = None,
         model: Optional[str] = None,  # Allow custom model selection
         provider_config: Optional[Any] = None,  # ProviderConfig when available
+        enable_auto_creation: bool = True,  # Enable automatic database creation
+        database_prefix: Optional[str] = None,  # Database name prefix
+        database_suffix: Optional[str] = None,  # Database name suffix  
     ):
         """
         Initialize Memori memory system v1.0.
@@ -91,6 +94,9 @@ class Memori:
             project: OpenAI project ID
             model: Model to use (defaults to 'gpt-4o' if not specified)
             provider_config: Complete provider configuration (overrides individual params)
+            enable_auto_creation: Enable automatic database creation if database doesn't exist
+            database_prefix: Optional prefix for database name (for multi-tenant setups)
+            database_suffix: Optional suffix for database name (e.g., 'dev', 'prod', 'test')
         """
         self.database_connect = database_connect
         self.template = template
@@ -102,6 +108,9 @@ class Memori:
         self.memory_filters = memory_filters or {}
         self.user_id = user_id
         self.verbose = verbose
+        self.enable_auto_creation = enable_auto_creation
+        self.database_prefix = database_prefix
+        self.database_suffix = database_suffix
 
         # Configure provider based on explicit settings ONLY - no auto-detection
         if provider_config:
@@ -167,7 +176,7 @@ class Memori:
         self._setup_logging()
 
         # Initialize database manager
-        self.db_manager = DatabaseManager(database_connect, template)
+        self.db_manager = DatabaseManager(database_connect, template, enable_auto_creation)
 
         # Initialize Pydantic-based agents
         self.memory_agent = None
@@ -498,7 +507,7 @@ class Memori:
                         "expires_at": None,
                         "searchable_content": searchable_content,
                         "summary": summary,
-                        "is_permanent_context": 1,
+                        "is_permanent_context": True,
                     },
                 )
                 connection.commit()
@@ -1700,7 +1709,7 @@ class Memori:
             with self.db_manager._get_connection() as connection:
                 result = connection.execute(
                     text(MemoryQueries.SELECT_MEMORIES_FOR_DEDUPLICATION),
-                    {"namespace": self.namespace, "limit": 20}  # Get last 20 memories
+                    {"namespace": self.namespace, "processed_for_duplicates": False, "limit": 20}
                 )
 
                 memories = []

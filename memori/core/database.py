@@ -375,19 +375,19 @@ class DatabaseManager:
                     memory.topic,
                     json.dumps(memory.entities),
                     json.dumps(memory.keywords),
-                    1 if memory.is_user_context else 0,
-                    1 if memory.is_preference else 0,
-                    1 if memory.is_skill_knowledge else 0,
-                    1 if memory.is_current_project else 0,
-                    1 if memory.promotion_eligible else 0,
+                    memory.is_user_context,
+                    memory.is_preference,
+                    memory.is_skill_knowledge,
+                    memory.is_current_project,
+                    memory.promotion_eligible,
                     memory.duplicate_of,
                     json.dumps(memory.supersedes),
                     json.dumps(memory.related_memories),
                     memory.confidence_score,
                     memory.extraction_timestamp.isoformat(),
                     memory.classification_reason,
-                    0,  # processed_for_duplicates
-                    0,  # conscious_processed
+                    False,  # processed_for_duplicates
+                    False,  # conscious_processed
                 ],
                 operation_type='insert',
                 table='long_term_memory',

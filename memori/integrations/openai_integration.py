@@ -208,6 +208,36 @@ class OpenAIInterceptor:
         return options
     
     @classmethod
+    def _is_internal_agent_call(cls, json_data):
+        """Check if this is an internal agent processing call that should not be recorded."""
+        try:
+            messages = json_data.get('messages', [])
+            for message in messages:
+                content = message.get('content', '')
+                if isinstance(content, str):
+                    # Check for internal agent processing patterns
+                    internal_patterns = [
+                        "Process this conversation for enhanced memory storage:",
+                        "User query:",
+                        "Enhanced memory processing:",
+                        "Memory classification:",
+                        "Search for relevant memories:",
+                        "Analyze conversation for:",
+                        "Extract entities from:",
+                        "Categorize the following conversation:",
+                    ]
+                    
+                    for pattern in internal_patterns:
+                        if pattern in content:
+                            return True
+            
+            return False
+            
+        except Exception as e:
+            logger.debug(f"Failed to check internal agent call: {e}")
+            return False
+    
+    @classmethod
     def _record_conversation_for_enabled_instances(cls, options, response, client_type):
         """Record conversation for all enabled Memori instances."""
         for memori_instance in _enabled_memori_instances:
@@ -216,6 +246,9 @@ class OpenAIInterceptor:
                     json_data = getattr(options, 'json_data', None) or {}
                     
                     if 'messages' in json_data:
+                        # Skip internal agent processing calls
+                        if cls._is_internal_agent_call(json_data):
+                            continue
                         # Chat completions
                         memori_instance._record_openai_conversation(json_data, response)
                     elif 'prompt' in json_data:

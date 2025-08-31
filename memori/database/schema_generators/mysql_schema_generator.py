@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS short_term_memory (
     last_accessed TIMESTAMP NULL,
     searchable_content TEXT NOT NULL,
     summary TEXT NOT NULL,
-    is_permanent_context BOOLEAN DEFAULT 0,
+    is_permanent_context BOOLEAN DEFAULT FALSE,
     INDEX idx_chat_id (chat_id),
     FOREIGN KEY (chat_id) REFERENCES chat_history (chat_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -86,11 +86,11 @@ CREATE TABLE IF NOT EXISTS long_term_memory (
     keywords_json JSON DEFAULT (JSON_ARRAY()),
     
     -- Conscious Context Flags
-    is_user_context BOOLEAN DEFAULT 0,
-    is_preference BOOLEAN DEFAULT 0,
-    is_skill_knowledge BOOLEAN DEFAULT 0,
-    is_current_project BOOLEAN DEFAULT 0,
-    promotion_eligible BOOLEAN DEFAULT 0,
+    is_user_context BOOLEAN DEFAULT FALSE,
+    is_preference BOOLEAN DEFAULT FALSE,
+    is_skill_knowledge BOOLEAN DEFAULT FALSE,
+    is_current_project BOOLEAN DEFAULT FALSE,
+    promotion_eligible BOOLEAN DEFAULT FALSE,
     
     -- Memory Management
     duplicate_of VARCHAR(255),
@@ -103,8 +103,8 @@ CREATE TABLE IF NOT EXISTS long_term_memory (
     classification_reason TEXT,
     
     -- Processing Status
-    processed_for_duplicates BOOLEAN DEFAULT 0,
-    conscious_processed BOOLEAN DEFAULT 0
+    processed_for_duplicates BOOLEAN DEFAULT FALSE,
+    conscious_processed BOOLEAN DEFAULT FALSE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
     

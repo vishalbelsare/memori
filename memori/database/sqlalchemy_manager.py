@@ -23,17 +23,26 @@ from ..utils.pydantic_models import (
 )
 from .models import Base, ChatHistory, ShortTermMemory, LongTermMemory, DatabaseManager as BaseDBManager
 from .search_service import SearchService
+from .query_translator import QueryParameterTranslator
+from .auto_creator import DatabaseAutoCreator
 
 
 class SQLAlchemyDatabaseManager:
     """SQLAlchemy-based database manager with cross-database support"""
     
-    def __init__(self, database_connect: str, template: str = "basic"):
+    def __init__(self, database_connect: str, template: str = "basic", enable_auto_creation: bool = True):
         self.database_connect = database_connect
         self.template = template
+        self.enable_auto_creation = enable_auto_creation
+        
+        # Initialize database auto-creator
+        self.auto_creator = DatabaseAutoCreator(enable_auto_creation)
+        
+        # Ensure database exists (create if necessary)
+        self.database_connect = self.auto_creator.ensure_database_exists(database_connect)
         
         # Parse connection string and create engine
-        self.engine = self._create_engine(database_connect)
+        self.engine = self._create_engine(self.database_connect)
         self.database_type = self.engine.dialect.name
         
         # Create session factory
@@ -41,6 +50,9 @@ class SQLAlchemyDatabaseManager:
         
         # Initialize search service
         self._search_service = None
+        
+        # Initialize query parameter translator for cross-database compatibility
+        self.query_translator = QueryParameterTranslator(self.database_type)
         
         logger.info(f"Initialized SQLAlchemy database manager for {self.database_type}")
     
@@ -69,16 +81,28 @@ class SQLAlchemyDatabaseManager:
                 
             elif database_connect.startswith("mysql:") or database_connect.startswith("mysql+"):
                 # MySQL-specific configuration
+                connect_args = {"charset": "utf8mb4"}
+                
+                # Different args for different MySQL drivers
+                if "pymysql" in database_connect:
+                    # PyMySQL-specific arguments
+                    connect_args.update({
+                        "charset": "utf8mb4",
+                        "autocommit": False,
+                    })
+                elif "mysqlconnector" in database_connect or "mysql+mysqlconnector" in database_connect:
+                    # MySQL Connector/Python-specific arguments
+                    connect_args.update({
+                        "charset": "utf8mb4",
+                        "use_pure": True,
+                    })
+                
                 engine = create_engine(
                     database_connect,
                     json_serializer=json.dumps,
                     json_deserializer=json.loads,
                     echo=False,
-                    # MySQL-specific options
-                    connect_args={
-                        "charset": "utf8mb4",
-                        "use_pure": True,
-                    },
+                    connect_args=connect_args,
                     pool_pre_ping=True,  # Validate connections
                     pool_recycle=3600,   # Recycle connections every hour
                 )
@@ -480,12 +504,33 @@ class SQLAlchemyDatabaseManager:
                 session.rollback()
                 raise DatabaseError(f"Failed to clear memory: {e}")
     
+    def execute_with_translation(self, query: str, parameters: Dict[str, Any] = None):
+        """
+        Execute a query with automatic parameter translation for cross-database compatibility.
+        
+        Args:
+            query: SQL query string
+            parameters: Query parameters
+            
+        Returns:
+            Query result
+        """
+        if parameters:
+            translated_params = self.query_translator.translate_parameters(parameters)
+        else:
+            translated_params = {}
+        
+        with self.engine.connect() as conn:
+            result = conn.execute(text(query), translated_params)
+            conn.commit()
+            return result
+    
     def _get_connection(self):
         """
         Compatibility method for legacy code that expects raw database connections.
         
-        Returns a context manager that provides a SQLAlchemy connection
-        similar to the old DatabaseManager._get_connection() method.
+        Returns a context manager that provides a SQLAlchemy connection with
+        automatic parameter translation support.
         
         This is used by memory.py for direct SQL queries.
         """
@@ -493,9 +538,56 @@ class SQLAlchemyDatabaseManager:
         
         @contextmanager
         def connection_context():
+            class TranslatingConnection:
+                """Wrapper that adds parameter translation to SQLAlchemy connections"""
+                
+                def __init__(self, conn, translator):
+                    self._conn = conn
+                    self._translator = translator
+                
+                def execute(self, query, parameters=None):
+                    """Execute query with automatic parameter translation"""
+                    if parameters:
+                        # Handle both text() queries and raw strings
+                        if hasattr(query, 'text'):
+                            # SQLAlchemy text() object
+                            translated_params = self._translator.translate_parameters(parameters)
+                            return self._conn.execute(query, translated_params)
+                        else:
+                            # Raw string query
+                            translated_params = self._translator.translate_parameters(parameters)
+                            return self._conn.execute(text(str(query)), translated_params)
+                    else:
+                        return self._conn.execute(query)
+                
+                def commit(self):
+                    """Commit transaction"""
+                    return self._conn.commit()
+                
+                def rollback(self):
+                    """Rollback transaction"""
+                    return self._conn.rollback()
+                
+                def close(self):
+                    """Close connection"""
+                    return self._conn.close()
+                
+                def fetchall(self):
+                    """Compatibility method for cursor-like usage"""
+                    # This is for backwards compatibility with code that expects cursor.fetchall()
+                    return []
+                
+                def scalar(self):
+                    """Compatibility method for cursor-like usage"""
+                    return None
+                
+                def __getattr__(self, name):
+                    """Delegate unknown attributes to the underlying connection"""
+                    return getattr(self._conn, name)
+            
             conn = self.engine.connect()
             try:
-                yield conn
+                yield TranslatingConnection(conn, self.query_translator)
             finally:
                 conn.close()
         
@@ -511,10 +603,18 @@ class SQLAlchemyDatabaseManager:
     
     def get_database_info(self) -> Dict[str, Any]:
         """Get database information and capabilities"""
-        return {
+        base_info = {
             'database_type': self.database_type,
             'database_url': self.database_connect.split('@')[-1] if '@' in self.database_connect else self.database_connect,
             'driver': self.engine.dialect.driver,
             'server_version': getattr(self.engine.dialect, 'server_version_info', None),
             'supports_fulltext': True,  # Assume true for SQLAlchemy managed connections
+            'auto_creation_enabled': self.enable_auto_creation,
         }
+        
+        # Add auto-creation specific information
+        if hasattr(self, 'auto_creator'):
+            creation_info = self.auto_creator.get_database_info(self.database_connect)
+            base_info.update(creation_info)
+        
+        return base_info

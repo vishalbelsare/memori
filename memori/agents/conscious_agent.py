@@ -5,6 +5,7 @@ This agent copies conscious-info labeled memories from long-term memory
 directly to short-term memory for immediate context availability.
 """
 
+import json
 from datetime import datetime
 from typing import List
 
@@ -203,9 +204,9 @@ class ConsciouscAgent:
                               importance_score, created_at
                        FROM long_term_memory 
                        WHERE namespace = :namespace AND classification = 'conscious-info' 
-                       AND conscious_processed = 0
+                       AND conscious_processed = :conscious_processed
                        ORDER BY importance_score DESC, created_at DESC"""),
-                    {"namespace": namespace},
+                    {"namespace": namespace, "conscious_processed": False},
                 )
                 return cursor.fetchall()
 
@@ -263,7 +264,7 @@ class ConsciouscAgent:
                         :searchable_content, :summary, :is_permanent_context)"""),
                     {
                         "memory_id": short_term_id,
-                        "processed_data": processed_data,  # Copy exact processed_data from long-term memory
+                        "processed_data": json.dumps(processed_data) if isinstance(processed_data, dict) else processed_data,
                         "importance_score": importance_score,
                         "category_primary": "conscious_context",  # Use conscious_context category
                         "retention_type": "permanent",
@@ -272,7 +273,7 @@ class ConsciouscAgent:
                         "expires_at": None,  # No expiration (permanent)
                         "searchable_content": searchable_content,  # Copy exact searchable_content
                         "summary": summary,  # Copy exact summary
-                        "is_permanent_context": 1,  # is_permanent_context = True
+                        "is_permanent_context": True,  # is_permanent_context = True
                     },
                 )
                 connection.commit()
@@ -299,9 +300,9 @@ class ConsciouscAgent:
                 for memory_id in memory_ids:
                     connection.execute(
                         text("""UPDATE long_term_memory 
-                           SET conscious_processed = 1
+                           SET conscious_processed = :conscious_processed
                            WHERE memory_id = :memory_id AND namespace = :namespace"""),
-                        {"memory_id": memory_id, "namespace": namespace},
+                        {"memory_id": memory_id, "namespace": namespace, "conscious_processed": True},
                     )
                 connection.commit()
 

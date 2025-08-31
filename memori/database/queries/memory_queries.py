@@ -191,8 +191,8 @@ class MemoryQueries(BaseQueries):
         WHERE namespace = ? 
         AND (
             classification = 'conscious-info' 
-            OR promotion_eligible = 1
-            OR is_user_context = 1
+            OR promotion_eligible = ?
+            OR is_user_context = ?
         )
         ORDER BY importance_score DESC, extraction_timestamp DESC
     """
@@ -200,13 +200,13 @@ class MemoryQueries(BaseQueries):
     SELECT_UNPROCESSED_CONSCIOUS = """
         SELECT memory_id, processed_data, classification, is_user_context, promotion_eligible
         FROM long_term_memory
-        WHERE namespace = ? AND conscious_processed = 0
-        AND (classification = 'conscious-info' OR promotion_eligible = 1 OR is_user_context = 1)
+        WHERE namespace = ? AND conscious_processed = ?
+        AND (classification = 'conscious-info' OR promotion_eligible = ? OR is_user_context = ?)
     """
 
     SELECT_USER_CONTEXT_PROFILE = """
         SELECT processed_data FROM short_term_memory
-        WHERE namespace = ? AND is_permanent_context = 1
+        WHERE namespace = ? AND is_permanent_context = ?
         AND category_primary = 'user_context'
     """
 
@@ -220,7 +220,7 @@ class MemoryQueries(BaseQueries):
 
     MARK_CONSCIOUS_PROCESSED = """
         UPDATE long_term_memory 
-        SET conscious_processed = 1
+        SET conscious_processed = ?
         WHERE memory_id = ? AND namespace = ?
     """
 
@@ -236,22 +236,22 @@ class MemoryQueries(BaseQueries):
     SELECT_MEMORIES_FOR_DEDUPLICATION = """
         SELECT memory_id, summary, searchable_content, classification, created_at
         FROM long_term_memory
-        WHERE namespace = :namespace AND processed_for_duplicates = 0
+        WHERE namespace = :namespace AND processed_for_duplicates = :processed_for_duplicates
         ORDER BY created_at DESC
         LIMIT :limit
     """
 
     UPDATE_DUPLICATE_STATUS = """
         UPDATE long_term_memory
-        SET duplicate_of = ?, processed_for_duplicates = 1
+        SET duplicate_of = ?, processed_for_duplicates = ?
         WHERE memory_id = ? AND namespace = ?
     """
 
     SELECT_PROMOTION_ELIGIBLE_MEMORIES = """
         SELECT memory_id, processed_data, summary, classification
         FROM long_term_memory
-        WHERE namespace = ? AND promotion_eligible = 1 
-        AND conscious_processed = 0
+        WHERE namespace = ? AND promotion_eligible = ? 
+        AND conscious_processed = ?
     """
 
     # Performance Queries
@@ -261,7 +261,7 @@ class MemoryQueries(BaseQueries):
                confidence_score, created_at
         FROM long_term_memory
         WHERE namespace = ? 
-        AND (is_user_context = 1 OR is_preference = 1 OR is_skill_knowledge = 1 OR is_current_project = 1)
+        AND (is_user_context = ? OR is_preference = ? OR is_skill_knowledge = ? OR is_current_project = ?)
         ORDER BY importance_score DESC, created_at DESC
         LIMIT ?
     """
