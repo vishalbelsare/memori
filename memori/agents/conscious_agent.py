@@ -75,6 +75,57 @@ class ConsciouscAgent:
             logger.error(f"ConsciouscAgent: Conscious ingest failed: {e}")
             return False
 
+    async def initialize_existing_conscious_memories(
+        self, db_manager, namespace: str = "default"
+    ) -> bool:
+        """
+        Initialize by copying ALL existing conscious-info memories to short-term memory
+        This is called when both auto_ingest=True and conscious_ingest=True
+        to ensure essential conscious information is immediately available
+
+        Args:
+            db_manager: Database manager instance
+            namespace: Memory namespace
+
+        Returns:
+            True if memories were processed, False otherwise
+        """
+        try:
+            from sqlalchemy import text
+            
+            with db_manager._get_connection() as connection:
+                # Get ALL conscious-info labeled memories from long-term memory
+                cursor = connection.execute(
+                    text("""SELECT memory_id, processed_data, summary, searchable_content, 
+                              importance_score, created_at
+                       FROM long_term_memory 
+                       WHERE namespace = :namespace AND classification = 'conscious-info' 
+                       ORDER BY importance_score DESC, created_at DESC"""),
+                    {"namespace": namespace},
+                )
+                existing_conscious_memories = cursor.fetchall()
+
+            if not existing_conscious_memories:
+                logger.debug("ConsciouscAgent: No existing conscious-info memories found for initialization")
+                return False
+
+            copied_count = 0
+            for memory_row in existing_conscious_memories:
+                success = await self._copy_memory_to_short_term(db_manager, namespace, memory_row)
+                if success:
+                    copied_count += 1
+
+            if copied_count > 0:
+                logger.info(f"ConsciouscAgent: Initialized {copied_count} existing conscious-info memories to short-term memory")
+                return True
+            else:
+                logger.debug("ConsciouscAgent: No new conscious memories to initialize (all were duplicates)")
+                return False
+
+        except Exception as e:
+            logger.error(f"ConsciouscAgent: Failed to initialize existing conscious memories: {e}")
+            return False
+
     async def check_for_context_updates(
         self, db_manager, namespace: str = "default"
     ) -> bool:
@@ -165,7 +216,7 @@ class ConsciouscAgent:
     async def _copy_memory_to_short_term(
         self, db_manager, namespace: str, memory_row: tuple
     ) -> bool:
-        """Copy a conscious memory directly to short-term memory"""
+        """Copy a conscious memory directly to short-term memory with duplicate filtering"""
         try:
             (
                 memory_id,
@@ -176,12 +227,31 @@ class ConsciouscAgent:
                 _,
             ) = memory_row
 
-            # Create short-term memory ID
-            short_term_id = f"conscious_{memory_id}_{int(datetime.now().timestamp())}"
-
             from sqlalchemy import text
             
             with db_manager._get_connection() as connection:
+                # Check if similar content already exists in short-term memory
+                existing_check = connection.execute(
+                    text("""SELECT COUNT(*) FROM short_term_memory 
+                           WHERE namespace = :namespace 
+                           AND category_primary = 'conscious_context'
+                           AND (searchable_content = :searchable_content 
+                                OR summary = :summary)"""),
+                    {
+                        "namespace": namespace,
+                        "searchable_content": searchable_content,
+                        "summary": summary
+                    }
+                )
+                
+                existing_count = existing_check.scalar()
+                if existing_count > 0:
+                    logger.debug(f"ConsciouscAgent: Skipping duplicate memory {memory_id} - similar content already exists in short-term memory")
+                    return False
+
+                # Create short-term memory ID
+                short_term_id = f"conscious_{memory_id}_{int(datetime.now().timestamp())}"
+                
                 # Insert directly into short-term memory with conscious_context category
                 connection.execute(
                     text("""INSERT INTO short_term_memory (

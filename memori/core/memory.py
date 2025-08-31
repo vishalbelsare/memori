@@ -346,14 +346,26 @@ class Memori:
                     )
                     self._conscious_init_pending = False
             except RuntimeError:
-                # Still no event loop, keep pending
-                pass
+                # No event loop available, run synchronous initialization
+                logger.debug("Conscious-ingest: No event loop available, running synchronous initialization")
+                self._run_synchronous_conscious_initialization()
+                self._conscious_init_pending = False
 
     async def _run_conscious_initialization(self):
         """Run conscious agent initialization in background"""
         try:
             if not self.conscious_agent:
                 return
+
+            # If both auto_ingest and conscious_ingest are enabled, 
+            # initialize by copying ALL existing conscious-info memories first
+            if self.auto_ingest and self.conscious_ingest:
+                logger.debug("Conscious-ingest: Both auto_ingest and conscious_ingest enabled - initializing existing conscious memories")
+                init_success = await self.conscious_agent.initialize_existing_conscious_memories(
+                    self.db_manager, self.namespace
+                )
+                if init_success:
+                    logger.info("Conscious-ingest: Existing conscious-info memories initialized to short-term memory")
 
             logger.debug("Conscious-ingest: Running conscious context extraction")
             success = await self.conscious_agent.run_conscious_ingest(
@@ -370,6 +382,133 @@ class Memori:
 
         except Exception as e:
             logger.error(f"Conscious agent initialization failed: {e}")
+
+    def _run_synchronous_conscious_initialization(self):
+        """Run conscious agent initialization synchronously (when no event loop is available)"""
+        try:
+            if not self.conscious_agent:
+                return
+            
+            # If both auto_ingest and conscious_ingest are enabled, 
+            # initialize by copying ALL existing conscious-info memories first
+            if self.auto_ingest and self.conscious_ingest:
+                logger.info("Conscious-ingest: Both auto_ingest and conscious_ingest enabled - initializing existing conscious memories")
+                
+                # Run synchronous initialization of existing memories
+                self._initialize_existing_conscious_memories_sync()
+                
+            logger.debug("Conscious-ingest: Synchronous conscious context extraction completed")
+            
+        except Exception as e:
+            logger.error(f"Synchronous conscious agent initialization failed: {e}")
+    
+    def _initialize_existing_conscious_memories_sync(self):
+        """Synchronously initialize existing conscious-info memories"""
+        try:
+            from sqlalchemy import text
+            
+            with self.db_manager._get_connection() as connection:
+                # Get ALL conscious-info labeled memories from long-term memory
+                cursor = connection.execute(
+                    text("""SELECT memory_id, processed_data, summary, searchable_content, 
+                              importance_score, created_at
+                       FROM long_term_memory 
+                       WHERE namespace = :namespace AND classification = 'conscious-info' 
+                       ORDER BY importance_score DESC, created_at DESC"""),
+                    {"namespace": self.namespace or "default"},
+                )
+                existing_conscious_memories = cursor.fetchall()
+
+            if not existing_conscious_memories:
+                logger.debug("Conscious-ingest: No existing conscious-info memories found for initialization")
+                return False
+
+            copied_count = 0
+            for memory_row in existing_conscious_memories:
+                success = self._copy_memory_to_short_term_sync(memory_row)
+                if success:
+                    copied_count += 1
+
+            if copied_count > 0:
+                logger.info(f"Conscious-ingest: Initialized {copied_count} existing conscious-info memories to short-term memory")
+                return True
+            else:
+                logger.debug("Conscious-ingest: No new conscious memories to initialize (all were duplicates)")
+                return False
+
+        except Exception as e:
+            logger.error(f"Conscious-ingest: Failed to initialize existing conscious memories: {e}")
+            return False
+    
+    def _copy_memory_to_short_term_sync(self, memory_row: tuple) -> bool:
+        """Synchronously copy a conscious memory to short-term memory with duplicate filtering"""
+        try:
+            (
+                memory_id,
+                processed_data,
+                summary,
+                searchable_content,
+                importance_score,
+                _,
+            ) = memory_row
+
+            from sqlalchemy import text
+            from datetime import datetime
+            
+            with self.db_manager._get_connection() as connection:
+                # Check if similar content already exists in short-term memory
+                existing_check = connection.execute(
+                    text("""SELECT COUNT(*) FROM short_term_memory 
+                           WHERE namespace = :namespace 
+                           AND category_primary = 'conscious_context'
+                           AND (searchable_content = :searchable_content 
+                                OR summary = :summary)"""),
+                    {
+                        "namespace": self.namespace or "default",
+                        "searchable_content": searchable_content,
+                        "summary": summary
+                    }
+                )
+                
+                existing_count = existing_check.scalar()
+                if existing_count > 0:
+                    logger.debug(f"Conscious-ingest: Skipping duplicate memory {memory_id} - similar content already exists in short-term memory")
+                    return False
+
+                # Create short-term memory ID
+                short_term_id = f"conscious_{memory_id}_{int(datetime.now().timestamp())}"
+                
+                # Insert directly into short-term memory with conscious_context category
+                connection.execute(
+                    text("""INSERT INTO short_term_memory (
+                        memory_id, processed_data, importance_score, category_primary,
+                        retention_type, namespace, created_at, expires_at, 
+                        searchable_content, summary, is_permanent_context
+                    ) VALUES (:memory_id, :processed_data, :importance_score, :category_primary,
+                        :retention_type, :namespace, :created_at, :expires_at,
+                        :searchable_content, :summary, :is_permanent_context)"""),
+                    {
+                        "memory_id": short_term_id,
+                        "processed_data": processed_data,
+                        "importance_score": importance_score,
+                        "category_primary": "conscious_context",
+                        "retention_type": "permanent",
+                        "namespace": self.namespace or "default",
+                        "created_at": datetime.now().isoformat(),
+                        "expires_at": None,
+                        "searchable_content": searchable_content,
+                        "summary": summary,
+                        "is_permanent_context": 1,
+                    },
+                )
+                connection.commit()
+
+            logger.debug(f"Conscious-ingest: Copied memory {memory_id} to short-term as {short_term_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Conscious-ingest: Failed to copy memory {memory_row[0]} to short-term: {e}")
+            return False
 
     def enable(self, interceptors: Optional[List[str]] = None):
         """
@@ -485,11 +624,17 @@ class Memori:
     def _inject_openai_context(self, kwargs):
         """Inject context for OpenAI calls based on ingest mode using ConversationManager"""
         try:
-            # Determine injection mode
-            if self.conscious_ingest:
-                mode = "conscious"
-            elif self.auto_ingest:
-                mode = "auto"
+            # Check for deferred conscious initialization
+            self._check_deferred_initialization()
+            
+            # Determine injection mode based on the architecture:
+            # - conscious_ingest only: Use short-term memory (conscious context)
+            # - auto_ingest only: Search long-term memory database
+            # - both enabled: Use auto_ingest search (includes conscious content from long-term)
+            if self.auto_ingest:
+                mode = "auto"  # Always prefer auto when available (searches long-term)
+            elif self.conscious_ingest:
+                mode = "conscious"  # Only use conscious when auto is not enabled
             else:
                 return kwargs  # No injection needed
 
@@ -801,61 +946,98 @@ class Memori:
         Searches through entire database for relevant memories.
         """
         try:
+            # Early validation
+            if not user_input or not user_input.strip():
+                logger.debug("Auto-ingest: No user input provided, returning empty context")
+                return []
+            
             # Check for recursion guard to prevent infinite loops
             if hasattr(self, '_in_context_retrieval') and self._in_context_retrieval:
                 logger.debug("Auto-ingest: Recursion detected, using direct database search")
-                return self.db_manager.search_memories(
+                results = self.db_manager.search_memories(
                     query=user_input,
                     namespace=self.namespace,
                     limit=5
                 )
+                logger.debug(f"Auto-ingest: Recursion fallback returned {len(results)} results")
+                return results
             
-            if not self.search_engine:
-                logger.warning("Auto-ingest: No search engine available, falling back to direct database search")
-                # Fallback to direct database search
-                return self.db_manager.search_memories(
-                    query=user_input,
-                    namespace=self.namespace,
-                    limit=5
-                )
-
             # Set recursion guard
             self._in_context_retrieval = True
             
-            try:
-                # First, try using the retrieval agent for intelligent search
-                results = self.search_engine.execute_search(
-                    query=user_input,
-                    db_manager=self.db_manager,
-                    namespace=self.namespace,
-                    limit=5,
-                )
-                
-                if results:
-                    logger.debug(f"Auto-ingest: Retrieved {len(results)} relevant memories via search engine")
-                    return results
-                else:
-                    logger.debug("Auto-ingest: Search engine returned 0 results, trying direct database search")
-                    
-            except Exception as search_error:
-                logger.warning(f"Auto-ingest: Search engine failed ({search_error}), falling back to direct search")
-
-            # Fallback to direct database search
+            logger.debug(f"Auto-ingest: Starting context retrieval for query: '{user_input[:50]}...'")
+            
+            # Always try direct database search first as it's more reliable
+            logger.debug("Auto-ingest: Using direct database search (primary method)")
             results = self.db_manager.search_memories(
                 query=user_input,
                 namespace=self.namespace,
                 limit=5
             )
             
-            logger.debug(f"Auto-ingest: Retrieved {len(results)} relevant memories via direct database search")
-            return results
+            if results:
+                logger.debug(f"Auto-ingest: Direct database search returned {len(results)} results")
+                # Add search metadata to results
+                for result in results:
+                    if isinstance(result, dict):
+                        result['retrieval_method'] = 'direct_database_search'
+                        result['retrieval_query'] = user_input
+                return results
+            
+            # If direct search fails, try search engine as backup
+            if self.search_engine:
+                logger.debug("Auto-ingest: Direct search returned 0 results, trying search engine")
+                try:
+                    engine_results = self.search_engine.execute_search(
+                        query=user_input,
+                        db_manager=self.db_manager,
+                        namespace=self.namespace,
+                        limit=5,
+                    )
+                    
+                    if engine_results:
+                        logger.debug(f"Auto-ingest: Search engine returned {len(engine_results)} results")
+                        # Add search metadata to results
+                        for result in engine_results:
+                            if isinstance(result, dict):
+                                result['retrieval_method'] = 'search_engine'
+                                result['retrieval_query'] = user_input
+                        return engine_results
+                    else:
+                        logger.debug("Auto-ingest: Search engine also returned 0 results")
+                        
+                except Exception as search_error:
+                    logger.warning(f"Auto-ingest: Search engine failed ({search_error})")
+            else:
+                logger.debug("Auto-ingest: No search engine available")
+
+            # Final fallback: get recent memories from the same namespace
+            logger.debug("Auto-ingest: All search methods returned 0 results, using recent memories fallback")
+            fallback_results = self.db_manager.search_memories(
+                query="",  # Empty query to get recent memories
+                namespace=self.namespace,
+                limit=3
+            )
+            
+            if fallback_results:
+                logger.debug(f"Auto-ingest: Fallback returned {len(fallback_results)} recent memories")
+                # Add search metadata to fallback results
+                for result in fallback_results:
+                    if isinstance(result, dict):
+                        result['retrieval_method'] = 'recent_memories_fallback'
+                        result['retrieval_query'] = user_input
+                return fallback_results
+
+            logger.debug("Auto-ingest: All retrieval methods failed, returning empty context")
+            return []
 
         except Exception as e:
-            logger.error(f"Failed to get auto-ingest context: {e}")
+            logger.error(f"Auto-ingest: Failed to get context for '{user_input[:50]}...': {e}")
             return []
         finally:
-            # Clear recursion guard
-            self._in_context_retrieval = False
+            # Always clear recursion guard
+            if hasattr(self, '_in_context_retrieval'):
+                self._in_context_retrieval = False
 
     def _record_openai_conversation(self, kwargs, response):
         """Record OpenAI conversation with enhanced content parsing"""

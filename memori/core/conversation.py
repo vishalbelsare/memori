@@ -194,11 +194,14 @@ class ConversationManager:
                     logger.debug(f"Injected conscious context with {len(context)} items for session {session_id}")
             
             elif mode == "auto":
-                # Auto mode: Get relevant context based on user input
+                # Auto mode: Search long-term memory database for relevant context
+                logger.debug(f"Auto-ingest: Processing user input for long-term memory search: '{user_input[:50]}...'")
                 context = memori_instance._get_auto_ingest_context(user_input) if user_input else []
                 if context:
                     context_prompt = self._build_auto_context_prompt(context)
-                    logger.debug(f"Injected auto context with {len(context)} items for session {session_id}")
+                    logger.debug(f"Auto-ingest: Successfully injected long-term memory context with {len(context)} items for session {session_id}")
+                else:
+                    logger.debug(f"Auto-ingest: No relevant memories found in long-term database for query '{user_input[:50]}...' in session {session_id}")
             
             # Get conversation history
             history_messages = session.get_history_messages(limit=10)

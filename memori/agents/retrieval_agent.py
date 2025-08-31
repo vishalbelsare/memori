@@ -296,14 +296,26 @@ Be strategic and comprehensive in your search planning."""
 
             # Sort by relevance (importance score + recency)
             if all_results:
+                def safe_created_at_parse(created_at_value):
+                    """Safely parse created_at value to datetime"""
+                    try:
+                        if created_at_value is None:
+                            return datetime.fromisoformat("2000-01-01")
+                        if isinstance(created_at_value, str):
+                            return datetime.fromisoformat(created_at_value)
+                        if hasattr(created_at_value, 'isoformat'):  # datetime object
+                            return created_at_value
+                        # Fallback for any other type
+                        return datetime.fromisoformat("2000-01-01")
+                    except (ValueError, TypeError):
+                        return datetime.fromisoformat("2000-01-01")
+                
                 all_results.sort(
                     key=lambda x: (
                         x.get("importance_score", 0) * 0.7  # Importance weight
                         + (
                             datetime.now().replace(tzinfo=None)  # Ensure timezone-naive
-                            - datetime.fromisoformat(
-                                x.get("created_at", "2000-01-01")
-                            ).replace(tzinfo=None)
+                            - safe_created_at_parse(x.get("created_at")).replace(tzinfo=None)
                         ).days
                         * -0.001  # Recency weight
                     ),
