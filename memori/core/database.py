@@ -11,7 +11,9 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
-from ..utils.exceptions import DatabaseError
+from ..utils.exceptions import DatabaseError, ValidationError
+from ..utils.input_validator import DatabaseInputValidator, InputValidator
+from ..utils.transaction_manager import TransactionManager, TransactionOperation
 from ..utils.pydantic_models import (
     ProcessedLongTermMemory,
     ProcessedMemory,
@@ -26,6 +28,7 @@ class DatabaseManager:
         self.database_connect = database_connect
         self.template = template
         self.db_path = self._parse_connection_string(database_connect)
+        self.transaction_manager = TransactionManager(self)
 
     def _parse_connection_string(self, connect_str: str) -> str:
         """Parse database connection string"""
@@ -228,7 +231,26 @@ class DatabaseManager:
         tokens_used: int = 0,
         metadata: Optional[Dict[str, Any]] = None,
     ):
-        """Store chat history"""
+        """Store chat history with input validation"""
+        try:
+            # Validate and sanitize all inputs
+            validated_data = DatabaseInputValidator.validate_insert_params(
+                "chat_history", {
+                    "chat_id": chat_id,
+                    "user_input": user_input,
+                    "ai_output": ai_output,
+                    "model": model,
+                    "timestamp": timestamp,
+                    "session_id": session_id,
+                    "namespace": namespace,
+                    "tokens_used": max(0, int(tokens_used)) if tokens_used else 0,
+                    "metadata": metadata or {}
+                }
+            )
+        except (ValidationError, ValueError) as e:
+            logger.error(f"Invalid chat history data: {e}")
+            raise DatabaseError(f"Cannot store chat history: {e}")
+        
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -238,15 +260,15 @@ class DatabaseManager:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
-                    chat_id,
-                    user_input,
-                    ai_output,
-                    model,
-                    timestamp,
-                    session_id,
-                    namespace,
-                    tokens_used,
-                    json.dumps(metadata or {}),
+                    validated_data["chat_id"],
+                    validated_data["user_input"],
+                    validated_data["ai_output"],
+                    validated_data["model"],
+                    validated_data["timestamp"],
+                    validated_data["session_id"],
+                    validated_data["namespace"],
+                    validated_data["tokens_used"],
+                    validated_data["metadata"],
                 ),
             )
             conn.commit()
@@ -258,6 +280,16 @@ class DatabaseManager:
         limit: int = 10,
     ) -> List[Dict[str, Any]]:
         """Get chat history with optional session filtering"""
+        try:
+            # Validate inputs
+            namespace = InputValidator.validate_namespace(namespace)
+            limit = InputValidator.validate_limit(limit)
+            if session_id:
+                session_id = InputValidator.validate_memory_id(session_id)
+        except ValidationError as e:
+            logger.error(f"Invalid chat history parameters: {e}")
+            return []
+            
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
@@ -303,14 +335,20 @@ class DatabaseManager:
     def store_long_term_memory_enhanced(
         self, memory: ProcessedLongTermMemory, chat_id: str, namespace: str = "default"
     ) -> str:
-        """Store a ProcessedLongTermMemory with enhanced schema"""
-        memory_id = str(uuid.uuid4())
-
-        with self._get_connection() as conn:
-            try:
-                # Create correct SQL query that matches the actual schema
-                conn.execute(
-                    """
+        """Store a ProcessedLongTermMemory with enhanced schema using transactions"""
+        try:
+            memory_id = str(uuid.uuid4())
+            
+            # Validate inputs
+            chat_id = InputValidator.validate_memory_id(chat_id)
+            namespace = InputValidator.validate_namespace(namespace)
+            
+            # Prepare operations for atomic execution
+            operations = []
+            
+            # Main memory insert operation
+            insert_operation = TransactionOperation(
+                query="""
                     INSERT INTO long_term_memory (
                         memory_id, original_chat_id, processed_data, importance_score, category_primary,
                         retention_type, namespace, created_at, searchable_content, summary,
@@ -319,59 +357,61 @@ class DatabaseManager:
                         is_current_project, promotion_eligible, duplicate_of, supersedes_json, related_memories_json,
                         confidence_score, extraction_timestamp, classification_reason, processed_for_duplicates, conscious_processed
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        memory_id,
-                        chat_id,
-                        json.dumps(
-                            memory.model_dump(mode="json")
-                        ),  # JSON-serializable format
-                        memory.importance_score,  # Use property method
-                        memory.classification.value,
-                        "long_term",
-                        namespace,
-                        datetime.now().isoformat(),
-                        memory.content,  # searchable_content
-                        memory.summary,
-                        0.5,
-                        0.5,
-                        0.5,  # novelty, relevance, actionability scores
-                        memory.classification.value,
-                        memory.importance.value,  # Use .value for enum string
-                        memory.topic,
-                        json.dumps(memory.entities),
-                        json.dumps(memory.keywords),
-                        1 if memory.is_user_context else 0,
-                        1 if memory.is_preference else 0,
-                        1 if memory.is_skill_knowledge else 0,
-                        1 if memory.is_current_project else 0,
-                        1 if memory.promotion_eligible else 0,
-                        memory.duplicate_of,
-                        json.dumps(memory.supersedes),
-                        json.dumps(memory.related_memories),
-                        memory.confidence_score,
-                        memory.extraction_timestamp.isoformat(),
-                        memory.classification_reason,
-                        0,  # processed_for_duplicates
-                        0,  # conscious_processed
-                    ),
-                )
-                conn.commit()
+                """,
+                params=[
+                    memory_id,
+                    chat_id,
+                    json.dumps(memory.model_dump(mode="json")),
+                    memory.importance_score,
+                    memory.classification.value,
+                    "long_term",
+                    namespace,
+                    datetime.now().isoformat(),
+                    memory.content,
+                    memory.summary,
+                    0.5, 0.5, 0.5,  # novelty, relevance, actionability scores
+                    memory.classification.value,
+                    memory.importance.value,
+                    memory.topic,
+                    json.dumps(memory.entities),
+                    json.dumps(memory.keywords),
+                    1 if memory.is_user_context else 0,
+                    1 if memory.is_preference else 0,
+                    1 if memory.is_skill_knowledge else 0,
+                    1 if memory.is_current_project else 0,
+                    1 if memory.promotion_eligible else 0,
+                    memory.duplicate_of,
+                    json.dumps(memory.supersedes),
+                    json.dumps(memory.related_memories),
+                    memory.confidence_score,
+                    memory.extraction_timestamp.isoformat(),
+                    memory.classification_reason,
+                    0,  # processed_for_duplicates
+                    0,  # conscious_processed
+                ],
+                operation_type='insert',
+                table='long_term_memory',
+                expected_rows=1
+            )
+            
+            operations.append(insert_operation)
+            
+            # Execute all operations atomically
+            result = self.transaction_manager.execute_atomic_operations(operations)
+            
+            if result.success:
                 logger.debug(f"Stored enhanced long-term memory {memory_id}")
                 return memory_id
+            else:
+                raise DatabaseError(f"Failed to store enhanced long-term memory: {result.error_message}")
+                
+        except ValidationError as e:
+            logger.error(f"Invalid memory data: {e}")
+            raise DatabaseError(f"Cannot store long-term memory: {e}")
+        except Exception as e:
+            logger.error(f"Failed to store enhanced long-term memory: {e}")
+            raise DatabaseError(f"Failed to store enhanced long-term memory: {e}")
 
-            except sqlite3.IntegrityError as e:
-                conn.rollback()
-                logger.error(f"Database constraint violation: {e}")
-                raise DatabaseError(f"Memory storage constraint violation: {e}")
-            except sqlite3.OperationalError as e:
-                conn.rollback()
-                logger.error(f"Database operational error: {e}")
-                raise DatabaseError(f"Memory storage operational error: {e}")
-            except Exception as e:
-                conn.rollback()
-                logger.error(f"Failed to store enhanced long-term memory: {e}")
-                raise DatabaseError(f"Failed to store enhanced long-term memory: {e}")
 
     def _store_short_term_memory(
         self,
@@ -467,6 +507,20 @@ class DatabaseManager:
         limit: int = 10,
     ) -> List[Dict[str, Any]]:
         """Advanced memory search with hybrid approach: FTS + Entity + Category filtering"""
+        try:
+            # Validate and sanitize all input parameters
+            validated_params = DatabaseInputValidator.validate_search_params(
+                query, namespace, category_filter, limit
+            )
+            query = validated_params['query']
+            namespace = validated_params['namespace']
+            category_filter = validated_params['category_filter']
+            limit = validated_params['limit']
+            
+        except ValidationError as e:
+            logger.error(f"Invalid search parameters: {e}")
+            return []
+        
         all_results = []
 
         with self._get_connection() as conn:
@@ -536,97 +590,163 @@ class DatabaseManager:
         category_filter: Optional[List[str]],
         limit: int,
     ):
-        """Execute FTS5 search"""
+        """Execute FTS5 search with proper parameterization"""
         try:
-            # Build FTS query with category filter - handle empty queries
+            # Sanitize and prepare FTS query
             if query and query.strip():
-                fts_query = f'"{query.strip()}"'
+                # Escape FTS5 special characters and wrap in quotes for phrase search
+                sanitized_query = query.strip().replace('"', '""')  # Escape quotes
+                fts_query = f'"{sanitized_query}"'
             else:
                 # Use a simple match-all query for empty searches
                 fts_query = "*"
-            category_clause = ""
+            
+            # Build parameterized query - avoid string concatenation
             params = [fts_query, namespace]
-
-            if category_filter:
-                category_placeholders = ",".join("?" * len(category_filter))
-                category_clause = (
-                    "AND fts.category_primary IN (" + category_placeholders + ")"
-                )
-                params.extend(category_filter)
-
-            params.append(limit)
-
-            base_query = """
-                SELECT
-                    fts.memory_id, fts.memory_type, fts.category_primary,
-                    CASE
-                        WHEN fts.memory_type = 'short_term' THEN st.processed_data
-                        WHEN fts.memory_type = 'long_term' THEN lt.processed_data
-                    END as processed_data,
-                    CASE
-                        WHEN fts.memory_type = 'short_term' THEN st.importance_score
-                        WHEN fts.memory_type = 'long_term' THEN lt.importance_score
-                        ELSE 0.5
-                    END as importance_score,
-                    CASE
-                        WHEN fts.memory_type = 'short_term' THEN st.created_at
-                        WHEN fts.memory_type = 'long_term' THEN lt.created_at
-                    END as created_at,
-                    fts.summary,
-                    rank
-                FROM memory_search_fts fts
-                LEFT JOIN short_term_memory st ON fts.memory_id = st.memory_id AND fts.memory_type = 'short_term'
-                LEFT JOIN long_term_memory lt ON fts.memory_id = lt.memory_id AND fts.memory_type = 'long_term'
-                WHERE memory_search_fts MATCH ? AND fts.namespace = ?"""
-
-            if category_clause:
-                sql_query = (
-                    base_query
-                    + " "
-                    + category_clause
-                    + """
-                ORDER BY rank, importance_score DESC
-                LIMIT ?"""
-                )
+            
+            if category_filter and isinstance(category_filter, list):
+                # Validate category filter is a list of strings
+                sanitized_categories = [str(cat) for cat in category_filter if cat]
+                if sanitized_categories:
+                    category_placeholders = ",".join("?" * len(sanitized_categories))
+                    params.extend(sanitized_categories)
+                    params.append(limit)
+                    
+                    sql_query = f"""
+                        SELECT
+                            fts.memory_id, fts.memory_type, fts.category_primary,
+                            CASE
+                                WHEN fts.memory_type = 'short_term' THEN st.processed_data
+                                WHEN fts.memory_type = 'long_term' THEN lt.processed_data
+                            END as processed_data,
+                            CASE
+                                WHEN fts.memory_type = 'short_term' THEN st.importance_score
+                                WHEN fts.memory_type = 'long_term' THEN lt.importance_score
+                                ELSE 0.5
+                            END as importance_score,
+                            CASE
+                                WHEN fts.memory_type = 'short_term' THEN st.created_at
+                                WHEN fts.memory_type = 'long_term' THEN lt.created_at
+                            END as created_at,
+                            fts.summary,
+                            rank
+                        FROM memory_search_fts fts
+                        LEFT JOIN short_term_memory st ON fts.memory_id = st.memory_id AND fts.memory_type = 'short_term'
+                        LEFT JOIN long_term_memory lt ON fts.memory_id = lt.memory_id AND fts.memory_type = 'long_term'
+                        WHERE memory_search_fts MATCH ? AND fts.namespace = ?
+                            AND fts.category_primary IN ({category_placeholders})
+                        ORDER BY rank, importance_score DESC
+                        LIMIT ?
+                    """
+                else:
+                    # No valid categories, proceed without filter
+                    params.append(limit)
+                    sql_query = """
+                        SELECT
+                            fts.memory_id, fts.memory_type, fts.category_primary,
+                            CASE
+                                WHEN fts.memory_type = 'short_term' THEN st.processed_data
+                                WHEN fts.memory_type = 'long_term' THEN lt.processed_data
+                            END as processed_data,
+                            CASE
+                                WHEN fts.memory_type = 'short_term' THEN st.importance_score
+                                WHEN fts.memory_type = 'long_term' THEN lt.importance_score
+                                ELSE 0.5
+                            END as importance_score,
+                            CASE
+                                WHEN fts.memory_type = 'short_term' THEN st.created_at
+                                WHEN fts.memory_type = 'long_term' THEN lt.created_at
+                            END as created_at,
+                            fts.summary,
+                            rank
+                        FROM memory_search_fts fts
+                        LEFT JOIN short_term_memory st ON fts.memory_id = st.memory_id AND fts.memory_type = 'short_term'
+                        LEFT JOIN long_term_memory lt ON fts.memory_id = lt.memory_id AND fts.memory_type = 'long_term'
+                        WHERE memory_search_fts MATCH ? AND fts.namespace = ?
+                        ORDER BY rank, importance_score DESC
+                        LIMIT ?
+                    """
             else:
-                sql_query = (
-                    base_query
-                    + """
-                ORDER BY rank, importance_score DESC
-                LIMIT ?"""
-                )
+                params.append(limit)
+                sql_query = """
+                    SELECT
+                        fts.memory_id, fts.memory_type, fts.category_primary,
+                        CASE
+                            WHEN fts.memory_type = 'short_term' THEN st.processed_data
+                            WHEN fts.memory_type = 'long_term' THEN lt.processed_data
+                        END as processed_data,
+                        CASE
+                            WHEN fts.memory_type = 'short_term' THEN st.importance_score
+                            WHEN fts.memory_type = 'long_term' THEN lt.importance_score
+                            ELSE 0.5
+                        END as importance_score,
+                        CASE
+                            WHEN fts.memory_type = 'short_term' THEN st.created_at
+                            WHEN fts.memory_type = 'long_term' THEN lt.created_at
+                        END as created_at,
+                        fts.summary,
+                        rank
+                    FROM memory_search_fts fts
+                    LEFT JOIN short_term_memory st ON fts.memory_id = st.memory_id AND fts.memory_type = 'short_term'
+                    LEFT JOIN long_term_memory lt ON fts.memory_id = lt.memory_id AND fts.memory_type = 'long_term'
+                    WHERE memory_search_fts MATCH ? AND fts.namespace = ?
+                    ORDER BY rank, importance_score DESC
+                    LIMIT ?
+                """
 
             cursor.execute(sql_query, params)
-
             return [dict(row) for row in cursor.fetchall()]
 
         except sqlite3.OperationalError as e:
             logger.debug(f"FTS not available: {e}")
             return []
+        except Exception as e:
+            logger.error(f"FTS search error: {e}")
+            return []
 
     def _execute_category_search(
         self, cursor, query: str, namespace: str, category_filter: List[str], limit: int
     ):
-        """Execute category-based search"""
-        category_placeholders = ",".join("?" * len(category_filter))
-        params = [namespace] + category_filter + [f"%{query}%", f"%{query}%", limit]
-
-        sql_query = (
+        """Execute category-based search with proper input validation"""
+        try:
+            # Input validation
+            if not isinstance(category_filter, list) or not category_filter:
+                return []
+            
+            # Sanitize inputs
+            sanitized_query = str(query).strip() if query else ""
+            sanitized_namespace = str(namespace).strip()
+            sanitized_categories = [str(cat).strip() for cat in category_filter if cat]
+            sanitized_limit = max(1, min(int(limit), 1000))  # Limit between 1 and 1000
+            
+            if not sanitized_categories:
+                return []
+            
+            # Build parameterized query
+            category_placeholders = ",".join(["?"] * len(sanitized_categories))
+            
+            # Use parameterized query with proper escaping
+            sql_query = f"""
+                SELECT memory_id, processed_data, importance_score, created_at, summary,
+                       category_primary, 'long_term' as memory_type
+                FROM long_term_memory
+                WHERE namespace = ? AND category_primary IN ({category_placeholders})
+                  AND (searchable_content LIKE ? OR summary LIKE ?)
+                ORDER BY importance_score DESC, created_at DESC
+                LIMIT ?
             """
-            SELECT memory_id, processed_data, importance_score, created_at, summary,
-                   category_primary, 'long_term' as memory_type
-            FROM long_term_memory
-            WHERE namespace = ? AND category_primary IN ("""
-            + category_placeholders
-            + """)
-              AND (searchable_content LIKE ? OR summary LIKE ?)
-            ORDER BY importance_score DESC, created_at DESC
-            LIMIT ?
-            """
-        )
-        cursor.execute(sql_query, params)
-
-        return [dict(row) for row in cursor.fetchall()]
+            
+            # Build parameters safely
+            params = [sanitized_namespace] + sanitized_categories + [
+                f"%{sanitized_query}%", f"%{sanitized_query}%", sanitized_limit
+            ]
+            
+            cursor.execute(sql_query, params)
+            return [dict(row) for row in cursor.fetchall()]
+            
+        except Exception as e:
+            logger.error(f"Category search error: {e}")
+            return []
 
     def _execute_like_search(
         self,
@@ -636,54 +756,94 @@ class DatabaseManager:
         category_filter: Optional[List[str]],
         limit: int,
     ):
-        """Execute fallback LIKE search"""
-        results = []
+        """Execute fallback LIKE search with proper input validation"""
+        try:
+            # Input validation and sanitization
+            sanitized_query = str(query).strip() if query else ""
+            sanitized_namespace = str(namespace).strip()
+            sanitized_limit = max(1, min(int(limit), 1000))  # Limit between 1 and 1000
+            current_timestamp = datetime.now()
+            
+            results = []
 
-        # Search short-term memory
-        category_clause = ""
-        params = [namespace, f"%{query}%", f"%{query}%", datetime.now()]
+            # Validate and sanitize category filter
+            sanitized_categories = []
+            if category_filter and isinstance(category_filter, list):
+                sanitized_categories = [str(cat).strip() for cat in category_filter if cat]
 
-        if category_filter:
-            category_placeholders = ",".join("?" * len(category_filter))
-            category_clause = "AND category_primary IN (" + category_placeholders + ")"
-            params.extend(category_filter)
+            # Search short-term memory with parameterized query
+            if sanitized_categories:
+                category_placeholders = ",".join(["?"] * len(sanitized_categories))
+                short_term_sql = f"""
+                    SELECT *, 'short_term' as memory_type FROM short_term_memory
+                    WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?)
+                    AND (expires_at IS NULL OR expires_at > ?)
+                    AND category_primary IN ({category_placeholders})
+                    ORDER BY importance_score DESC, created_at DESC
+                    LIMIT ?
+                """
+                short_term_params = [
+                    sanitized_namespace, 
+                    f"%{sanitized_query}%", 
+                    f"%{sanitized_query}%", 
+                    current_timestamp
+                ] + sanitized_categories + [sanitized_limit]
+            else:
+                short_term_sql = """
+                    SELECT *, 'short_term' as memory_type FROM short_term_memory
+                    WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?)
+                    AND (expires_at IS NULL OR expires_at > ?)
+                    ORDER BY importance_score DESC, created_at DESC
+                    LIMIT ?
+                """
+                short_term_params = [
+                    sanitized_namespace,
+                    f"%{sanitized_query}%", 
+                    f"%{sanitized_query}%", 
+                    current_timestamp,
+                    sanitized_limit
+                ]
 
-        params.append(limit)
+            cursor.execute(short_term_sql, short_term_params)
+            results.extend([dict(row) for row in cursor.fetchall()])
 
-        sql_query = (
-            """
-            SELECT *, 'short_term' as memory_type FROM short_term_memory
-            WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?)
-            AND (expires_at IS NULL OR expires_at > ?) """
-            + category_clause
-            + """
-            ORDER BY importance_score DESC, created_at DESC
-            LIMIT ?
-            """
-        )
-        cursor.execute(sql_query, params)
-        results.extend([dict(row) for row in cursor.fetchall()])
+            # Search long-term memory with parameterized query
+            if sanitized_categories:
+                category_placeholders = ",".join(["?"] * len(sanitized_categories))
+                long_term_sql = f"""
+                    SELECT *, 'long_term' as memory_type FROM long_term_memory
+                    WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?)
+                    AND category_primary IN ({category_placeholders})
+                    ORDER BY importance_score DESC, created_at DESC
+                    LIMIT ?
+                """
+                long_term_params = [
+                    sanitized_namespace,
+                    f"%{sanitized_query}%", 
+                    f"%{sanitized_query}%"
+                ] + sanitized_categories + [sanitized_limit]
+            else:
+                long_term_sql = """
+                    SELECT *, 'long_term' as memory_type FROM long_term_memory
+                    WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?)
+                    ORDER BY importance_score DESC, created_at DESC
+                    LIMIT ?
+                """
+                long_term_params = [
+                    sanitized_namespace,
+                    f"%{sanitized_query}%", 
+                    f"%{sanitized_query}%",
+                    sanitized_limit
+                ]
 
-        # Search long-term memory
-        params = [namespace, f"%{query}%", f"%{query}%"]
-        if category_filter:
-            params.extend(category_filter)
-        params.append(limit)
+            cursor.execute(long_term_sql, long_term_params)
+            results.extend([dict(row) for row in cursor.fetchall()])
 
-        sql_query = (
-            """
-            SELECT *, 'long_term' as memory_type FROM long_term_memory
-            WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?) """
-            + category_clause
-            + """
-            ORDER BY importance_score DESC, created_at DESC
-            LIMIT ?
-            """
-        )
-        cursor.execute(sql_query, params)
-        results.extend([dict(row) for row in cursor.fetchall()])
-
-        return results
+            return results[:sanitized_limit]  # Ensure final limit
+            
+        except Exception as e:
+            logger.error(f"LIKE search error: {e}")
+            return []
 
     def _calculate_recency_score(self, created_at_str: str) -> float:
         """Calculate recency score (0-1, newer = higher)"""

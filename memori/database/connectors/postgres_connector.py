@@ -6,18 +6,24 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
-from ...utils.exceptions import DatabaseError
+from .base_connector import BaseDatabaseConnector, DatabaseType
+from ...utils.exceptions import DatabaseError, ValidationError
+from ...utils.input_validator import DatabaseInputValidator
 
 
-class PostgreSQLConnector:
+class PostgreSQLConnector(BaseDatabaseConnector):
     """PostgreSQL database connector"""
 
-    def __init__(self, connection_string: str):
+    def __init__(self, connection_config):
         """Initialize PostgreSQL connector"""
-        self.connection_string = connection_string
+        if isinstance(connection_config, str):
+            self.connection_string = connection_config
+        else:
+            self.connection_string = self._build_connection_string(connection_config)
         self._psycopg2 = None
         self._setup_psycopg2()
         self._ensure_database_exists()
+        super().__init__(connection_config)
 
     def _setup_psycopg2(self):
         """Setup psycopg2 connection"""
@@ -35,6 +41,29 @@ class PostgreSQLConnector:
                 "Install it with: pip install psycopg2-binary"
             )
 
+    def _detect_database_type(self) -> DatabaseType:
+        """Detect database type from connection config"""
+        return DatabaseType.POSTGRESQL
+    
+    def _build_connection_string(self, config: Dict[str, Any]) -> str:
+        """Build PostgreSQL connection string from config dict"""
+        try:
+            user = config.get('user', 'postgres')
+            password = config.get('password', '')
+            host = config.get('host', 'localhost')
+            port = config.get('port', 5432)
+            database = config.get('database')
+            
+            if not database:
+                raise ValidationError("Database name is required")
+            
+            if password:
+                return f"postgresql://{user}:{password}@{host}:{port}/{database}"
+            else:
+                return f"postgresql://{user}@{host}:{port}/{database}"
+        except Exception as e:
+            raise DatabaseError(f"Invalid PostgreSQL configuration: {e}")
+    
     def _parse_connection_string(self):
         """Parse connection string to extract components"""
         import re
@@ -237,3 +266,146 @@ class PostgreSQLConnector:
         except Exception as e:
             logger.error(f"Connection test failed: {e}")
             return False
+    
+    def initialize_schema(self, schema_sql: Optional[str] = None):
+        """Initialize PostgreSQL database schema"""
+        try:
+            if not schema_sql:
+                # Use PostgreSQL-specific schema
+                from ..schema_generators.postgresql_schema_generator import PostgreSQLSchemaGenerator
+                schema_generator = PostgreSQLSchemaGenerator()
+                schema_sql = schema_generator.generate_full_schema()
+            
+            # Execute schema using transaction
+            with self.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    try:
+                        # Split schema into individual statements
+                        statements = self._split_postgresql_statements(schema_sql)
+                        
+                        for statement in statements:
+                            statement = statement.strip()
+                            if statement and not statement.startswith('--'):
+                                cursor.execute(statement)
+                        
+                        conn.commit()
+                        logger.info("PostgreSQL database schema initialized successfully")
+                        
+                    except Exception as e:
+                        conn.rollback()
+                        logger.error(f"Failed to initialize PostgreSQL schema: {e}")
+                        raise DatabaseError(f"Schema initialization failed: {e}")
+                        
+        except Exception as e:
+            logger.error(f"Failed to initialize PostgreSQL schema: {e}")
+            raise DatabaseError(f"Failed to initialize PostgreSQL schema: {e}")
+    
+    def supports_full_text_search(self) -> bool:
+        """Check if PostgreSQL supports full-text search"""
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    # Test tsvector functionality
+                    cursor.execute("SELECT to_tsvector('english', 'test') @@ plainto_tsquery('english', 'test')")
+                    result = cursor.fetchone()
+                    return result[0] if result else False
+        except Exception as e:
+            logger.warning(f"Could not determine PostgreSQL FTS support: {e}")
+            return False
+    
+    def create_full_text_index(
+        self, 
+        table: str, 
+        columns: List[str], 
+        index_name: str
+    ) -> str:
+        """Create PostgreSQL GIN index for full-text search"""
+        # Validate inputs
+        try:
+            from ...utils.input_validator import InputValidator
+            table = InputValidator.sanitize_sql_identifier(table)
+            index_name = InputValidator.sanitize_sql_identifier(index_name)
+            for col in columns:
+                InputValidator.sanitize_sql_identifier(col)
+        except Exception as e:
+            raise DatabaseError(f"Invalid index parameters: {e}")
+        
+        # Create tsvector expression
+        tsvector_expr = " || ' ' || ".join(columns)
+        return f"CREATE INDEX {index_name} ON {table} USING gin(to_tsvector('english', {tsvector_expr}))"
+    
+    def get_database_info(self) -> Dict[str, Any]:
+        """Get PostgreSQL database information and capabilities"""
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor(cursor_factory=self._extras.RealDictCursor) as cursor:
+                    info = {}
+                    
+                    # Basic version info
+                    cursor.execute("SELECT version() as version")
+                    version_result = cursor.fetchone()
+                    info['version'] = version_result['version'] if version_result else 'unknown'
+                    
+                    # Database name
+                    cursor.execute("SELECT current_database() as db_name")
+                    db_result = cursor.fetchone()
+                    info['database'] = db_result['db_name'] if db_result else 'unknown'
+                    
+                    # Extensions info
+                    cursor.execute("SELECT extname FROM pg_extension")
+                    extensions = cursor.fetchall()
+                    info['extensions'] = [ext['extname'] for ext in extensions] if extensions else []
+                    
+                    # Check for full-text search capabilities
+                    info['database_type'] = self.database_type.value
+                    info['fulltext_support'] = self.supports_full_text_search()
+                    
+                    # Connection info
+                    info['connection_string'] = self.connection_string.split('@')[1] if '@' in self.connection_string else 'unknown'
+                    
+                    return info
+                    
+        except Exception as e:
+            logger.warning(f"Could not get PostgreSQL database info: {e}")
+            return {
+                'database_type': self.database_type.value,
+                'version': 'unknown',
+                'fulltext_support': False,
+                'error': str(e)
+            }
+    
+    def _split_postgresql_statements(self, schema_sql: str) -> List[str]:
+        """Split SQL schema into individual statements handling PostgreSQL syntax"""
+        statements = []
+        current_statement = []
+        in_function = False
+        
+        for line in schema_sql.split('\n'):
+            line = line.strip()
+            
+            # Skip comments and empty lines
+            if not line or line.startswith('--'):
+                continue
+            
+            # Track function/procedure boundaries
+            if line.upper().startswith(('CREATE FUNCTION', 'CREATE OR REPLACE FUNCTION', 'CREATE PROCEDURE')):
+                in_function = True
+            elif line.upper().startswith('$$') and in_function:
+                in_function = False
+            
+            current_statement.append(line)
+            
+            # PostgreSQL uses semicolon to end statements (except within functions)
+            if line.endswith(';') and not in_function:
+                statement = ' '.join(current_statement)
+                if statement.strip():
+                    statements.append(statement)
+                current_statement = []
+        
+        # Add any remaining statement
+        if current_statement:
+            statement = ' '.join(current_statement)
+            if statement.strip():
+                statements.append(statement)
+        
+        return statements

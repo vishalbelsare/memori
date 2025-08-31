@@ -122,14 +122,16 @@ class ConsciouscAgent:
     async def _get_conscious_memories(self, db_manager, namespace: str) -> List[tuple]:
         """Get all conscious-info labeled memories from long-term memory"""
         try:
+            from sqlalchemy import text
+            
             with db_manager._get_connection() as connection:
                 cursor = connection.execute(
-                    """SELECT memory_id, processed_data, summary, searchable_content, 
+                    text("""SELECT memory_id, processed_data, summary, searchable_content, 
                               importance_score, created_at
                        FROM long_term_memory 
-                       WHERE namespace = ? AND classification = 'conscious-info'
-                       ORDER BY importance_score DESC, created_at DESC""",
-                    (namespace,),
+                       WHERE namespace = :namespace AND classification = 'conscious-info'
+                       ORDER BY importance_score DESC, created_at DESC"""),
+                    {"namespace": namespace},
                 )
                 return cursor.fetchall()
 
@@ -142,15 +144,17 @@ class ConsciouscAgent:
     ) -> List[tuple]:
         """Get unprocessed conscious-info labeled memories from long-term memory"""
         try:
+            from sqlalchemy import text
+            
             with db_manager._get_connection() as connection:
                 cursor = connection.execute(
-                    """SELECT memory_id, processed_data, summary, searchable_content, 
+                    text("""SELECT memory_id, processed_data, summary, searchable_content, 
                               importance_score, created_at
                        FROM long_term_memory 
-                       WHERE namespace = ? AND classification = 'conscious-info' 
+                       WHERE namespace = :namespace AND classification = 'conscious-info' 
                        AND conscious_processed = 0
-                       ORDER BY importance_score DESC, created_at DESC""",
-                    (namespace,),
+                       ORDER BY importance_score DESC, created_at DESC"""),
+                    {"namespace": namespace},
                 )
                 return cursor.fetchall()
 
@@ -175,27 +179,31 @@ class ConsciouscAgent:
             # Create short-term memory ID
             short_term_id = f"conscious_{memory_id}_{int(datetime.now().timestamp())}"
 
+            from sqlalchemy import text
+            
             with db_manager._get_connection() as connection:
                 # Insert directly into short-term memory with conscious_context category
                 connection.execute(
-                    """INSERT INTO short_term_memory (
+                    text("""INSERT INTO short_term_memory (
                         memory_id, processed_data, importance_score, category_primary,
                         retention_type, namespace, created_at, expires_at, 
                         searchable_content, summary, is_permanent_context
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (
-                        short_term_id,
-                        processed_data,  # Copy exact processed_data from long-term memory
-                        importance_score,
-                        "conscious_context",  # Use conscious_context category
-                        "permanent",
-                        namespace,
-                        datetime.now().isoformat(),
-                        None,  # No expiration (permanent)
-                        searchable_content,  # Copy exact searchable_content
-                        summary,  # Copy exact summary
-                        1,  # is_permanent_context = True
-                    ),
+                    ) VALUES (:memory_id, :processed_data, :importance_score, :category_primary,
+                        :retention_type, :namespace, :created_at, :expires_at,
+                        :searchable_content, :summary, :is_permanent_context)"""),
+                    {
+                        "memory_id": short_term_id,
+                        "processed_data": processed_data,  # Copy exact processed_data from long-term memory
+                        "importance_score": importance_score,
+                        "category_primary": "conscious_context",  # Use conscious_context category
+                        "retention_type": "permanent",
+                        "namespace": namespace,
+                        "created_at": datetime.now().isoformat(),
+                        "expires_at": None,  # No expiration (permanent)
+                        "searchable_content": searchable_content,  # Copy exact searchable_content
+                        "summary": summary,  # Copy exact summary
+                        "is_permanent_context": 1,  # is_permanent_context = True
+                    },
                 )
                 connection.commit()
 
@@ -215,13 +223,15 @@ class ConsciouscAgent:
     ):
         """Mark memories as processed for conscious context"""
         try:
+            from sqlalchemy import text
+            
             with db_manager._get_connection() as connection:
                 for memory_id in memory_ids:
                     connection.execute(
-                        """UPDATE long_term_memory 
+                        text("""UPDATE long_term_memory 
                            SET conscious_processed = 1
-                           WHERE memory_id = ? AND namespace = ?""",
-                        (memory_id, namespace),
+                           WHERE memory_id = :memory_id AND namespace = :namespace"""),
+                        {"memory_id": memory_id, "namespace": namespace},
                     )
                 connection.commit()
 

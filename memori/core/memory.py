@@ -1434,7 +1434,7 @@ class Memori:
                 user_input=user_input,
                 ai_output=ai_output,
                 context=context,
-                existing_memories=[mem.summary for mem in existing_memories[:10]],
+                existing_memories=[mem.summary for mem in existing_memories[:10]] if existing_memories else [],
             )
 
             # Check for duplicates
@@ -1480,6 +1480,7 @@ class Memori:
         """Get recent memories for deduplication check"""
         try:
             from ..database.queries.memory_queries import MemoryQueries
+            from ..utils.pydantic_models import ProcessedLongTermMemory
             from sqlalchemy import text
 
             with self.db_manager._get_connection() as connection:
@@ -1491,20 +1492,23 @@ class Memori:
                 memories = []
                 for row in result:
                     try:
-                        # Create simplified memory objects for comparison
-                        memory = type(
-                            "SimpleMemory",
-                            (),
-                            {
-                                "conversation_id": row[0],
-                                "summary": row[1],
-                                "content": row[2],
-                                "classification": row[3],
-                            },
-                        )()
+                        # Create ProcessedLongTermMemory objects for proper comparison
+                        # Note: Query returns (memory_id, summary, searchable_content, classification, created_at)
+                        memory = ProcessedLongTermMemory(
+                            memory_id=row[0],
+                            conversation_id=row[0],  # Use memory_id as conversation_id for existing memories
+                            summary=row[1] or "",
+                            content=row[2] or "",
+                            classification=row[3] or "conversational",
+                            importance="medium",  # Default importance level for comparison
+                            conscious_context=False,  # Default for existing memories
+                            promotion_eligible=False,  # Default for existing memories
+                            classification_reason="Existing memory loaded for deduplication check"  # Required field
+                        )
                         memories.append(memory)
                     except Exception as e:
-                        logger.warning(f"Failed to parse memory for dedup: {e}")
+                        # Silently skip malformed memories from old data format
+                        logger.debug(f"Skipping malformed memory during dedup: {e}")
                         continue
 
                 return memories

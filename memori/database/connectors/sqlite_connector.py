@@ -8,16 +8,35 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
-from ...utils.exceptions import DatabaseError
+from .base_connector import BaseDatabaseConnector, DatabaseType
+from ...utils.exceptions import DatabaseError, ValidationError
+from ...utils.input_validator import InputValidator
 
 
-class SQLiteConnector:
+class SQLiteConnector(BaseDatabaseConnector):
     """SQLite database connector with FTS5 support"""
 
-    def __init__(self, db_path: str):
+    def __init__(self, connection_config):
         """Initialize SQLite connector"""
-        self.db_path = db_path
+        if isinstance(connection_config, str):
+            self.db_path = self._parse_db_path(connection_config)
+        else:
+            self.db_path = connection_config.get('database', ':memory:')
         self._ensure_directory_exists()
+        super().__init__(connection_config)
+    
+    def _detect_database_type(self) -> DatabaseType:
+        """Detect database type from connection config"""
+        return DatabaseType.SQLITE
+    
+    def _parse_db_path(self, connection_string: str) -> str:
+        """Parse SQLite connection string to get database path"""
+        if connection_string.startswith('sqlite:///'):
+            return connection_string.replace('sqlite:///', '')
+        elif connection_string.startswith('sqlite://'):
+            return connection_string.replace('sqlite://', '')
+        else:
+            return connection_string
 
     def _ensure_directory_exists(self):
         """Ensure the database directory exists"""
@@ -146,3 +165,155 @@ class SQLiteConnector:
         except Exception as e:
             logger.error(f"Connection test failed: {e}")
             return False
+    
+    def initialize_schema(self, schema_sql: Optional[str] = None):
+        """Initialize SQLite database schema"""
+        try:
+            if not schema_sql:
+                # Use SQLite-specific schema
+                from ..schema_generators.sqlite_schema_generator import SQLiteSchemaGenerator
+                schema_generator = SQLiteSchemaGenerator()
+                schema_sql = schema_generator.generate_full_schema()
+            
+            # Execute schema using transaction
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                try:
+                    # Split schema into individual statements
+                    statements = self._split_sqlite_statements(schema_sql)
+                    
+                    for statement in statements:
+                        statement = statement.strip()
+                        if statement and not statement.startswith('--'):
+                            cursor.execute(statement)
+                    
+                    conn.commit()
+                    logger.info("SQLite database schema initialized successfully")
+                    
+                except Exception as e:
+                    conn.rollback()
+                    logger.error(f"Failed to initialize SQLite schema: {e}")
+                    raise DatabaseError(f"Schema initialization failed: {e}")
+                        
+        except Exception as e:
+            logger.error(f"Failed to initialize SQLite schema: {e}")
+            raise DatabaseError(f"Failed to initialize SQLite schema: {e}")
+    
+    def supports_full_text_search(self) -> bool:
+        """Check if SQLite supports FTS5"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("CREATE VIRTUAL TABLE fts_test USING fts5(content)")
+                cursor.execute("DROP TABLE fts_test")
+                return True
+        except sqlite3.OperationalError:
+            return False
+        except Exception:
+            return False
+    
+    def create_full_text_index(
+        self, 
+        table: str, 
+        columns: List[str], 
+        index_name: str
+    ) -> str:
+        """Create SQLite FTS5 virtual table"""
+        # Validate inputs
+        try:
+            table = InputValidator.sanitize_sql_identifier(table)
+            index_name = InputValidator.sanitize_sql_identifier(index_name)
+            for col in columns:
+                InputValidator.sanitize_sql_identifier(col)
+        except Exception as e:
+            raise DatabaseError(f"Invalid index parameters: {e}")
+        
+        columns_str = ", ".join(columns)
+        return f"CREATE VIRTUAL TABLE {index_name} USING fts5({columns_str})"
+    
+    def get_database_info(self) -> Dict[str, Any]:
+        """Get SQLite database information and capabilities"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                
+                info = {}
+                
+                # SQLite version
+                cursor.execute("SELECT sqlite_version() as version")
+                version_result = cursor.fetchone()
+                info['version'] = version_result[0] if version_result else 'unknown'
+                
+                # Database file info
+                info['database_file'] = self.db_path
+                info['database_type'] = self.database_type.value
+                
+                # Check capabilities
+                info['fts5_support'] = self.supports_full_text_search()
+                
+                # Pragma settings
+                cursor.execute("PRAGMA journal_mode")
+                journal_mode = cursor.fetchone()
+                info['journal_mode'] = journal_mode[0] if journal_mode else 'unknown'
+                
+                cursor.execute("PRAGMA synchronous")
+                synchronous = cursor.fetchone()
+                info['synchronous'] = synchronous[0] if synchronous else 'unknown'
+                
+                cursor.execute("PRAGMA cache_size")
+                cache_size = cursor.fetchone()
+                info['cache_size'] = cache_size[0] if cache_size else 'unknown'
+                
+                return info
+                
+        except Exception as e:
+            logger.warning(f"Could not get SQLite database info: {e}")
+            return {
+                'database_type': self.database_type.value,
+                'version': 'unknown',
+                'fts5_support': False,
+                'error': str(e)
+            }
+    
+    def _split_sqlite_statements(self, schema_sql: str) -> List[str]:
+        """Split SQL schema into individual statements handling SQLite syntax"""
+        statements = []
+        current_statement = []
+        in_trigger = False
+        
+        for line in schema_sql.split('\n'):
+            line = line.strip()
+            
+            # Skip comments and empty lines
+            if not line or line.startswith('--'):
+                continue
+            
+            # Track trigger boundaries
+            if line.upper().startswith('CREATE TRIGGER'):
+                in_trigger = True
+            elif line.upper() == 'END;' and in_trigger:
+                current_statement.append(line)
+                statement = ' '.join(current_statement)
+                if statement.strip():
+                    statements.append(statement)
+                current_statement = []
+                in_trigger = False
+                continue
+            
+            current_statement.append(line)
+            
+            # SQLite uses semicolon to end statements (except within triggers)
+            if line.endswith(';') and not in_trigger:
+                statement = ' '.join(current_statement)
+                if statement.strip():
+                    statements.append(statement)
+                current_statement = []
+        
+        # Add any remaining statement
+        if current_statement:
+            statement = ' '.join(current_statement)
+            if statement.strip():
+                statements.append(statement)
+        
+        return statements

@@ -6,6 +6,10 @@ Provides abstraction layer for different database backends
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
+from loguru import logger
+
+from ...utils.exceptions import DatabaseError, ValidationError
+from ...utils.input_validator import DatabaseInputValidator
 
 
 class DatabaseType(str, Enum):
@@ -141,44 +145,99 @@ class BaseSearchAdapter(ABC):
         category_filter: Optional[List[str]] = None,
         limit: int = 10
     ) -> List[Dict[str, Any]]:
-        """Execute fallback LIKE-based search"""
-        results = []
-        
-        # Search short-term memory
-        category_clause = ""
-        params = [namespace, f"%{query}%", f"%{query}%"]
-        
-        if category_filter:
-            category_placeholders = ",".join("?" * len(category_filter))
-            category_clause = f"AND category_primary IN ({category_placeholders})"
-            params.extend(category_filter)
-        
-        params.append(limit)
-        
-        short_term_query = f"""
-            SELECT *, 'short_term' as memory_type, 'like_fallback' as search_strategy
-            FROM short_term_memory
-            WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?)
-            {category_clause}
-            ORDER BY importance_score DESC, created_at DESC
-            LIMIT ?
-        """
-        
-        results.extend(self.connector.execute_query(short_term_query, params))
-        
-        # Search long-term memory
-        long_term_query = f"""
-            SELECT *, 'long_term' as memory_type, 'like_fallback' as search_strategy
-            FROM long_term_memory
-            WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?)
-            {category_clause}
-            ORDER BY importance_score DESC, created_at DESC
-            LIMIT ?
-        """
-        
-        results.extend(self.connector.execute_query(long_term_query, params))
-        
-        return results[:limit]
+        """Execute fallback LIKE-based search with proper parameterization"""
+        try:
+            # Input validation and sanitization
+            sanitized_query = str(query).strip() if query else ""
+            sanitized_namespace = str(namespace).strip()
+            sanitized_limit = max(1, min(int(limit), 1000))  # Limit between 1 and 1000
+            
+            results = []
+            
+            # Validate and sanitize category filter
+            sanitized_categories = []
+            if category_filter and isinstance(category_filter, list):
+                sanitized_categories = [str(cat).strip() for cat in category_filter if cat]
+            
+            # Search short-term memory with parameterized query
+            if sanitized_categories:
+                category_placeholders = ",".join(["?"] * len(sanitized_categories))
+                short_term_query = f"""
+                    SELECT *, 'short_term' as memory_type, 'like_fallback' as search_strategy
+                    FROM short_term_memory
+                    WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?)
+                    AND category_primary IN ({category_placeholders})
+                    ORDER BY importance_score DESC, created_at DESC
+                    LIMIT ?
+                """
+                short_term_params = [
+                    sanitized_namespace, 
+                    f"%{sanitized_query}%", 
+                    f"%{sanitized_query}%"
+                ] + sanitized_categories + [sanitized_limit]
+            else:
+                short_term_query = """
+                    SELECT *, 'short_term' as memory_type, 'like_fallback' as search_strategy
+                    FROM short_term_memory
+                    WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?)
+                    ORDER BY importance_score DESC, created_at DESC
+                    LIMIT ?
+                """
+                short_term_params = [
+                    sanitized_namespace,
+                    f"%{sanitized_query}%", 
+                    f"%{sanitized_query}%",
+                    sanitized_limit
+                ]
+            
+            try:
+                results.extend(self.connector.execute_query(short_term_query, short_term_params))
+            except Exception as e:
+                # Log error but continue with long-term search
+                pass
+            
+            # Search long-term memory with parameterized query
+            if sanitized_categories:
+                category_placeholders = ",".join(["?"] * len(sanitized_categories))
+                long_term_query = f"""
+                    SELECT *, 'long_term' as memory_type, 'like_fallback' as search_strategy
+                    FROM long_term_memory
+                    WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?)
+                    AND category_primary IN ({category_placeholders})
+                    ORDER BY importance_score DESC, created_at DESC
+                    LIMIT ?
+                """
+                long_term_params = [
+                    sanitized_namespace,
+                    f"%{sanitized_query}%", 
+                    f"%{sanitized_query}%"
+                ] + sanitized_categories + [sanitized_limit]
+            else:
+                long_term_query = """
+                    SELECT *, 'long_term' as memory_type, 'like_fallback' as search_strategy
+                    FROM long_term_memory
+                    WHERE namespace = ? AND (searchable_content LIKE ? OR summary LIKE ?)
+                    ORDER BY importance_score DESC, created_at DESC
+                    LIMIT ?
+                """
+                long_term_params = [
+                    sanitized_namespace,
+                    f"%{sanitized_query}%", 
+                    f"%{sanitized_query}%",
+                    sanitized_limit
+                ]
+            
+            try:
+                results.extend(self.connector.execute_query(long_term_query, long_term_params))
+            except Exception as e:
+                # Log error but continue
+                pass
+            
+            return results[:sanitized_limit]  # Ensure final limit
+            
+        except Exception as e:
+            # Return empty results on error instead of raising exception
+            return []
 
 
 class BaseSchemaGenerator(ABC):
