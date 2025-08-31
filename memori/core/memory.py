@@ -24,6 +24,7 @@ from ..config.memory_manager import MemoryManager
 from ..config.settings import LoggingSettings, LogLevel
 
 from .providers import ProviderConfig, detect_provider_from_env
+from .conversation import ConversationManager
 from ..utils.exceptions import DatabaseError, MemoriError
 from ..utils.logging import LoggingManager
 from ..utils.pydantic_models import ConversationContext
@@ -234,6 +235,13 @@ class Memori:
             False  # Track if conscious context was already injected
         )
         self._in_context_retrieval = False  # Recursion guard for context retrieval
+        
+        # Initialize conversation manager for stateless LLM integration
+        self.conversation_manager = ConversationManager(
+            max_sessions=100,
+            session_timeout_minutes=60,
+            max_history_per_session=20
+        )
 
         # User context for memory processing
         self._user_context = {
@@ -475,7 +483,7 @@ class Memori:
         return results.get("success", False)
 
     def _inject_openai_context(self, kwargs):
-        """Inject context for OpenAI calls based on ingest mode"""
+        """Inject context for OpenAI calls based on ingest mode using ConversationManager"""
         try:
             # Determine injection mode
             if self.conscious_ingest:
@@ -485,8 +493,24 @@ class Memori:
             else:
                 return kwargs  # No injection needed
 
-            # Use the unified LiteLLM context injection method
-            return self._inject_litellm_context(kwargs, mode=mode)
+            # Extract messages from kwargs
+            messages = kwargs.get('messages', [])
+            if not messages:
+                return kwargs  # No messages to process
+            
+            # Use conversation manager for enhanced context injection
+            enhanced_messages = self.conversation_manager.inject_context_with_history(
+                session_id=self._session_id,
+                messages=messages,
+                memori_instance=self,
+                mode=mode
+            )
+            
+            # Update kwargs with enhanced messages
+            kwargs['messages'] = enhanced_messages
+            
+            return kwargs
+            
         except Exception as e:
             logger.error(f"OpenAI context injection failed: {e}")
         return kwargs
@@ -860,6 +884,14 @@ class Memori:
                 model=model,
                 metadata=metadata,
             )
+            
+            # Also record AI response in conversation manager for history tracking
+            if ai_output:
+                self.conversation_manager.record_response(
+                    session_id=self._session_id,
+                    response=ai_output,
+                    metadata={"model": model, "tokens_used": tokens_used}
+                )
         except Exception as e:
             logger.error(f"Failed to record OpenAI conversation: {e}")
 
@@ -2123,3 +2155,46 @@ class Memori:
         except ImportError as e:
             logger.error(f"Failed to import OpenAI integration: {e}")
             raise ImportError("OpenAI integration not available. Install with: pip install openai") from e
+    
+    # Conversation management methods
+    
+    def get_conversation_stats(self) -> Dict[str, Any]:
+        """Get conversation manager statistics"""
+        return self.conversation_manager.get_session_stats()
+    
+    def clear_conversation_history(self, session_id: str = None):
+        """
+        Clear conversation history
+        
+        Args:
+            session_id: Specific session to clear. If None, clears current session.
+        """
+        if session_id is None:
+            session_id = self._session_id
+        self.conversation_manager.clear_session(session_id)
+        logger.info(f"Cleared conversation history for session: {session_id}")
+    
+    def clear_all_conversations(self):
+        """Clear all conversation histories"""
+        self.conversation_manager.clear_all_sessions()
+        logger.info("Cleared all conversation histories")
+    
+    def start_new_conversation(self) -> str:
+        """
+        Start a new conversation session
+        
+        Returns:
+            New session ID
+        """
+        old_session_id = self._session_id
+        self._session_id = str(uuid.uuid4())
+        
+        # Reset conscious context injection flag for new conversation
+        self._conscious_context_injected = False
+        
+        logger.info(f"Started new conversation: {self._session_id} (previous: {old_session_id})")
+        return self._session_id
+    
+    def get_current_session_id(self) -> str:
+        """Get current conversation session ID"""
+        return self._session_id
