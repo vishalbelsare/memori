@@ -64,9 +64,72 @@ class SQLAlchemyDatabaseManager:
 
         logger.info(f"Initialized SQLAlchemy database manager for {self.database_type}")
 
+    def _validate_database_dependencies(self, database_connect: str):
+        """Validate that required database drivers are installed"""
+        if database_connect.startswith("mysql:") or database_connect.startswith("mysql+"):
+            # Check for MySQL drivers
+            mysql_drivers = []
+            
+            if "mysqlconnector" in database_connect or "mysql+mysqlconnector" in database_connect:
+                try:
+                    import mysql.connector
+                    mysql_drivers.append("mysql-connector-python")
+                except ImportError:
+                    pass
+            
+            if "pymysql" in database_connect:
+                try:
+                    import pymysql
+                    mysql_drivers.append("PyMySQL")
+                except ImportError:
+                    pass
+            
+            # If using generic mysql:// try both drivers
+            if database_connect.startswith("mysql://"):
+                try:
+                    import mysql.connector
+                    mysql_drivers.append("mysql-connector-python")
+                except ImportError:
+                    pass
+                try:
+                    import pymysql
+                    mysql_drivers.append("PyMySQL")
+                except ImportError:
+                    pass
+            
+            if not mysql_drivers:
+                error_msg = (
+                    "❌ No MySQL driver found. Install one of the following:\n\n"
+                    "Option 1 (Recommended): pip install mysql-connector-python\n"
+                    "Option 2: pip install PyMySQL\n"
+                    "Option 3: pip install memorisdk[mysql]\n\n"
+                    "Then update your connection string:\n"
+                    "- For mysql-connector-python: mysql+mysqlconnector://user:pass@host:port/db\n"
+                    "- For PyMySQL: mysql+pymysql://user:pass@host:port/db"
+                )
+                raise DatabaseError(error_msg)
+        
+        elif database_connect.startswith("postgresql:") or database_connect.startswith("postgresql+"):
+            # Check for PostgreSQL drivers
+            try:
+                import psycopg2
+            except ImportError:
+                try:
+                    import asyncpg
+                except ImportError:
+                    error_msg = (
+                        "❌ No PostgreSQL driver found. Install one of the following:\n\n"
+                        "Option 1 (Recommended): pip install psycopg2-binary\n"
+                        "Option 2: pip install memorisdk[postgres]\n\n"
+                        "Then use connection string: postgresql://user:pass@host:port/db"
+                    )
+                    raise DatabaseError(error_msg)
+
     def _create_engine(self, database_connect: str):
         """Create SQLAlchemy engine with appropriate configuration"""
         try:
+            # Validate database driver dependencies first
+            self._validate_database_dependencies(database_connect)
             # Parse connection string
             if database_connect.startswith("sqlite:"):
                 # Ensure directory exists for SQLite
@@ -175,6 +238,32 @@ class SQLAlchemyDatabaseManager:
 
             return engine
 
+        except DatabaseError:
+            # Re-raise our custom database errors with helpful messages
+            raise
+        except ModuleNotFoundError as e:
+            if "mysql" in str(e).lower():
+                error_msg = (
+                    "❌ MySQL driver not found. Install one of the following:\n\n"
+                    "Option 1 (Recommended): pip install mysql-connector-python\n"
+                    "Option 2: pip install PyMySQL\n"
+                    "Option 3: pip install memorisdk[mysql]\n\n"
+                    f"Original error: {e}"
+                )
+                raise DatabaseError(error_msg)
+            elif "psycopg" in str(e).lower() or "postgresql" in str(e).lower():
+                error_msg = (
+                    "❌ PostgreSQL driver not found. Install one of the following:\n\n"
+                    "Option 1 (Recommended): pip install psycopg2-binary\n"
+                    "Option 2: pip install memorisdk[postgres]\n\n"
+                    f"Original error: {e}"
+                )
+                raise DatabaseError(error_msg)
+            else:
+                raise DatabaseError(f"Missing required dependency: {e}")
+        except SQLAlchemyError as e:
+            error_msg = f"Database connection failed: {e}\n\nCheck your connection string and ensure the database server is running."
+            raise DatabaseError(error_msg)
         except Exception as e:
             raise DatabaseError(f"Failed to create database engine: {e}")
 

@@ -165,6 +165,17 @@ class DatabaseAutoCreator:
             engine.dispose()
             return exists
 
+        except ModuleNotFoundError as e:
+            if "mysql" in str(e).lower():
+                logger.error(f"MySQL database existence check failed: {e}")
+                error_msg = (
+                    "❌ MySQL driver not found for database existence check. Install one of:\n"
+                    "- pip install mysql-connector-python\n"
+                    "- pip install PyMySQL\n"
+                    "- pip install memorisdk[mysql]"
+                )
+                logger.error(error_msg)
+            return False
         except Exception as e:
             logger.error(f"MySQL database existence check failed: {e}")
             return False
@@ -243,6 +254,18 @@ class DatabaseAutoCreator:
                 f"MySQL database '{components['database']}' created successfully"
             )
 
+        except ModuleNotFoundError as e:
+            if "mysql" in str(e).lower():
+                error_msg = (
+                    "❌ MySQL driver not found for database creation. Install one of:\n"
+                    "- pip install mysql-connector-python\n"
+                    "- pip install PyMySQL\n"
+                    "- pip install memorisdk[mysql]"
+                )
+                logger.error(error_msg)
+                raise RuntimeError(error_msg)
+            else:
+                raise RuntimeError(f"Missing dependency for database creation: {e}")
         except (OperationalError, ProgrammingError) as e:
             error_msg = str(e)
             if "database exists" in error_msg.lower():
