@@ -25,7 +25,8 @@ def main():
                 st.success("✅ Travel agent initialized!")
         except ValueError as e:
             st.error(f"❌ Configuration Error: {str(e)}")
-            st.info("""
+            st.info(
+                """
             **Please set up your environment:**
 
             1. Create a `.env` file in this directory with:
@@ -33,11 +34,12 @@ def main():
             OPENAI_API_KEY=sk-your-openai-key-here
             SERPER_API_KEY=your-serper-key-here
             ```
-            
+
             2. Get your API keys:
             - 🔸 **OpenAI API Key**: Visit [OpenAI Platform](https://platform.openai.com/api-keys)
             - 🔸 **Serper API Key**: Visit [Serper.dev](https://serper.dev) (100 free searches/month)
-            """)
+            """
+            )
             return
         except Exception as e:
             st.error(f"❌ Initialization Error: {str(e)}")
@@ -178,7 +180,8 @@ def main():
 
         # Add example queries for better user experience
         with st.expander("💡 Example Memory Questions"):
-            st.markdown("""
+            st.markdown(
+                """
             **Try asking questions like:**
             - "When was my last trip?"
             - "What are my budget preferences?"
@@ -188,7 +191,8 @@ def main():
             - "Any trips to Europe?"
             - "My dining preferences"
             - "Transportation preferences"
-            """)
+            """
+            )
 
         # Memory stats
         st.subheader("📊 Memory Stats")
@@ -202,7 +206,8 @@ def main():
 
         # Quick tips
         st.subheader("💡 Tips")
-        st.info("""
+        st.info(
+            """
         **This AI remembers:**
         - Your travel preferences
         - Past trip requests
@@ -211,7 +216,8 @@ def main():
         - Activity preferences
 
         **The more you use it, the better it gets at planning trips you'll love!**
-        """)
+        """
+        )
 
         # Environment status
         st.subheader("⚙️ Configuration")

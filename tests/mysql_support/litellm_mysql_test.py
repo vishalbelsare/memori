@@ -16,10 +16,10 @@ def test_litellm_mysql_integration():
     """Test that LiteLLM integration works with MySQL backend"""
     print("🚀 Testing LiteLLM + MySQL Integration")
     print("=" * 50)
-    
+
     try:
         from memori import Memori
-        
+
         # Test with MySQL instead of SQLite
         memory = Memori(
             database_connect="mysql+mysqlconnector://root:@127.0.0.1:3306/memori_test",
@@ -27,17 +27,17 @@ def test_litellm_mysql_integration():
             auto_ingest=False,
             verbose=True
         )
-        
+
         print("✅ Memori initialized with MySQL backend successfully")
-        
+
         # Enable LiteLLM integration
         memory.enable()
         print("✅ LiteLLM callbacks enabled")
-        
+
         # Test database functionality
         stats_before = memory.db_manager.get_memory_stats("default")
         print(f"📊 Initial stats: {stats_before['database_type']} database with {stats_before['chat_history_count']} chats")
-        
+
         # Simulate a conversation (without actual LLM calls)
         memory.db_manager.store_chat_history(
             chat_id=f"litellm_test_{int(time.time())}",
@@ -50,31 +50,31 @@ def test_litellm_mysql_integration():
             tokens_used=85,
             metadata={"test": "litellm_mysql", "provider": "test"}
         )
-        
+
         # Verify the data was stored
         stats_after = memory.db_manager.get_memory_stats("default")
         print(f"📊 After storage: {stats_after['chat_history_count']} chats")
-        
+
         # Test search functionality
         results = memory.db_manager.search_memories("MySQL integration", namespace="default")
         print(f"🔍 Search results: {len(results)} matches")
-        
+
         # Test history retrieval
         history = memory.db_manager.get_chat_history("default", limit=5)
         print(f"📚 Retrieved {len(history)} history records")
-        
+
         if len(history) > 0:
             latest = history[0]
             print(f"💬 Latest chat: {latest['user_input'][:50]}...")
-        
+
         # Cleanup
         memory.db_manager.clear_memory("default")
         memory.disable()
         memory.db_manager.close()
-        
+
         print("✅ All tests passed! LiteLLM + MySQL integration is working correctly.")
         return True
-        
+
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback

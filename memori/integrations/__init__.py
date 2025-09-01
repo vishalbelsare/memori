@@ -64,17 +64,21 @@ try:
     def __getattr__(name):
         if name == "MemoriOpenAI":
             logger.warning(
-                f"🚨 MemoriOpenAI wrapper class is deprecated!\n"
-                f"✅ NEW RECOMMENDED WAY: Use MemoriOpenAIInterceptor or memori.create_openai_client()"
+                "🚨 MemoriOpenAI wrapper class is deprecated!\n"
+                "✅ NEW RECOMMENDED WAY: Use MemoriOpenAIInterceptor or memori.create_openai_client()"
             )
             return MemoriOpenAI
         elif name == "MemoriAnthropic":
             logger.warning(
-                f"🚨 MemoriAnthropic wrapper class is deprecated!\n"
-                f"✅ NEW SIMPLE WAY: Use memori.enable() and import anthropic normally"
+                "🚨 MemoriAnthropic wrapper class is deprecated!\n"
+                "✅ NEW SIMPLE WAY: Use memori.enable() and import anthropic normally"
             )
             return MemoriAnthropic
-        elif name in ["MemoriOpenAIInterceptor", "create_openai_client", "setup_openai_interceptor"]:
+        elif name in [
+            "MemoriOpenAIInterceptor",
+            "create_openai_client",
+            "setup_openai_interceptor",
+        ]:
             # These are the new recommended classes/functions
             if name == "MemoriOpenAIInterceptor":
                 return MemoriOpenAIInterceptor

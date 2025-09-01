@@ -93,38 +93,50 @@ class ConsciouscAgent:
         """
         try:
             from sqlalchemy import text
-            
+
             with db_manager._get_connection() as connection:
                 # Get ALL conscious-info labeled memories from long-term memory
                 cursor = connection.execute(
-                    text("""SELECT memory_id, processed_data, summary, searchable_content, 
+                    text(
+                        """SELECT memory_id, processed_data, summary, searchable_content,
                               importance_score, created_at
-                       FROM long_term_memory 
-                       WHERE namespace = :namespace AND classification = 'conscious-info' 
-                       ORDER BY importance_score DESC, created_at DESC"""),
+                       FROM long_term_memory
+                       WHERE namespace = :namespace AND classification = 'conscious-info'
+                       ORDER BY importance_score DESC, created_at DESC"""
+                    ),
                     {"namespace": namespace},
                 )
                 existing_conscious_memories = cursor.fetchall()
 
             if not existing_conscious_memories:
-                logger.debug("ConsciouscAgent: No existing conscious-info memories found for initialization")
+                logger.debug(
+                    "ConsciouscAgent: No existing conscious-info memories found for initialization"
+                )
                 return False
 
             copied_count = 0
             for memory_row in existing_conscious_memories:
-                success = await self._copy_memory_to_short_term(db_manager, namespace, memory_row)
+                success = await self._copy_memory_to_short_term(
+                    db_manager, namespace, memory_row
+                )
                 if success:
                     copied_count += 1
 
             if copied_count > 0:
-                logger.info(f"ConsciouscAgent: Initialized {copied_count} existing conscious-info memories to short-term memory")
+                logger.info(
+                    f"ConsciouscAgent: Initialized {copied_count} existing conscious-info memories to short-term memory"
+                )
                 return True
             else:
-                logger.debug("ConsciouscAgent: No new conscious memories to initialize (all were duplicates)")
+                logger.debug(
+                    "ConsciouscAgent: No new conscious memories to initialize (all were duplicates)"
+                )
                 return False
 
         except Exception as e:
-            logger.error(f"ConsciouscAgent: Failed to initialize existing conscious memories: {e}")
+            logger.error(
+                f"ConsciouscAgent: Failed to initialize existing conscious memories: {e}"
+            )
             return False
 
     async def check_for_context_updates(
@@ -175,14 +187,16 @@ class ConsciouscAgent:
         """Get all conscious-info labeled memories from long-term memory"""
         try:
             from sqlalchemy import text
-            
+
             with db_manager._get_connection() as connection:
                 cursor = connection.execute(
-                    text("""SELECT memory_id, processed_data, summary, searchable_content, 
+                    text(
+                        """SELECT memory_id, processed_data, summary, searchable_content,
                               importance_score, created_at
-                       FROM long_term_memory 
+                       FROM long_term_memory
                        WHERE namespace = :namespace AND classification = 'conscious-info'
-                       ORDER BY importance_score DESC, created_at DESC"""),
+                       ORDER BY importance_score DESC, created_at DESC"""
+                    ),
                     {"namespace": namespace},
                 )
                 return cursor.fetchall()
@@ -197,15 +211,17 @@ class ConsciouscAgent:
         """Get unprocessed conscious-info labeled memories from long-term memory"""
         try:
             from sqlalchemy import text
-            
+
             with db_manager._get_connection() as connection:
                 cursor = connection.execute(
-                    text("""SELECT memory_id, processed_data, summary, searchable_content, 
+                    text(
+                        """SELECT memory_id, processed_data, summary, searchable_content,
                               importance_score, created_at
-                       FROM long_term_memory 
-                       WHERE namespace = :namespace AND classification = 'conscious-info' 
+                       FROM long_term_memory
+                       WHERE namespace = :namespace AND classification = 'conscious-info'
                        AND conscious_processed = :conscious_processed
-                       ORDER BY importance_score DESC, created_at DESC"""),
+                       ORDER BY importance_score DESC, created_at DESC"""
+                    ),
                     {"namespace": namespace, "conscious_processed": False},
                 )
                 return cursor.fetchall()
@@ -229,42 +245,54 @@ class ConsciouscAgent:
             ) = memory_row
 
             from sqlalchemy import text
-            
+
             with db_manager._get_connection() as connection:
                 # Check if similar content already exists in short-term memory
                 existing_check = connection.execute(
-                    text("""SELECT COUNT(*) FROM short_term_memory 
-                           WHERE namespace = :namespace 
+                    text(
+                        """SELECT COUNT(*) FROM short_term_memory
+                           WHERE namespace = :namespace
                            AND category_primary = 'conscious_context'
-                           AND (searchable_content = :searchable_content 
-                                OR summary = :summary)"""),
+                           AND (searchable_content = :searchable_content
+                                OR summary = :summary)"""
+                    ),
                     {
                         "namespace": namespace,
                         "searchable_content": searchable_content,
-                        "summary": summary
-                    }
+                        "summary": summary,
+                    },
                 )
-                
+
                 existing_count = existing_check.scalar()
                 if existing_count > 0:
-                    logger.debug(f"ConsciouscAgent: Skipping duplicate memory {memory_id} - similar content already exists in short-term memory")
+                    logger.debug(
+                        f"ConsciouscAgent: Skipping duplicate memory {memory_id} - similar content already exists in short-term memory"
+                    )
                     return False
 
                 # Create short-term memory ID
-                short_term_id = f"conscious_{memory_id}_{int(datetime.now().timestamp())}"
-                
+                short_term_id = (
+                    f"conscious_{memory_id}_{int(datetime.now().timestamp())}"
+                )
+
                 # Insert directly into short-term memory with conscious_context category
                 connection.execute(
-                    text("""INSERT INTO short_term_memory (
+                    text(
+                        """INSERT INTO short_term_memory (
                         memory_id, processed_data, importance_score, category_primary,
-                        retention_type, namespace, created_at, expires_at, 
+                        retention_type, namespace, created_at, expires_at,
                         searchable_content, summary, is_permanent_context
                     ) VALUES (:memory_id, :processed_data, :importance_score, :category_primary,
                         :retention_type, :namespace, :created_at, :expires_at,
-                        :searchable_content, :summary, :is_permanent_context)"""),
+                        :searchable_content, :summary, :is_permanent_context)"""
+                    ),
                     {
                         "memory_id": short_term_id,
-                        "processed_data": json.dumps(processed_data) if isinstance(processed_data, dict) else processed_data,
+                        "processed_data": (
+                            json.dumps(processed_data)
+                            if isinstance(processed_data, dict)
+                            else processed_data
+                        ),
                         "importance_score": importance_score,
                         "category_primary": "conscious_context",  # Use conscious_context category
                         "retention_type": "permanent",
@@ -295,14 +323,20 @@ class ConsciouscAgent:
         """Mark memories as processed for conscious context"""
         try:
             from sqlalchemy import text
-            
+
             with db_manager._get_connection() as connection:
                 for memory_id in memory_ids:
                     connection.execute(
-                        text("""UPDATE long_term_memory 
+                        text(
+                            """UPDATE long_term_memory
                            SET conscious_processed = :conscious_processed
-                           WHERE memory_id = :memory_id AND namespace = :namespace"""),
-                        {"memory_id": memory_id, "namespace": namespace, "conscious_processed": True},
+                           WHERE memory_id = :memory_id AND namespace = :namespace"""
+                        ),
+                        {
+                            "memory_id": memory_id,
+                            "namespace": namespace,
+                            "conscious_processed": True,
+                        },
                     )
                 connection.commit()
 

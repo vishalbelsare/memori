@@ -99,10 +99,11 @@ class MemoryManager:
     def set_memori_instance(self, memori_instance):
         """Set the parent Memori instance for memory management."""
         self.memori_instance = memori_instance
-        
+
         # Initialize LiteLLM callback manager
         try:
             from ..integrations.litellm_integration import setup_litellm_callbacks
+
             self.litellm_callback_manager = setup_litellm_callbacks(memori_instance)
             if self.litellm_callback_manager:
                 logger.debug("LiteLLM callback manager initialized")
@@ -110,7 +111,7 @@ class MemoryManager:
                 logger.warning("Failed to initialize LiteLLM callback manager")
         except ImportError as e:
             logger.warning(f"Could not initialize LiteLLM callback manager: {e}")
-            
+
         logger.debug("MemoryManager configured with Memori instance")
 
     def enable(self, interceptors: Optional[List[str]] = None) -> Dict[str, Any]:
@@ -135,20 +136,23 @@ class MemoryManager:
 
         try:
             # Enable LiteLLM native callback system
-            if self.litellm_callback_manager and not self.litellm_callback_manager.is_registered:
+            if (
+                self.litellm_callback_manager
+                and not self.litellm_callback_manager.is_registered
+            ):
                 success = self.litellm_callback_manager.register_callbacks()
                 if not success:
                     return {
                         "success": False,
-                        "message": "Failed to register LiteLLM callbacks"
+                        "message": "Failed to register LiteLLM callbacks",
                     }
             elif not self.litellm_callback_manager:
                 logger.warning("No LiteLLM callback manager available")
-            
+
             self._enabled = True
-            
+
             logger.info("MemoryManager enabled with LiteLLM native callbacks")
-            
+
             return {
                 "success": True,
                 "message": "Enabled LiteLLM native callback system",
@@ -170,11 +174,14 @@ class MemoryManager:
 
         try:
             # Disable LiteLLM native callback system
-            if self.litellm_callback_manager and self.litellm_callback_manager.is_registered:
+            if (
+                self.litellm_callback_manager
+                and self.litellm_callback_manager.is_registered
+            ):
                 success = self.litellm_callback_manager.unregister_callbacks()
                 if not success:
                     logger.warning("Failed to unregister LiteLLM callbacks")
-            
+
             self._enabled = False
 
             logger.info("MemoryManager disabled")
@@ -202,7 +209,7 @@ class MemoryManager:
                 callback_status = "available_but_not_registered"
         else:
             callback_status = "unavailable"
-            
+
         return {
             "litellm_native": {
                 "enabled": self._enabled,
@@ -226,7 +233,11 @@ class MemoryManager:
             "namespace": self.namespace,
             "user_id": self.user_id,
             "litellm_callback_manager": self.litellm_callback_manager is not None,
-            "litellm_callbacks_registered": self.litellm_callback_manager.is_registered if self.litellm_callback_manager else False,
+            "litellm_callbacks_registered": (
+                self.litellm_callback_manager.is_registered
+                if self.litellm_callback_manager
+                else False
+            ),
             "memory_filters": len(self.memory_filters),
             "conscious_ingest": self.conscious_ingest,
             "auto_ingest": self.auto_ingest,
@@ -286,12 +297,12 @@ class MemoryManager:
         try:
             if self._enabled:
                 self.disable()
-            
+
             # Clean up callback manager
             if self.litellm_callback_manager:
                 self.litellm_callback_manager.unregister_callbacks()
                 self.litellm_callback_manager = None
-                
+
             logger.info("MemoryManager cleanup completed")
         except Exception as e:
             logger.error(f"Error during MemoryManager cleanup: {e}")

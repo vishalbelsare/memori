@@ -13,8 +13,9 @@ __email__ = "harshalmore2468@gmail.com"
 try:
     from .agents.memory_agent import MemoryAgent
     from .agents.retrieval_agent import MemorySearchEngine
+
     _AGENTS_AVAILABLE = True
-except ImportError as e:
+except ImportError:
     # Agents are not available, create placeholder classes
     MemoryAgent = None
     MemorySearchEngine = None

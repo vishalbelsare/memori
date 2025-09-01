@@ -184,13 +184,13 @@ class MemoryQueries(BaseQueries):
 
     # Conscious Context Queries
     SELECT_CONSCIOUS_MEMORIES = """
-        SELECT memory_id, processed_data, summary, classification, importance_score, 
+        SELECT memory_id, processed_data, summary, classification, importance_score,
                is_user_context, is_preference, is_skill_knowledge, is_current_project,
                promotion_eligible, created_at
-        FROM long_term_memory 
-        WHERE namespace = ? 
+        FROM long_term_memory
+        WHERE namespace = ?
         AND (
-            classification = 'conscious-info' 
+            classification = 'conscious-info'
             OR promotion_eligible = ?
             OR is_user_context = ?
         )
@@ -213,13 +213,13 @@ class MemoryQueries(BaseQueries):
     INSERT_USER_CONTEXT_PROFILE = """
         INSERT OR REPLACE INTO short_term_memory (
             memory_id, processed_data, importance_score, category_primary,
-            retention_type, namespace, created_at, expires_at, 
+            retention_type, namespace, created_at, expires_at,
             searchable_content, summary, is_permanent_context
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
     MARK_CONSCIOUS_PROCESSED = """
-        UPDATE long_term_memory 
+        UPDATE long_term_memory
         SET conscious_processed = ?
         WHERE memory_id = ? AND namespace = ?
     """
@@ -250,17 +250,17 @@ class MemoryQueries(BaseQueries):
     SELECT_PROMOTION_ELIGIBLE_MEMORIES = """
         SELECT memory_id, processed_data, summary, classification
         FROM long_term_memory
-        WHERE namespace = ? AND promotion_eligible = ? 
+        WHERE namespace = ? AND promotion_eligible = ?
         AND conscious_processed = ?
     """
 
     # Performance Queries
     SELECT_MEMORIES_WITH_CONTEXT_FLAGS = """
-        SELECT memory_id, processed_data, classification, 
+        SELECT memory_id, processed_data, classification,
                is_user_context, is_preference, is_skill_knowledge, is_current_project,
                confidence_score, created_at
         FROM long_term_memory
-        WHERE namespace = ? 
+        WHERE namespace = ?
         AND (is_user_context = ? OR is_preference = ? OR is_skill_knowledge = ? OR is_current_project = ?)
         ORDER BY importance_score DESC, created_at DESC
         LIMIT ?

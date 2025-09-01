@@ -13,12 +13,12 @@ from loguru import logger
 
 from ..utils.exceptions import DatabaseError, ValidationError
 from ..utils.input_validator import DatabaseInputValidator, InputValidator
-from ..utils.transaction_manager import TransactionManager, TransactionOperation
 from ..utils.pydantic_models import (
     ProcessedLongTermMemory,
     ProcessedMemory,
     RetentionType,
 )
+from ..utils.transaction_manager import TransactionManager, TransactionOperation
 
 
 class DatabaseManager:
@@ -235,7 +235,8 @@ class DatabaseManager:
         try:
             # Validate and sanitize all inputs
             validated_data = DatabaseInputValidator.validate_insert_params(
-                "chat_history", {
+                "chat_history",
+                {
                     "chat_id": chat_id,
                     "user_input": user_input,
                     "ai_output": ai_output,
@@ -244,13 +245,13 @@ class DatabaseManager:
                     "session_id": session_id,
                     "namespace": namespace,
                     "tokens_used": max(0, int(tokens_used)) if tokens_used else 0,
-                    "metadata": metadata or {}
-                }
+                    "metadata": metadata or {},
+                },
             )
         except (ValidationError, ValueError) as e:
             logger.error(f"Invalid chat history data: {e}")
             raise DatabaseError(f"Cannot store chat history: {e}")
-        
+
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -289,7 +290,7 @@ class DatabaseManager:
         except ValidationError as e:
             logger.error(f"Invalid chat history parameters: {e}")
             return []
-            
+
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
@@ -338,14 +339,14 @@ class DatabaseManager:
         """Store a ProcessedLongTermMemory with enhanced schema using transactions"""
         try:
             memory_id = str(uuid.uuid4())
-            
+
             # Validate inputs
             chat_id = InputValidator.validate_memory_id(chat_id)
             namespace = InputValidator.validate_namespace(namespace)
-            
+
             # Prepare operations for atomic execution
             operations = []
-            
+
             # Main memory insert operation
             insert_operation = TransactionOperation(
                 query="""
@@ -369,7 +370,9 @@ class DatabaseManager:
                     datetime.now().isoformat(),
                     memory.content,
                     memory.summary,
-                    0.5, 0.5, 0.5,  # novelty, relevance, actionability scores
+                    0.5,
+                    0.5,
+                    0.5,  # novelty, relevance, actionability scores
                     memory.classification.value,
                     memory.importance.value,
                     memory.topic,
@@ -389,29 +392,30 @@ class DatabaseManager:
                     False,  # processed_for_duplicates
                     False,  # conscious_processed
                 ],
-                operation_type='insert',
-                table='long_term_memory',
-                expected_rows=1
+                operation_type="insert",
+                table="long_term_memory",
+                expected_rows=1,
             )
-            
+
             operations.append(insert_operation)
-            
+
             # Execute all operations atomically
             result = self.transaction_manager.execute_atomic_operations(operations)
-            
+
             if result.success:
                 logger.debug(f"Stored enhanced long-term memory {memory_id}")
                 return memory_id
             else:
-                raise DatabaseError(f"Failed to store enhanced long-term memory: {result.error_message}")
-                
+                raise DatabaseError(
+                    f"Failed to store enhanced long-term memory: {result.error_message}"
+                )
+
         except ValidationError as e:
             logger.error(f"Invalid memory data: {e}")
             raise DatabaseError(f"Cannot store long-term memory: {e}")
         except Exception as e:
             logger.error(f"Failed to store enhanced long-term memory: {e}")
             raise DatabaseError(f"Failed to store enhanced long-term memory: {e}")
-
 
     def _store_short_term_memory(
         self,
@@ -512,15 +516,15 @@ class DatabaseManager:
             validated_params = DatabaseInputValidator.validate_search_params(
                 query, namespace, category_filter, limit
             )
-            query = validated_params['query']
-            namespace = validated_params['namespace']
-            category_filter = validated_params['category_filter']
-            limit = validated_params['limit']
-            
+            query = validated_params["query"]
+            namespace = validated_params["namespace"]
+            category_filter = validated_params["category_filter"]
+            limit = validated_params["limit"]
+
         except ValidationError as e:
             logger.error(f"Invalid search parameters: {e}")
             return []
-        
+
         all_results = []
 
         with self._get_connection() as conn:
@@ -600,10 +604,10 @@ class DatabaseManager:
             else:
                 # Use a simple match-all query for empty searches
                 fts_query = "*"
-            
+
             # Build parameterized query - avoid string concatenation
             params = [fts_query, namespace]
-            
+
             if category_filter and isinstance(category_filter, list):
                 # Validate category filter is a list of strings
                 sanitized_categories = [str(cat) for cat in category_filter if cat]
@@ -611,7 +615,7 @@ class DatabaseManager:
                     category_placeholders = ",".join("?" * len(sanitized_categories))
                     params.extend(sanitized_categories)
                     params.append(limit)
-                    
+
                     sql_query = f"""
                         SELECT
                             fts.memory_id, fts.memory_type, fts.category_primary,
@@ -712,19 +716,19 @@ class DatabaseManager:
             # Input validation
             if not isinstance(category_filter, list) or not category_filter:
                 return []
-            
+
             # Sanitize inputs
             sanitized_query = str(query).strip() if query else ""
             sanitized_namespace = str(namespace).strip()
             sanitized_categories = [str(cat).strip() for cat in category_filter if cat]
             sanitized_limit = max(1, min(int(limit), 1000))  # Limit between 1 and 1000
-            
+
             if not sanitized_categories:
                 return []
-            
+
             # Build parameterized query
             category_placeholders = ",".join(["?"] * len(sanitized_categories))
-            
+
             # Use parameterized query with proper escaping
             sql_query = f"""
                 SELECT memory_id, processed_data, importance_score, created_at, summary,
@@ -735,15 +739,17 @@ class DatabaseManager:
                 ORDER BY importance_score DESC, created_at DESC
                 LIMIT ?
             """
-            
+
             # Build parameters safely
-            params = [sanitized_namespace] + sanitized_categories + [
-                f"%{sanitized_query}%", f"%{sanitized_query}%", sanitized_limit
-            ]
-            
+            params = (
+                [sanitized_namespace]
+                + sanitized_categories
+                + [f"%{sanitized_query}%", f"%{sanitized_query}%", sanitized_limit]
+            )
+
             cursor.execute(sql_query, params)
             return [dict(row) for row in cursor.fetchall()]
-            
+
         except Exception as e:
             logger.error(f"Category search error: {e}")
             return []
@@ -763,13 +769,15 @@ class DatabaseManager:
             sanitized_namespace = str(namespace).strip()
             sanitized_limit = max(1, min(int(limit), 1000))  # Limit between 1 and 1000
             current_timestamp = datetime.now()
-            
+
             results = []
 
             # Validate and sanitize category filter
             sanitized_categories = []
             if category_filter and isinstance(category_filter, list):
-                sanitized_categories = [str(cat).strip() for cat in category_filter if cat]
+                sanitized_categories = [
+                    str(cat).strip() for cat in category_filter if cat
+                ]
 
             # Search short-term memory with parameterized query
             if sanitized_categories:
@@ -782,12 +790,16 @@ class DatabaseManager:
                     ORDER BY importance_score DESC, created_at DESC
                     LIMIT ?
                 """
-                short_term_params = [
-                    sanitized_namespace, 
-                    f"%{sanitized_query}%", 
-                    f"%{sanitized_query}%", 
-                    current_timestamp
-                ] + sanitized_categories + [sanitized_limit]
+                short_term_params = (
+                    [
+                        sanitized_namespace,
+                        f"%{sanitized_query}%",
+                        f"%{sanitized_query}%",
+                        current_timestamp,
+                    ]
+                    + sanitized_categories
+                    + [sanitized_limit]
+                )
             else:
                 short_term_sql = """
                     SELECT *, 'short_term' as memory_type FROM short_term_memory
@@ -798,10 +810,10 @@ class DatabaseManager:
                 """
                 short_term_params = [
                     sanitized_namespace,
-                    f"%{sanitized_query}%", 
-                    f"%{sanitized_query}%", 
+                    f"%{sanitized_query}%",
+                    f"%{sanitized_query}%",
                     current_timestamp,
-                    sanitized_limit
+                    sanitized_limit,
                 ]
 
             cursor.execute(short_term_sql, short_term_params)
@@ -817,11 +829,15 @@ class DatabaseManager:
                     ORDER BY importance_score DESC, created_at DESC
                     LIMIT ?
                 """
-                long_term_params = [
-                    sanitized_namespace,
-                    f"%{sanitized_query}%", 
-                    f"%{sanitized_query}%"
-                ] + sanitized_categories + [sanitized_limit]
+                long_term_params = (
+                    [
+                        sanitized_namespace,
+                        f"%{sanitized_query}%",
+                        f"%{sanitized_query}%",
+                    ]
+                    + sanitized_categories
+                    + [sanitized_limit]
+                )
             else:
                 long_term_sql = """
                     SELECT *, 'long_term' as memory_type FROM long_term_memory
@@ -831,16 +847,16 @@ class DatabaseManager:
                 """
                 long_term_params = [
                     sanitized_namespace,
-                    f"%{sanitized_query}%", 
                     f"%{sanitized_query}%",
-                    sanitized_limit
+                    f"%{sanitized_query}%",
+                    sanitized_limit,
                 ]
 
             cursor.execute(long_term_sql, long_term_params)
             results.extend([dict(row) for row in cursor.fetchall()])
 
             return results[:sanitized_limit]  # Ensure final limit
-            
+
         except Exception as e:
             logger.error(f"LIKE search error: {e}")
             return []

@@ -8,6 +8,7 @@ with example interactions and use cases.
 
 import os
 import time
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -51,9 +52,9 @@ def main():
     demo_print("📝 Demo 1: Adding a diary entry with mood and productivity tracking")
     demo_print("-" * 60)
 
-    sample_entry = """Had a great morning! Started with a 30-minute workout, 
-    then had a productive work session where I completed the quarterly report. 
-    Team meeting went well, and I got positive feedback on my presentation. 
+    sample_entry = """Had a great morning! Started with a 30-minute workout,
+    then had a productive work session where I completed the quarterly report.
+    Team meeting went well, and I got positive feedback on my presentation.
     Feeling energized and accomplished."""
 
     demo_print(f"Adding entry: {sample_entry[:50]}...")

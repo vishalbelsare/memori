@@ -4,26 +4,27 @@ Converts SQLite schema to MySQL-compatible schema with FULLTEXT search
 """
 
 from typing import Dict, List
+
 from ..connectors.base_connector import BaseSchemaGenerator, DatabaseType
 
 
 class MySQLSchemaGenerator(BaseSchemaGenerator):
     """MySQL-specific schema generator"""
-    
+
     def __init__(self):
         super().__init__(DatabaseType.MYSQL)
-    
+
     def get_data_type_mappings(self) -> Dict[str, str]:
         """Get MySQL-specific data type mappings from SQLite"""
         return {
-            'TEXT': 'TEXT',
-            'INTEGER': 'INT',
-            'REAL': 'DECIMAL(10,2)',
-            'BOOLEAN': 'BOOLEAN',
-            'TIMESTAMP': 'TIMESTAMP',
-            'AUTOINCREMENT': 'AUTO_INCREMENT',
+            "TEXT": "TEXT",
+            "INTEGER": "INT",
+            "REAL": "DECIMAL(10,2)",
+            "BOOLEAN": "BOOLEAN",
+            "TIMESTAMP": "TIMESTAMP",
+            "AUTOINCREMENT": "AUTO_INCREMENT",
         }
-    
+
     def generate_core_schema(self) -> str:
         """Generate core tables schema for MySQL"""
         return """
@@ -77,37 +78,37 @@ CREATE TABLE IF NOT EXISTS long_term_memory (
     novelty_score DECIMAL(3,2) DEFAULT 0.5,
     relevance_score DECIMAL(3,2) DEFAULT 0.5,
     actionability_score DECIMAL(3,2) DEFAULT 0.5,
-    
+
     -- Enhanced Classification Fields
     classification VARCHAR(50) NOT NULL DEFAULT 'conversational',
     memory_importance VARCHAR(20) NOT NULL DEFAULT 'medium',
     topic VARCHAR(255),
     entities_json JSON DEFAULT (JSON_ARRAY()),
     keywords_json JSON DEFAULT (JSON_ARRAY()),
-    
+
     -- Conscious Context Flags
     is_user_context BOOLEAN DEFAULT FALSE,
     is_preference BOOLEAN DEFAULT FALSE,
     is_skill_knowledge BOOLEAN DEFAULT FALSE,
     is_current_project BOOLEAN DEFAULT FALSE,
     promotion_eligible BOOLEAN DEFAULT FALSE,
-    
+
     -- Memory Management
     duplicate_of VARCHAR(255),
     supersedes_json JSON DEFAULT (JSON_ARRAY()),
     related_memories_json JSON DEFAULT (JSON_ARRAY()),
-    
+
     -- Technical Metadata
     confidence_score DECIMAL(3,2) DEFAULT 0.8,
     extraction_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     classification_reason TEXT,
-    
+
     -- Processing Status
     processed_for_duplicates BOOLEAN DEFAULT FALSE,
     conscious_processed BOOLEAN DEFAULT FALSE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 """
-    
+
     def generate_indexes(self) -> str:
         """Generate MySQL-specific indexes"""
         return """
@@ -146,7 +147,7 @@ CREATE INDEX idx_long_term_confidence ON long_term_memory(confidence_score);
 CREATE INDEX idx_short_term_namespace_category_importance ON short_term_memory(namespace, category_primary, importance_score);
 CREATE INDEX idx_long_term_namespace_category_importance ON long_term_memory(namespace, category_primary, importance_score);
 """
-    
+
     def generate_search_setup(self) -> str:
         """Generate MySQL FULLTEXT search setup"""
         return """
@@ -156,7 +157,7 @@ CREATE INDEX idx_long_term_namespace_category_importance ON long_term_memory(nam
 -- FULLTEXT index for short-term memory
 ALTER TABLE short_term_memory ADD FULLTEXT INDEX ft_short_term_search (searchable_content, summary);
 
--- FULLTEXT index for long-term memory  
+-- FULLTEXT index for long-term memory
 ALTER TABLE long_term_memory ADD FULLTEXT INDEX ft_long_term_search (searchable_content, summary);
 
 -- Additional FULLTEXT indexes for enhanced search capabilities
@@ -165,7 +166,7 @@ ALTER TABLE long_term_memory ADD FULLTEXT INDEX ft_long_term_topic (topic);
 -- Note: MySQL FULLTEXT indexes are maintained automatically
 -- No triggers needed like SQLite FTS5
 """
-    
+
     def generate_mysql_specific_optimizations(self) -> str:
         """Generate MySQL-specific optimizations"""
         return """
@@ -182,7 +183,7 @@ ALTER TABLE long_term_memory ADD FULLTEXT INDEX ft_long_term_topic (topic);
 -- SET GLOBAL query_cache_type = ON;
 -- SET GLOBAL query_cache_size = 67108864;  -- 64MB
 """
-    
+
     def generate_full_schema(self) -> str:
         """Generate complete MySQL schema"""
         schema_parts = [
@@ -202,7 +203,7 @@ ALTER TABLE long_term_memory ADD FULLTEXT INDEX ft_long_term_topic (topic);
             "-- Schema generation completed",
         ]
         return "\n".join(schema_parts)
-    
+
     def get_migration_queries(self) -> List[str]:
         """Get queries to migrate from SQLite to MySQL"""
         return [
@@ -210,5 +211,5 @@ ALTER TABLE long_term_memory ADD FULLTEXT INDEX ft_long_term_topic (topic);
             # Data migration is complex and would require specialized tooling
             "-- Data migration queries would go here",
             "-- This requires extracting data from SQLite and inserting into MySQL",
-            "-- with proper data type conversions and character encoding handling"
+            "-- with proper data type conversions and character encoding handling",
         ]

@@ -11,8 +11,8 @@ from typing import Any, Dict, List, Optional
 from loguru import logger
 
 try:
-    import litellm
-    from litellm import success_callback
+    import litellm  # noqa: F401
+    from litellm import success_callback  # noqa: F401
 
     LITELLM_AVAILABLE = True
 except ImportError:
@@ -22,13 +22,11 @@ except ImportError:
 from ..agents.conscious_agent import ConsciouscAgent
 from ..config.memory_manager import MemoryManager
 from ..config.settings import LoggingSettings, LogLevel
-
-from .providers import ProviderConfig, detect_provider_from_env
-from .conversation import ConversationManager
+from ..database.sqlalchemy_manager import SQLAlchemyDatabaseManager as DatabaseManager
 from ..utils.exceptions import DatabaseError, MemoriError
 from ..utils.logging import LoggingManager
 from ..utils.pydantic_models import ConversationContext
-from ..database.sqlalchemy_manager import SQLAlchemyDatabaseManager as DatabaseManager
+from .conversation import ConversationManager
 
 
 class Memori:
@@ -66,7 +64,7 @@ class Memori:
         provider_config: Optional[Any] = None,  # ProviderConfig when available
         schema_init: bool = True,  # Initialize database schema and create tables
         database_prefix: Optional[str] = None,  # Database name prefix
-        database_suffix: Optional[str] = None,  # Database name suffix  
+        database_suffix: Optional[str] = None,  # Database name suffix
     ):
         """
         Initialize Memori memory system v1.0.
@@ -116,11 +114,14 @@ class Memori:
         if provider_config:
             # Use provided configuration
             self.provider_config = provider_config
-            logger.info(f"Using provided ProviderConfig with api_type: {provider_config.api_type}")
+            logger.info(
+                f"Using provided ProviderConfig with api_type: {provider_config.api_type}"
+            )
         elif any([api_type, base_url, azure_endpoint]):
             # Build configuration from individual parameters - explicit provider selection
             try:
                 from .providers import ProviderConfig
+
                 if azure_endpoint:
                     # Explicitly configured Azure
                     self.provider_config = ProviderConfig.from_azure(
@@ -139,7 +140,9 @@ class Memori:
                         api_key=api_key or openai_api_key,
                         model=model,
                     )
-                    logger.info(f"Using explicitly configured custom provider: {base_url}")
+                    logger.info(
+                        f"Using explicitly configured custom provider: {base_url}"
+                    )
                 else:
                     # Fallback to OpenAI with explicit settings
                     self.provider_config = ProviderConfig.from_openai(
@@ -150,26 +153,33 @@ class Memori:
                     )
                     logger.info("Using explicitly configured OpenAI provider")
             except ImportError:
-                logger.warning("ProviderConfig not available, using basic configuration")
+                logger.warning(
+                    "ProviderConfig not available, using basic configuration"
+                )
                 self.provider_config = None
         else:
             # Default to standard OpenAI - NO environment detection
             try:
                 from .providers import ProviderConfig
+
                 self.provider_config = ProviderConfig.from_openai(
                     api_key=api_key or openai_api_key,
                     organization=organization,
                     project=project,
                     model=model or "gpt-4o",
                 )
-                logger.info("Using default OpenAI provider (no specific provider configured)")
+                logger.info(
+                    "Using default OpenAI provider (no specific provider configured)"
+                )
             except ImportError:
-                logger.warning("ProviderConfig not available, using basic configuration")
+                logger.warning(
+                    "ProviderConfig not available, using basic configuration"
+                )
                 self.provider_config = None
 
         # Keep backward compatibility
         self.openai_api_key = api_key or openai_api_key or ""
-        if self.provider_config and hasattr(self.provider_config, 'api_key'):
+        if self.provider_config and hasattr(self.provider_config, "api_key"):
             self.openai_api_key = self.provider_config.api_key or self.openai_api_key
 
         # Setup logging based on verbose mode
@@ -189,48 +199,54 @@ class Memori:
         try:
             from ..agents.memory_agent import MemoryAgent
             from ..agents.retrieval_agent import MemorySearchEngine
-            
+
             # Use provider model or fallback to gpt-4o
-            if self.provider_config and hasattr(self.provider_config, 'model') and self.provider_config.model:
+            if (
+                self.provider_config
+                and hasattr(self.provider_config, "model")
+                and self.provider_config.model
+            ):
                 effective_model = model or self.provider_config.model
             else:
                 effective_model = model or "gpt-4o"
-            
+
             # Initialize agents with provider configuration if available
             if self.provider_config:
                 self.memory_agent = MemoryAgent(
-                    provider_config=self.provider_config,
-                    model=effective_model
+                    provider_config=self.provider_config, model=effective_model
                 )
                 self.search_engine = MemorySearchEngine(
-                    provider_config=self.provider_config,
-                    model=effective_model
+                    provider_config=self.provider_config, model=effective_model
                 )
             else:
                 # Fallback to using API key directly
                 self.memory_agent = MemoryAgent(
-                    api_key=self.openai_api_key,
-                    model=effective_model
+                    api_key=self.openai_api_key, model=effective_model
                 )
                 self.search_engine = MemorySearchEngine(
-                    api_key=self.openai_api_key,
-                    model=effective_model
+                    api_key=self.openai_api_key, model=effective_model
                 )
 
             # Only initialize conscious_agent if conscious_ingest or auto_ingest is enabled
             if conscious_ingest or auto_ingest:
                 self.conscious_agent = ConsciouscAgent()
 
-            logger.info(f"Agents initialized successfully with model: {effective_model}")
+            logger.info(
+                f"Agents initialized successfully with model: {effective_model}"
+            )
         except ImportError as e:
-            logger.warning(f"Failed to import LLM agents: {e}. Memory ingestion disabled.")
+            logger.warning(
+                f"Failed to import LLM agents: {e}. Memory ingestion disabled."
+            )
             self.memory_agent = None
             self.search_engine = None
             self.conscious_agent = None
             self.conscious_ingest = False
             self.auto_ingest = False
         except Exception as e:
-            logger.warning(f"Failed to initialize LLM agents: {e}. Memory ingestion disabled.")
+            logger.warning(
+                f"Failed to initialize LLM agents: {e}. Memory ingestion disabled."
+            )
             self.memory_agent = None
             self.search_engine = None
             self.conscious_agent = None
@@ -244,12 +260,10 @@ class Memori:
             False  # Track if conscious context was already injected
         )
         self._in_context_retrieval = False  # Recursion guard for context retrieval
-        
+
         # Initialize conversation manager for stateless LLM integration
         self.conversation_manager = ConversationManager(
-            max_sessions=100,
-            session_timeout_minutes=60,
-            max_history_per_session=20
+            max_sessions=100, session_timeout_minutes=60, max_history_per_session=20
         )
 
         # User context for memory processing
@@ -310,7 +324,7 @@ class Memori:
         if not self.schema_init:
             logger.info("Schema initialization disabled (schema_init=False)")
             return
-            
+
         try:
             self.db_manager.initialize_schema()
             logger.info("Database schema initialized successfully")
@@ -360,7 +374,9 @@ class Memori:
                     self._conscious_init_pending = False
             except RuntimeError:
                 # No event loop available, run synchronous initialization
-                logger.debug("Conscious-ingest: No event loop available, running synchronous initialization")
+                logger.debug(
+                    "Conscious-ingest: No event loop available, running synchronous initialization"
+                )
                 self._run_synchronous_conscious_initialization()
                 self._conscious_init_pending = False
 
@@ -370,15 +386,21 @@ class Memori:
             if not self.conscious_agent:
                 return
 
-            # If both auto_ingest and conscious_ingest are enabled, 
+            # If both auto_ingest and conscious_ingest are enabled,
             # initialize by copying ALL existing conscious-info memories first
             if self.auto_ingest and self.conscious_ingest:
-                logger.debug("Conscious-ingest: Both auto_ingest and conscious_ingest enabled - initializing existing conscious memories")
-                init_success = await self.conscious_agent.initialize_existing_conscious_memories(
-                    self.db_manager, self.namespace
+                logger.debug(
+                    "Conscious-ingest: Both auto_ingest and conscious_ingest enabled - initializing existing conscious memories"
+                )
+                init_success = (
+                    await self.conscious_agent.initialize_existing_conscious_memories(
+                        self.db_manager, self.namespace
+                    )
                 )
                 if init_success:
-                    logger.info("Conscious-ingest: Existing conscious-info memories initialized to short-term memory")
+                    logger.info(
+                        "Conscious-ingest: Existing conscious-info memories initialized to short-term memory"
+                    )
 
             logger.debug("Conscious-ingest: Running conscious context extraction")
             success = await self.conscious_agent.run_conscious_ingest(
@@ -401,39 +423,47 @@ class Memori:
         try:
             if not self.conscious_agent:
                 return
-            
-            # If both auto_ingest and conscious_ingest are enabled, 
+
+            # If both auto_ingest and conscious_ingest are enabled,
             # initialize by copying ALL existing conscious-info memories first
             if self.auto_ingest and self.conscious_ingest:
-                logger.info("Conscious-ingest: Both auto_ingest and conscious_ingest enabled - initializing existing conscious memories")
-                
+                logger.info(
+                    "Conscious-ingest: Both auto_ingest and conscious_ingest enabled - initializing existing conscious memories"
+                )
+
                 # Run synchronous initialization of existing memories
                 self._initialize_existing_conscious_memories_sync()
-                
-            logger.debug("Conscious-ingest: Synchronous conscious context extraction completed")
-            
+
+            logger.debug(
+                "Conscious-ingest: Synchronous conscious context extraction completed"
+            )
+
         except Exception as e:
             logger.error(f"Synchronous conscious agent initialization failed: {e}")
-    
+
     def _initialize_existing_conscious_memories_sync(self):
         """Synchronously initialize existing conscious-info memories"""
         try:
             from sqlalchemy import text
-            
+
             with self.db_manager._get_connection() as connection:
                 # Get ALL conscious-info labeled memories from long-term memory
                 cursor = connection.execute(
-                    text("""SELECT memory_id, processed_data, summary, searchable_content, 
+                    text(
+                        """SELECT memory_id, processed_data, summary, searchable_content,
                               importance_score, created_at
-                       FROM long_term_memory 
-                       WHERE namespace = :namespace AND classification = 'conscious-info' 
-                       ORDER BY importance_score DESC, created_at DESC"""),
+                       FROM long_term_memory
+                       WHERE namespace = :namespace AND classification = 'conscious-info'
+                       ORDER BY importance_score DESC, created_at DESC"""
+                    ),
                     {"namespace": self.namespace or "default"},
                 )
                 existing_conscious_memories = cursor.fetchall()
 
             if not existing_conscious_memories:
-                logger.debug("Conscious-ingest: No existing conscious-info memories found for initialization")
+                logger.debug(
+                    "Conscious-ingest: No existing conscious-info memories found for initialization"
+                )
                 return False
 
             copied_count = 0
@@ -443,16 +473,22 @@ class Memori:
                     copied_count += 1
 
             if copied_count > 0:
-                logger.info(f"Conscious-ingest: Initialized {copied_count} existing conscious-info memories to short-term memory")
+                logger.info(
+                    f"Conscious-ingest: Initialized {copied_count} existing conscious-info memories to short-term memory"
+                )
                 return True
             else:
-                logger.debug("Conscious-ingest: No new conscious memories to initialize (all were duplicates)")
+                logger.debug(
+                    "Conscious-ingest: No new conscious memories to initialize (all were duplicates)"
+                )
                 return False
 
         except Exception as e:
-            logger.error(f"Conscious-ingest: Failed to initialize existing conscious memories: {e}")
+            logger.error(
+                f"Conscious-ingest: Failed to initialize existing conscious memories: {e}"
+            )
             return False
-    
+
     def _copy_memory_to_short_term_sync(self, memory_row: tuple) -> bool:
         """Synchronously copy a conscious memory to short-term memory with duplicate filtering"""
         try:
@@ -465,41 +501,50 @@ class Memori:
                 _,
             ) = memory_row
 
-            from sqlalchemy import text
             from datetime import datetime
-            
+
+            from sqlalchemy import text
+
             with self.db_manager._get_connection() as connection:
                 # Check if similar content already exists in short-term memory
                 existing_check = connection.execute(
-                    text("""SELECT COUNT(*) FROM short_term_memory 
-                           WHERE namespace = :namespace 
+                    text(
+                        """SELECT COUNT(*) FROM short_term_memory
+                           WHERE namespace = :namespace
                            AND category_primary = 'conscious_context'
-                           AND (searchable_content = :searchable_content 
-                                OR summary = :summary)"""),
+                           AND (searchable_content = :searchable_content
+                                OR summary = :summary)"""
+                    ),
                     {
                         "namespace": self.namespace or "default",
                         "searchable_content": searchable_content,
-                        "summary": summary
-                    }
+                        "summary": summary,
+                    },
                 )
-                
+
                 existing_count = existing_check.scalar()
                 if existing_count > 0:
-                    logger.debug(f"Conscious-ingest: Skipping duplicate memory {memory_id} - similar content already exists in short-term memory")
+                    logger.debug(
+                        f"Conscious-ingest: Skipping duplicate memory {memory_id} - similar content already exists in short-term memory"
+                    )
                     return False
 
                 # Create short-term memory ID
-                short_term_id = f"conscious_{memory_id}_{int(datetime.now().timestamp())}"
-                
+                short_term_id = (
+                    f"conscious_{memory_id}_{int(datetime.now().timestamp())}"
+                )
+
                 # Insert directly into short-term memory with conscious_context category
                 connection.execute(
-                    text("""INSERT INTO short_term_memory (
+                    text(
+                        """INSERT INTO short_term_memory (
                         memory_id, processed_data, importance_score, category_primary,
-                        retention_type, namespace, created_at, expires_at, 
+                        retention_type, namespace, created_at, expires_at,
                         searchable_content, summary, is_permanent_context
                     ) VALUES (:memory_id, :processed_data, :importance_score, :category_primary,
                         :retention_type, :namespace, :created_at, :expires_at,
-                        :searchable_content, :summary, :is_permanent_context)"""),
+                        :searchable_content, :summary, :is_permanent_context)"""
+                    ),
                     {
                         "memory_id": short_term_id,
                         "processed_data": processed_data,
@@ -516,11 +561,15 @@ class Memori:
                 )
                 connection.commit()
 
-            logger.debug(f"Conscious-ingest: Copied memory {memory_id} to short-term as {short_term_id}")
+            logger.debug(
+                f"Conscious-ingest: Copied memory {memory_id} to short-term as {short_term_id}"
+            )
             return True
 
         except Exception as e:
-            logger.error(f"Conscious-ingest: Failed to copy memory {memory_row[0]} to short-term: {e}")
+            logger.error(
+                f"Conscious-ingest: Failed to copy memory {memory_row[0]} to short-term: {e}"
+            )
             return False
 
     def enable(self, interceptors: Optional[List[str]] = None):
@@ -543,6 +592,7 @@ class Memori:
         # Register for automatic OpenAI interception
         try:
             from ..integrations.openai_integration import register_memori_instance
+
             register_memori_instance(self)
         except ImportError:
             logger.debug("OpenAI integration not available for automatic interception")
@@ -590,6 +640,7 @@ class Memori:
         # Unregister from automatic OpenAI interception
         try:
             from ..integrations.openai_integration import unregister_memori_instance
+
             unregister_memori_instance(self)
         except ImportError:
             logger.debug("OpenAI integration not available for automatic interception")
@@ -639,7 +690,7 @@ class Memori:
         try:
             # Check for deferred conscious initialization
             self._check_deferred_initialization()
-            
+
             # Determine injection mode based on the architecture:
             # - conscious_ingest only: Use short-term memory (conscious context)
             # - auto_ingest only: Search long-term memory database
@@ -652,23 +703,23 @@ class Memori:
                 return kwargs  # No injection needed
 
             # Extract messages from kwargs
-            messages = kwargs.get('messages', [])
+            messages = kwargs.get("messages", [])
             if not messages:
                 return kwargs  # No messages to process
-            
+
             # Use conversation manager for enhanced context injection
             enhanced_messages = self.conversation_manager.inject_context_with_history(
                 session_id=self._session_id,
                 messages=messages,
                 memori_instance=self,
-                mode=mode
+                mode=mode,
             )
-            
+
             # Update kwargs with enhanced messages
-            kwargs['messages'] = enhanced_messages
-            
+            kwargs["messages"] = enhanced_messages
+
             return kwargs
-            
+
         except Exception as e:
             logger.error(f"OpenAI context injection failed: {e}")
         return kwargs
@@ -912,20 +963,22 @@ class Memori:
         """
         try:
             from sqlalchemy import text
-            
+
             with self.db_manager._get_connection() as conn:
                 # Get ALL short-term memories (no limit) ordered by importance and recency
                 # This gives the complete conscious context as single initial injection
                 result = conn.execute(
-                    text("""
+                    text(
+                        """
                     SELECT memory_id, processed_data, importance_score,
                            category_primary, summary, searchable_content,
                            created_at, access_count
                     FROM short_term_memory
                     WHERE namespace = :namespace AND (expires_at IS NULL OR expires_at > :current_time)
                     ORDER BY importance_score DESC, created_at DESC
-                    """),
-                    {"namespace": self.namespace, "current_time": datetime.now()}
+                    """
+                    ),
+                    {"namespace": self.namespace, "current_time": datetime.now()},
                 )
 
                 memories = []
@@ -961,45 +1014,53 @@ class Memori:
         try:
             # Early validation
             if not user_input or not user_input.strip():
-                logger.debug("Auto-ingest: No user input provided, returning empty context")
-                return []
-            
-            # Check for recursion guard to prevent infinite loops
-            if hasattr(self, '_in_context_retrieval') and self._in_context_retrieval:
-                logger.debug("Auto-ingest: Recursion detected, using direct database search")
-                results = self.db_manager.search_memories(
-                    query=user_input,
-                    namespace=self.namespace,
-                    limit=5
+                logger.debug(
+                    "Auto-ingest: No user input provided, returning empty context"
                 )
-                logger.debug(f"Auto-ingest: Recursion fallback returned {len(results)} results")
+                return []
+
+            # Check for recursion guard to prevent infinite loops
+            if hasattr(self, "_in_context_retrieval") and self._in_context_retrieval:
+                logger.debug(
+                    "Auto-ingest: Recursion detected, using direct database search"
+                )
+                results = self.db_manager.search_memories(
+                    query=user_input, namespace=self.namespace, limit=5
+                )
+                logger.debug(
+                    f"Auto-ingest: Recursion fallback returned {len(results)} results"
+                )
                 return results
-            
+
             # Set recursion guard
             self._in_context_retrieval = True
-            
-            logger.debug(f"Auto-ingest: Starting context retrieval for query: '{user_input[:50]}...'")
-            
+
+            logger.debug(
+                f"Auto-ingest: Starting context retrieval for query: '{user_input[:50]}...'"
+            )
+
             # Always try direct database search first as it's more reliable
             logger.debug("Auto-ingest: Using direct database search (primary method)")
             results = self.db_manager.search_memories(
-                query=user_input,
-                namespace=self.namespace,
-                limit=5
+                query=user_input, namespace=self.namespace, limit=5
             )
-            
+
             if results:
-                logger.debug(f"Auto-ingest: Direct database search returned {len(results)} results")
+                logger.debug(
+                    f"Auto-ingest: Direct database search returned {len(results)} results"
+                )
                 # Add search metadata to results
                 for result in results:
                     if isinstance(result, dict):
-                        result['retrieval_method'] = 'direct_database_search'
-                        result['retrieval_query'] = user_input
+                        result["retrieval_method"] = "direct_database_search"
+                        result["retrieval_query"] = user_input
                 return results
-            
+
             # If direct search fails, try search engine as backup
             if self.search_engine:
-                logger.debug("Auto-ingest: Direct search returned 0 results, trying search engine")
+                logger.debug(
+                    "Auto-ingest: Direct search returned 0 results, trying search engine"
+                )
                 try:
                     engine_results = self.search_engine.execute_search(
                         query=user_input,
@@ -1007,49 +1068,63 @@ class Memori:
                         namespace=self.namespace,
                         limit=5,
                     )
-                    
+
                     if engine_results:
-                        logger.debug(f"Auto-ingest: Search engine returned {len(engine_results)} results")
+                        logger.debug(
+                            f"Auto-ingest: Search engine returned {len(engine_results)} results"
+                        )
                         # Add search metadata to results
                         for result in engine_results:
                             if isinstance(result, dict):
-                                result['retrieval_method'] = 'search_engine'
-                                result['retrieval_query'] = user_input
+                                result["retrieval_method"] = "search_engine"
+                                result["retrieval_query"] = user_input
                         return engine_results
                     else:
-                        logger.debug("Auto-ingest: Search engine also returned 0 results")
-                        
+                        logger.debug(
+                            "Auto-ingest: Search engine also returned 0 results"
+                        )
+
                 except Exception as search_error:
-                    logger.warning(f"Auto-ingest: Search engine failed ({search_error})")
+                    logger.warning(
+                        f"Auto-ingest: Search engine failed ({search_error})"
+                    )
             else:
                 logger.debug("Auto-ingest: No search engine available")
 
             # Final fallback: get recent memories from the same namespace
-            logger.debug("Auto-ingest: All search methods returned 0 results, using recent memories fallback")
+            logger.debug(
+                "Auto-ingest: All search methods returned 0 results, using recent memories fallback"
+            )
             fallback_results = self.db_manager.search_memories(
                 query="",  # Empty query to get recent memories
                 namespace=self.namespace,
-                limit=3
+                limit=3,
             )
-            
+
             if fallback_results:
-                logger.debug(f"Auto-ingest: Fallback returned {len(fallback_results)} recent memories")
+                logger.debug(
+                    f"Auto-ingest: Fallback returned {len(fallback_results)} recent memories"
+                )
                 # Add search metadata to fallback results
                 for result in fallback_results:
                     if isinstance(result, dict):
-                        result['retrieval_method'] = 'recent_memories_fallback'
-                        result['retrieval_query'] = user_input
+                        result["retrieval_method"] = "recent_memories_fallback"
+                        result["retrieval_query"] = user_input
                 return fallback_results
 
-            logger.debug("Auto-ingest: All retrieval methods failed, returning empty context")
+            logger.debug(
+                "Auto-ingest: All retrieval methods failed, returning empty context"
+            )
             return []
 
         except Exception as e:
-            logger.error(f"Auto-ingest: Failed to get context for '{user_input[:50]}...': {e}")
+            logger.error(
+                f"Auto-ingest: Failed to get context for '{user_input[:50]}...': {e}"
+            )
             return []
         finally:
             # Always clear recursion guard
-            if hasattr(self, '_in_context_retrieval'):
+            if hasattr(self, "_in_context_retrieval"):
                 self._in_context_retrieval = False
 
     def _record_openai_conversation(self, kwargs, response):
@@ -1079,13 +1154,13 @@ class Memori:
                 model=model,
                 metadata=metadata,
             )
-            
+
             # Also record AI response in conversation manager for history tracking
             if ai_output:
                 self.conversation_manager.record_response(
                     session_id=self._session_id,
                     response=ai_output,
-                    metadata={"model": model, "tokens_used": tokens_used}
+                    metadata={"model": model, "tokens_used": tokens_used},
                 )
         except Exception as e:
             logger.error(f"Failed to record OpenAI conversation: {e}")
@@ -1661,7 +1736,11 @@ class Memori:
                 user_input=user_input,
                 ai_output=ai_output,
                 context=context,
-                existing_memories=[mem.summary for mem in existing_memories[:10]] if existing_memories else [],
+                existing_memories=(
+                    [mem.summary for mem in existing_memories[:10]]
+                    if existing_memories
+                    else []
+                ),
             )
 
             # Check for duplicates
@@ -1706,14 +1785,19 @@ class Memori:
     async def _get_recent_memories_for_dedup(self) -> List:
         """Get recent memories for deduplication check"""
         try:
+            from sqlalchemy import text
+
             from ..database.queries.memory_queries import MemoryQueries
             from ..utils.pydantic_models import ProcessedLongTermMemory
-            from sqlalchemy import text
 
             with self.db_manager._get_connection() as connection:
                 result = connection.execute(
                     text(MemoryQueries.SELECT_MEMORIES_FOR_DEDUPLICATION),
-                    {"namespace": self.namespace, "processed_for_duplicates": False, "limit": 20}
+                    {
+                        "namespace": self.namespace,
+                        "processed_for_duplicates": False,
+                        "limit": 20,
+                    },
                 )
 
                 memories = []
@@ -1723,14 +1807,16 @@ class Memori:
                         # Note: Query returns (memory_id, summary, searchable_content, classification, created_at)
                         memory = ProcessedLongTermMemory(
                             memory_id=row[0],
-                            conversation_id=row[0],  # Use memory_id as conversation_id for existing memories
+                            conversation_id=row[
+                                0
+                            ],  # Use memory_id as conversation_id for existing memories
                             summary=row[1] or "",
                             content=row[2] or "",
                             classification=row[3] or "conversational",
                             importance="medium",  # Default importance level for comparison
                             conscious_context=False,  # Default for existing memories
                             promotion_eligible=False,  # Default for existing memories
-                            classification_reason="Existing memory loaded for deduplication check"  # Required field
+                            classification_reason="Existing memory loaded for deduplication check",  # Required field
                         )
                         memories.append(memory)
                     except Exception as e:
@@ -1850,7 +1936,7 @@ class Memori:
         """Get statistics from the new interceptor system"""
         try:
             # Get system status first
-            system_status = self.get_interceptor_status()
+            interceptor_status = self.get_interceptor_status()
 
             stats = {
                 "integration": "memori_system",
@@ -1882,8 +1968,9 @@ class Memori:
             # OpenAI stats
             try:
                 import openai
+
                 _ = openai  # Suppress unused import warning
-                
+
                 openai_interceptor_status = interceptor_status.get("openai", {})
                 stats["providers"]["openai"] = {
                     "available": True,
@@ -1901,8 +1988,9 @@ class Memori:
             # Anthropic stats
             try:
                 import anthropic
+
                 _ = anthropic  # Suppress unused import warning
-                
+
                 anthropic_interceptor_status = interceptor_status.get("anthropic", {})
                 stats["providers"]["anthropic"] = {
                     "available": True,
@@ -2265,7 +2353,7 @@ class Memori:
         """Get essential conversations from short-term memory"""
         try:
             from sqlalchemy import text
-            
+
             # Get all conversations marked as essential
             with self.db_manager._get_connection() as connection:
                 query = """
@@ -2277,7 +2365,9 @@ class Memori:
                 LIMIT :limit
                 """
 
-                result = connection.execute(text(query), {"namespace": self.namespace, "limit": limit})
+                result = connection.execute(
+                    text(query), {"namespace": self.namespace, "limit": limit}
+                )
 
                 essential_conversations = []
                 for row in result:
@@ -2302,25 +2392,25 @@ class Memori:
     def create_openai_client(self, **kwargs):
         """
         Create an OpenAI client with automatic memory recording.
-        
+
         This method creates a MemoriOpenAIInterceptor that automatically records
         all OpenAI API calls to memory using the inheritance-based approach.
-        
+
         Args:
             **kwargs: Additional arguments passed to OpenAI client (e.g., api_key)
                      These override any settings from the Memori provider config
-        
+
         Returns:
             MemoriOpenAIInterceptor instance that works as a drop-in replacement
             for the standard OpenAI client
-            
+
         Example:
             memori = Memori(api_key="sk-...")
             memori.enable()
-            
+
             # Create interceptor client
             client = memori.create_openai_client()
-            
+
             # Use exactly like standard OpenAI client
             response = client.chat.completions.create(
                 model="gpt-4o",
@@ -2330,37 +2420,43 @@ class Memori:
         """
         try:
             from ..integrations.openai_integration import create_openai_client
+
             return create_openai_client(self, self.provider_config, **kwargs)
         except ImportError as e:
             logger.error(f"Failed to import OpenAI integration: {e}")
-            raise ImportError("OpenAI integration not available. Install with: pip install openai") from e
+            raise ImportError(
+                "OpenAI integration not available. Install with: pip install openai"
+            ) from e
 
     def create_openai_wrapper(self, **kwargs):
         """
         Create a legacy OpenAI wrapper (backward compatibility).
-        
+
         DEPRECATED: Use create_openai_client() instead for better integration.
-        
+
         Returns:
             MemoriOpenAI wrapper instance
         """
         try:
             from ..integrations.openai_integration import MemoriOpenAI
+
             return MemoriOpenAI(self, **kwargs)
         except ImportError as e:
             logger.error(f"Failed to import OpenAI integration: {e}")
-            raise ImportError("OpenAI integration not available. Install with: pip install openai") from e
-    
+            raise ImportError(
+                "OpenAI integration not available. Install with: pip install openai"
+            ) from e
+
     # Conversation management methods
-    
+
     def get_conversation_stats(self) -> Dict[str, Any]:
         """Get conversation manager statistics"""
         return self.conversation_manager.get_session_stats()
-    
+
     def clear_conversation_history(self, session_id: str = None):
         """
         Clear conversation history
-        
+
         Args:
             session_id: Specific session to clear. If None, clears current session.
         """
@@ -2368,28 +2464,30 @@ class Memori:
             session_id = self._session_id
         self.conversation_manager.clear_session(session_id)
         logger.info(f"Cleared conversation history for session: {session_id}")
-    
+
     def clear_all_conversations(self):
         """Clear all conversation histories"""
         self.conversation_manager.clear_all_sessions()
         logger.info("Cleared all conversation histories")
-    
+
     def start_new_conversation(self) -> str:
         """
         Start a new conversation session
-        
+
         Returns:
             New session ID
         """
         old_session_id = self._session_id
         self._session_id = str(uuid.uuid4())
-        
+
         # Reset conscious context injection flag for new conversation
         self._conscious_context_injected = False
-        
-        logger.info(f"Started new conversation: {self._session_id} (previous: {old_session_id})")
+
+        logger.info(
+            f"Started new conversation: {self._session_id} (previous: {old_session_id})"
+        )
         return self._session_id
-    
+
     def get_current_session_id(self) -> str:
         """Get current conversation session ID"""
         return self._session_id
