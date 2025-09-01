@@ -10,17 +10,19 @@ pydantic>=2.0.0
 # Configuration management
 python-dotenv>=1.0.0
 
-# Utilities
-click>=8.0.0
+# Database ORM (required for core functionality)
+sqlalchemy>=2.0.0
 
-# Database ORM and drivers
-sqlalchemy>=*
+# AI/LLM integration (required for core functionality)
+openai>=1.0.0
 
 # Optional: Database drivers (install as needed)
 # psycopg2-binary>=2.9.0  # PostgreSQL
-# mysql-connector-python>=8.0.0  # MySQL
+# PyMySQL>=1.0.0  # MySQL
 
-# Optional: AI/LLM integrations (install as needed)
-# openai>=1.0.0
+# Optional: Additional AI/LLM integrations (install as needed)
 # anthropic>=0.3.0
 # litellm>=1.0.0
+
+# Optional: Development and testing dependencies
+# For full development environment, use: pip install -r requirements-dev.txt
