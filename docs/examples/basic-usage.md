@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def main():
-    print("🧠 Memori v1.1 - AI Memory with Conscious Ingestion")
+    print("Memori v1.1 - AI Memory with Conscious Ingestion")
     
     # Initialize your workspace memory with conscious ingestion
     office_work = Memori(
@@ -68,11 +68,11 @@ def main():
     )
     print(f"Assistant: {response3.choices[0].message.content}")
     
-    print("\n🎉 That's it! Your AI now remembers your:")
+    print("\nThat's it! Your AI now remembers your:")
     print("  - Tech stack (FastAPI, PostgreSQL)")  
     print("  - Coding preferences (clean code, type hints)")
     print("  - Project context (user models, database connections)")
-    print("\n🧠 With conscious_ingest=True:")
+    print("\nWith conscious_ingest=True:")
     print("  - Background analysis will identify essential information")
     print("  - Key facts automatically promoted for instant access")
     print("  - Context injection gets smarter over time")
@@ -96,7 +96,7 @@ office_work = Memori(
 
 **What `conscious_ingest=True` enables:**
 
-- 🧠 **Background Analysis**: AI analyzes memory patterns every 6 hours
+- **Background Analysis**: AI analyzes memory patterns every 6 hours
 - **Essential Memory Promotion**: Key personal facts promoted to immediate access
 - **Smart Context Injection**: 3-5 most relevant memories automatically included
 - **Continuous Learning**: System adapts to your preferences and patterns
@@ -136,7 +136,7 @@ Each conversation builds on the previous with AI-powered selection:
 ## Expected Output
 
 ```
-🧠 Memori - Your AI's Second Memory
+Memori - Your AI's Second Memory
 Memory enabled - all conversations will be recorded!
 
 --- First conversation ---
@@ -148,7 +148,7 @@ Assistant: Since you're working with FastAPI and PostgreSQL, here's how to set u
 --- Third conversation (preferences remembered) ---
 Assistant: I'll keep that in mind! Clean, well-documented code with type hints is definitely the way to go...
 
-🎉 That's it! Your AI now remembers your:
+That's it! Your AI now remembers your:
   - Tech stack (FastAPI, PostgreSQL)
   - Coding preferences (clean code, type hints)  
   - Project context (user models, database connections)
