@@ -464,15 +464,10 @@ Be strategic and comprehensive in your search planning."""
                         )
                         return False
 
-            # Check for Azure endpoints (they may or may not support beta features)
+            # Check for Azure endpoints - test if they support structured outputs
             if self.provider_config and hasattr(self.provider_config, "api_type"):
                 if self.provider_config.api_type == "azure":
-                    logger.debug(
-                        "Detected Azure endpoint, enabling structured outputs (may need manual verification)"
-                    )
-                    return (
-                        True  # Azure may support it, let it try and fallback if needed
-                    )
+                    return self._test_azure_structured_outputs_support()
                 elif self.provider_config.api_type in ["custom", "openai_compatible"]:
                     logger.debug(
                         f"Detected {self.provider_config.api_type} endpoint, disabling structured outputs"
@@ -488,6 +483,43 @@ Be strategic and comprehensive in your search planning."""
                 f"Error detecting structured output support: {e}, defaulting to enabled"
             )
             return True
+
+    def _test_azure_structured_outputs_support(self) -> bool:
+        """
+        Test if Azure OpenAI supports structured outputs by making a test call
+        
+        Returns:
+            True if structured outputs are supported, False otherwise
+        """
+        try:
+            from pydantic import BaseModel
+            
+            # Simple test model
+            class TestModel(BaseModel):
+                test_field: str
+            
+            # Try to make a structured output call
+            test_response = self.client.beta.chat.completions.parse(
+                model=self.model,
+                messages=[
+                    {"role": "user", "content": "Say hello"}
+                ],
+                response_format=TestModel,
+                max_tokens=10,
+                temperature=0
+            )
+            
+            if test_response and hasattr(test_response, 'choices') and test_response.choices:
+                logger.debug("Azure endpoint supports structured outputs - test successful")
+                return True
+            else:
+                logger.debug("Azure endpoint structured outputs test failed - response invalid")
+                return False
+                
+        except Exception as e:
+            # If structured outputs fail, log the error and fall back to regular completions
+            logger.debug(f"Azure endpoint doesn't support structured outputs: {e}")
+            return False
 
     def _plan_search_with_fallback_parsing(self, query: str) -> MemorySearchQuery:
         """
