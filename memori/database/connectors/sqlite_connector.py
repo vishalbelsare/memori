@@ -171,12 +171,16 @@ class SQLiteConnector(BaseDatabaseConnector):
         try:
             if not schema_sql:
                 # Use SQLite-specific schema
-                from ..schema_generators.sqlite_schema_generator import (
-                    SQLiteSchemaGenerator,
-                )
+                try:
+                    from ..schema_generators.sqlite_schema_generator import (  # type: ignore
+                        SQLiteSchemaGenerator,
+                    )
 
-                schema_generator = SQLiteSchemaGenerator()
-                schema_sql = schema_generator.generate_full_schema()
+                    schema_generator = SQLiteSchemaGenerator()
+                    schema_sql = schema_generator.generate_full_schema()
+                except ImportError:
+                    # Fall back to None - let base functionality handle it
+                    schema_sql = None
 
             # Execute schema using transaction
             with self.get_connection() as conn:

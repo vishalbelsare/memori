@@ -9,17 +9,7 @@ __version__ = "1.0.0"
 __author__ = "Harshal More"
 __email__ = "harshalmore2468@gmail.com"
 
-# Memory agents (dynamically imported to avoid import errors)
-try:
-    from .agents.memory_agent import MemoryAgent
-    from .agents.retrieval_agent import MemorySearchEngine
-
-    _AGENTS_AVAILABLE = True
-except ImportError:
-    # Agents are not available, create placeholder classes
-    MemoryAgent = None
-    MemorySearchEngine = None
-    _AGENTS_AVAILABLE = False
+from typing import Any, Optional
 
 # Configuration system
 from .config import (
@@ -79,6 +69,20 @@ from .utils import (  # Pydantic models; Enhanced exceptions; Validators and hel
     ValidationError,
     get_logger,
 )
+
+# Memory agents (dynamically imported to avoid import errors)
+MemoryAgent: Optional[Any] = None
+MemorySearchEngine: Optional[Any] = None
+_AGENTS_AVAILABLE = False
+
+try:
+    from .agents.memory_agent import MemoryAgent
+    from .agents.retrieval_agent import MemorySearchEngine
+
+    _AGENTS_AVAILABLE = True
+except ImportError:
+    # Agents are not available, use placeholder None values
+    pass
 
 # Build __all__ list dynamically based on available components
 _all_components = [

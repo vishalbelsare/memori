@@ -273,12 +273,16 @@ class PostgreSQLConnector(BaseDatabaseConnector):
         try:
             if not schema_sql:
                 # Use PostgreSQL-specific schema
-                from ..schema_generators.postgresql_schema_generator import (
-                    PostgreSQLSchemaGenerator,
-                )
+                try:
+                    from ..schema_generators.postgresql_schema_generator import (  # type: ignore
+                        PostgreSQLSchemaGenerator,
+                    )
 
-                schema_generator = PostgreSQLSchemaGenerator()
-                schema_sql = schema_generator.generate_full_schema()
+                    schema_generator = PostgreSQLSchemaGenerator()
+                    schema_sql = schema_generator.generate_full_schema()
+                except ImportError:
+                    # Fall back to None - let base functionality handle it
+                    schema_sql = None
 
             # Execute schema using transaction
             with self.get_connection() as conn:

@@ -1806,7 +1806,6 @@ class Memori:
                         # Create ProcessedLongTermMemory objects for proper comparison
                         # Note: Query returns (memory_id, summary, searchable_content, classification, created_at)
                         memory = ProcessedLongTermMemory(
-                            memory_id=row[0],
                             conversation_id=row[
                                 0
                             ],  # Use memory_id as conversation_id for existing memories
@@ -1814,7 +1813,6 @@ class Memori:
                             content=row[2] or "",
                             classification=row[3] or "conversational",
                             importance="medium",  # Default importance level for comparison
-                            conscious_context=False,  # Default for existing memories
                             promotion_eligible=False,  # Default for existing memories
                             classification_reason="Existing memory loaded for deduplication check",  # Required field
                         )
