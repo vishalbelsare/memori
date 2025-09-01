@@ -7,10 +7,13 @@ import json
 import threading
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import openai
 from loguru import logger
+
+if TYPE_CHECKING:
+    from ..core.providers import ProviderConfig
 
 from ..utils.pydantic_models import MemorySearchQuery
 
@@ -53,16 +56,35 @@ Your primary functions:
 
 Be strategic and comprehensive in your search planning."""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
+        provider_config: Optional["ProviderConfig"] = None,
+    ):
         """
-        Initialize Memory Search Engine
+        Initialize Memory Search Engine with LLM provider configuration
 
         Args:
-            api_key: OpenAI API key (if None, uses environment variable)
-            model: OpenAI model to use for query understanding
+            api_key: API key (deprecated, use provider_config)
+            model: Model to use for query understanding (defaults to 'gpt-4o' if not specified)
+            provider_config: Provider configuration for LLM client
         """
-        self.client = openai.OpenAI(api_key=api_key)
-        self.model = model
+        if provider_config:
+            # Use provider configuration to create client
+            self.client = provider_config.create_client()
+            # Use provided model, fallback to provider config model, then default to gpt-4o
+            self.model = model or provider_config.model or "gpt-4o"
+            logger.debug(f"Search engine initialized with model: {self.model}")
+            self.provider_config = provider_config
+        else:
+            # Backward compatibility: use api_key directly
+            self.client = openai.OpenAI(api_key=api_key)
+            self.model = model or "gpt-4o"
+            self.provider_config = None
+
+        # Determine if we're using a local/custom endpoint that might not support structured outputs
+        self._supports_structured_outputs = self._detect_structured_output_support()
 
         # Performance improvements
         self._query_cache = {}  # Cache for search plans
@@ -102,28 +124,46 @@ Be strategic and comprehensive in your search planning."""
             if context:
                 prompt += f"\nAdditional context: {context}"
 
-            # Call OpenAI Structured Outputs
-            completion = self.client.beta.chat.completions.parse(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": self.SYSTEM_PROMPT},
-                    {
-                        "role": "user",
-                        "content": f"Analyze and plan memory search for this query:\n\n{prompt}",
-                    },
-                ],
-                response_format=MemorySearchQuery,
-                temperature=0.1,
-            )
+            # Try structured outputs first, fall back to manual parsing
+            search_query = None
 
-            # Handle potential refusal
-            if completion.choices[0].message.refusal:
-                logger.warning(
-                    f"Search planning refused: {completion.choices[0].message.refusal}"
-                )
-                return self._create_fallback_query(query)
+            if self._supports_structured_outputs:
+                try:
+                    # Call OpenAI Structured Outputs
+                    completion = self.client.beta.chat.completions.parse(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": self.SYSTEM_PROMPT},
+                            {
+                                "role": "user",
+                                "content": prompt,
+                            },
+                        ],
+                        response_format=MemorySearchQuery,
+                        temperature=0.1,
+                    )
 
-            search_query = completion.choices[0].message.parsed
+                    # Handle potential refusal
+                    if completion.choices[0].message.refusal:
+                        logger.warning(
+                            f"Search planning refused: {completion.choices[0].message.refusal}"
+                        )
+                        return self._create_fallback_query(query)
+
+                    search_query = completion.choices[0].message.parsed
+
+                except Exception as e:
+                    logger.warning(
+                        f"Structured outputs failed for search planning, falling back to manual parsing: {e}"
+                    )
+                    self._supports_structured_outputs = (
+                        False  # Disable for future calls
+                    )
+                    search_query = None
+
+            # Fallback to manual parsing if structured outputs failed or not supported
+            if search_query is None:
+                search_query = self._plan_search_with_fallback_parsing(query)
 
             # Cache the result
             with self._cache_lock:
@@ -158,6 +198,9 @@ Be strategic and comprehensive in your search planning."""
         try:
             # Plan the search
             search_plan = self.plan_search(query)
+            logger.debug(
+                f"Search plan for '{query}': strategies={search_plan.search_strategy}, entities={search_plan.entity_filters}"
+            )
 
             all_results = []
             seen_memory_ids = set()
@@ -167,11 +210,19 @@ Be strategic and comprehensive in your search planning."""
                 search_plan.entity_filters
                 or "keyword_search" in search_plan.search_strategy
             ):
+                logger.debug(
+                    f"Executing keyword search for: {search_plan.entity_filters}"
+                )
                 keyword_results = self._execute_keyword_search(
                     search_plan, db_manager, namespace, limit
                 )
+                logger.debug(f"Keyword search returned {len(keyword_results)} results")
+
                 for result in keyword_results:
-                    if result.get("memory_id") not in seen_memory_ids:
+                    if (
+                        isinstance(result, dict)
+                        and result.get("memory_id") not in seen_memory_ids
+                    ):
                         seen_memory_ids.add(result["memory_id"])
                         result["search_strategy"] = "keyword_search"
                         result["search_reasoning"] = (
@@ -184,11 +235,21 @@ Be strategic and comprehensive in your search planning."""
                 search_plan.category_filters
                 or "category_filter" in search_plan.search_strategy
             ):
+                logger.debug(
+                    f"Executing category search for: {[c.value for c in search_plan.category_filters]}"
+                )
                 category_results = self._execute_category_search(
                     search_plan, db_manager, namespace, limit - len(all_results)
                 )
+                logger.debug(
+                    f"Category search returned {len(category_results)} results"
+                )
+
                 for result in category_results:
-                    if result.get("memory_id") not in seen_memory_ids:
+                    if (
+                        isinstance(result, dict)
+                        and result.get("memory_id") not in seen_memory_ids
+                    ):
                         seen_memory_ids.add(result["memory_id"])
                         result["search_strategy"] = "category_filter"
                         result["search_reasoning"] = (
@@ -201,11 +262,21 @@ Be strategic and comprehensive in your search planning."""
                 search_plan.min_importance > 0.0
                 or "importance_filter" in search_plan.search_strategy
             ):
+                logger.debug(
+                    f"Executing importance search with min_importance: {search_plan.min_importance}"
+                )
                 importance_results = self._execute_importance_search(
                     search_plan, db_manager, namespace, limit - len(all_results)
                 )
+                logger.debug(
+                    f"Importance search returned {len(importance_results)} results"
+                )
+
                 for result in importance_results:
-                    if result.get("memory_id") not in seen_memory_ids:
+                    if (
+                        isinstance(result, dict)
+                        and result.get("memory_id") not in seen_memory_ids
+                    ):
                         seen_memory_ids.add(result["memory_id"])
                         result["search_strategy"] = "importance_filter"
                         result["search_reasoning"] = (
@@ -215,36 +286,70 @@ Be strategic and comprehensive in your search planning."""
 
             # If no specific strategies worked, do a general search
             if not all_results:
+                logger.debug(
+                    "No results from specific strategies, executing general search"
+                )
                 general_results = db_manager.search_memories(
                     query=search_plan.query_text, namespace=namespace, limit=limit
                 )
+                logger.debug(f"General search returned {len(general_results)} results")
+
                 for result in general_results:
-                    result["search_strategy"] = "general_search"
-                    result["search_reasoning"] = "General content search"
-                    all_results.append(result)
+                    if isinstance(result, dict):
+                        result["search_strategy"] = "general_search"
+                        result["search_reasoning"] = "General content search"
+                        all_results.append(result)
+
+            # Filter out any non-dictionary results before processing
+            valid_results = []
+            for result in all_results:
+                if isinstance(result, dict):
+                    valid_results.append(result)
+                else:
+                    logger.warning(
+                        f"Filtering out non-dict search result: {type(result)}"
+                    )
+
+            all_results = valid_results
 
             # Sort by relevance (importance score + recency)
-            all_results.sort(
-                key=lambda x: (
-                    x.get("importance_score", 0) * 0.7  # Importance weight
-                    + (
-                        datetime.now().replace(tzinfo=None)  # Ensure timezone-naive
-                        - datetime.fromisoformat(
-                            x.get("created_at", "2000-01-01")
-                        ).replace(tzinfo=None)
-                    ).days
-                    * -0.001  # Recency weight
-                ),
-                reverse=True,
-            )
+            if all_results:
 
-            # Add search metadata
-            for result in all_results:
-                result["search_metadata"] = {
-                    "original_query": query,
-                    "interpreted_intent": search_plan.intent,
-                    "search_timestamp": datetime.now().isoformat(),
-                }
+                def safe_created_at_parse(created_at_value):
+                    """Safely parse created_at value to datetime"""
+                    try:
+                        if created_at_value is None:
+                            return datetime.fromisoformat("2000-01-01")
+                        if isinstance(created_at_value, str):
+                            return datetime.fromisoformat(created_at_value)
+                        if hasattr(created_at_value, "isoformat"):  # datetime object
+                            return created_at_value
+                        # Fallback for any other type
+                        return datetime.fromisoformat("2000-01-01")
+                    except (ValueError, TypeError):
+                        return datetime.fromisoformat("2000-01-01")
+
+                all_results.sort(
+                    key=lambda x: (
+                        x.get("importance_score", 0) * 0.7  # Importance weight
+                        + (
+                            datetime.now().replace(tzinfo=None)  # Ensure timezone-naive
+                            - safe_created_at_parse(x.get("created_at")).replace(
+                                tzinfo=None
+                            )
+                        ).days
+                        * -0.001  # Recency weight
+                    ),
+                    reverse=True,
+                )
+
+                # Add search metadata
+                for result in all_results:
+                    result["search_metadata"] = {
+                        "original_query": query,
+                        "interpreted_intent": search_plan.intent,
+                        "search_timestamp": datetime.now().isoformat(),
+                    }
 
             logger.debug(
                 f"Search executed for '{query}': {len(all_results)} results found"
@@ -269,9 +374,27 @@ Be strategic and comprehensive in your search planning."""
             ]
 
         search_terms = " ".join(keywords)
-        return db_manager.search_memories(
-            query=search_terms, namespace=namespace, limit=limit
-        )
+        try:
+            results = db_manager.search_memories(
+                query=search_terms, namespace=namespace, limit=limit
+            )
+            # Ensure results is a list of dictionaries
+            if not isinstance(results, list):
+                logger.warning(f"Search returned non-list result: {type(results)}")
+                return []
+
+            # Filter out any non-dictionary items
+            valid_results = []
+            for result in results:
+                if isinstance(result, dict):
+                    valid_results.append(result)
+                else:
+                    logger.warning(f"Search returned non-dict item: {type(result)}")
+
+            return valid_results
+        except Exception as e:
+            logger.error(f"Keyword search failed: {e}")
+            return []
 
     def _execute_category_search(
         self, search_plan: MemorySearchQuery, db_manager, namespace: str, limit: int
@@ -297,7 +420,13 @@ Be strategic and comprehensive in your search planning."""
             # Extract category from processed_data if it's stored as JSON
             try:
                 if "processed_data" in result:
-                    processed_data = json.loads(result["processed_data"])
+                    processed_data = result["processed_data"]
+                    # Handle both dict and JSON string formats
+                    if isinstance(processed_data, str):
+                        processed_data = json.loads(processed_data)
+                    elif not isinstance(processed_data, dict):
+                        continue  # Skip if neither dict nor string
+
                     memory_category = processed_data.get("category", {}).get(
                         "primary_category", ""
                     )
@@ -305,10 +434,220 @@ Be strategic and comprehensive in your search planning."""
                         filtered_results.append(result)
                 elif result.get("category") in categories:
                     filtered_results.append(result)
-            except (json.JSONDecodeError, KeyError):
+            except (json.JSONDecodeError, KeyError, AttributeError):
                 continue
 
         return filtered_results[:limit]
+
+    def _detect_structured_output_support(self) -> bool:
+        """
+        Detect if the current provider/endpoint supports OpenAI structured outputs
+
+        Returns:
+            True if structured outputs are likely supported, False otherwise
+        """
+        try:
+            # Check if we have a provider config with custom base_url
+            if self.provider_config and hasattr(self.provider_config, "base_url"):
+                base_url = self.provider_config.base_url
+                if base_url:
+                    # Local/custom endpoints typically don't support beta features
+                    if "localhost" in base_url or "127.0.0.1" in base_url:
+                        logger.debug(
+                            f"Detected local endpoint ({base_url}), disabling structured outputs"
+                        )
+                        return False
+                    # Custom endpoints that aren't OpenAI
+                    if "api.openai.com" not in base_url:
+                        logger.debug(
+                            f"Detected custom endpoint ({base_url}), disabling structured outputs"
+                        )
+                        return False
+
+            # Check for Azure endpoints - test if they support structured outputs
+            if self.provider_config and hasattr(self.provider_config, "api_type"):
+                if self.provider_config.api_type == "azure":
+                    return self._test_azure_structured_outputs_support()
+                elif self.provider_config.api_type in ["custom", "openai_compatible"]:
+                    logger.debug(
+                        f"Detected {self.provider_config.api_type} endpoint, disabling structured outputs"
+                    )
+                    return False
+
+            # Default: assume OpenAI endpoint supports structured outputs
+            logger.debug("Assuming OpenAI endpoint, enabling structured outputs")
+            return True
+
+        except Exception as e:
+            logger.debug(
+                f"Error detecting structured output support: {e}, defaulting to enabled"
+            )
+            return True
+
+    def _test_azure_structured_outputs_support(self) -> bool:
+        """
+        Test if Azure OpenAI supports structured outputs by making a test call
+
+        Returns:
+            True if structured outputs are supported, False otherwise
+        """
+        try:
+            from pydantic import BaseModel
+
+            # Simple test model
+            class TestModel(BaseModel):
+                test_field: str
+
+            # Try to make a structured output call
+            test_response = self.client.beta.chat.completions.parse(
+                model=self.model,
+                messages=[{"role": "user", "content": "Say hello"}],
+                response_format=TestModel,
+                max_tokens=10,
+                temperature=0,
+            )
+
+            if (
+                test_response
+                and hasattr(test_response, "choices")
+                and test_response.choices
+            ):
+                logger.debug(
+                    "Azure endpoint supports structured outputs - test successful"
+                )
+                return True
+            else:
+                logger.debug(
+                    "Azure endpoint structured outputs test failed - response invalid"
+                )
+                return False
+
+        except Exception as e:
+            # If structured outputs fail, log the error and fall back to regular completions
+            logger.debug(f"Azure endpoint doesn't support structured outputs: {e}")
+            return False
+
+    def _plan_search_with_fallback_parsing(self, query: str) -> MemorySearchQuery:
+        """
+        Plan search strategy using regular chat completions with manual JSON parsing
+
+        This method works with any OpenAI-compatible API that supports chat completions
+        but doesn't support structured outputs (like Ollama, local models, etc.)
+        """
+        try:
+            # Prepare the prompt from raw query
+            prompt = f"User query: {query}"
+
+            # Enhanced system prompt for JSON output
+            json_system_prompt = (
+                self.SYSTEM_PROMPT
+                + "\n\nIMPORTANT: You MUST respond with a valid JSON object that matches this exact schema:\n"
+            )
+            json_system_prompt += self._get_search_query_json_schema()
+            json_system_prompt += "\n\nRespond ONLY with the JSON object, no additional text or formatting."
+
+            # Call regular chat completions
+            completion = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": json_system_prompt},
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    },
+                ],
+                temperature=0.1,
+                max_tokens=1000,  # Ensure enough tokens for full response
+            )
+
+            # Extract and parse JSON response
+            response_text = completion.choices[0].message.content
+            if not response_text:
+                raise ValueError("Empty response from model")
+
+            # Clean up response (remove markdown formatting if present)
+            response_text = response_text.strip()
+            if response_text.startswith("```json"):
+                response_text = response_text[7:]
+            if response_text.startswith("```"):
+                response_text = response_text[3:]
+            if response_text.endswith("```"):
+                response_text = response_text[:-3]
+            response_text = response_text.strip()
+
+            # Parse JSON
+            try:
+                parsed_data = json.loads(response_text)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON response for search planning: {e}")
+                logger.debug(f"Raw response: {response_text}")
+                return self._create_fallback_query(query)
+
+            # Convert to MemorySearchQuery object with validation and defaults
+            search_query = self._create_search_query_from_dict(parsed_data, query)
+
+            logger.debug("Successfully parsed search query using fallback method")
+            return search_query
+
+        except Exception as e:
+            logger.error(f"Fallback search planning failed: {e}")
+            return self._create_fallback_query(query)
+
+    def _get_search_query_json_schema(self) -> str:
+        """
+        Get JSON schema description for manual search query parsing
+        """
+        return """{
+  "query_text": "string - Original query text",
+  "intent": "string - Interpreted intent of the query",
+  "entity_filters": ["array of strings - Specific entities to search for"],
+  "category_filters": ["array of strings - Memory categories: fact, preference, skill, context, rule"],
+  "time_range": "string or null - Time range for search (e.g., last_week)",
+  "min_importance": "number - Minimum importance score (0.0-1.0)",
+  "search_strategy": ["array of strings - Recommended search strategies"],
+  "expected_result_types": ["array of strings - Expected types of results"]
+}"""
+
+    def _create_search_query_from_dict(
+        self, data: Dict[str, Any], original_query: str
+    ) -> MemorySearchQuery:
+        """
+        Create MemorySearchQuery from dictionary with proper validation and defaults
+        """
+        try:
+            # Import here to avoid circular imports
+            from ..utils.pydantic_models import MemoryCategoryType
+
+            # Validate and convert category filters
+            category_filters = []
+            raw_categories = data.get("category_filters", [])
+            if isinstance(raw_categories, list):
+                for cat_str in raw_categories:
+                    try:
+                        category = MemoryCategoryType(cat_str.lower())
+                        category_filters.append(category)
+                    except ValueError:
+                        logger.debug(f"Invalid category filter '{cat_str}', skipping")
+
+            # Create search query object with proper validation
+            search_query = MemorySearchQuery(
+                query_text=data.get("query_text", original_query),
+                intent=data.get("intent", "General search (fallback)"),
+                entity_filters=data.get("entity_filters", []),
+                category_filters=category_filters,
+                time_range=data.get("time_range"),
+                min_importance=max(
+                    0.0, min(1.0, float(data.get("min_importance", 0.0)))
+                ),
+                search_strategy=data.get("search_strategy", ["keyword_search"]),
+                expected_result_types=data.get("expected_result_types", ["any"]),
+            )
+
+            return search_query
+
+        except Exception as e:
+            logger.error(f"Error creating search query from dict: {e}")
+            return self._create_fallback_query(original_query)
 
     def _execute_importance_search(
         self, search_plan: MemorySearchQuery, db_manager, namespace: str, limit: int
@@ -414,7 +753,10 @@ Be strategic and comprehensive in your search planning."""
                         continue
 
                     for result in results:
-                        if result.get("memory_id") not in seen_memory_ids:
+                        if (
+                            isinstance(result, dict)
+                            and result.get("memory_id") not in seen_memory_ids
+                        ):
                             seen_memory_ids.add(result["memory_id"])
                             all_results.append(result)
 
@@ -540,7 +882,21 @@ def smart_memory_search(query: str, memori_instance, limit: int = 5) -> str:
                 if "processed_data" in result:
                     import json
 
-                    processed_data = json.loads(result["processed_data"])
+                    processed_data = result["processed_data"]
+                    # Handle both dict and JSON string formats
+                    if isinstance(processed_data, str):
+                        processed_data = json.loads(processed_data)
+                    elif isinstance(processed_data, dict):
+                        pass  # Already a dict, use as-is
+                    else:
+                        # Fallback to basic result fields
+                        summary = result.get(
+                            "summary",
+                            result.get("searchable_content", "")[:100] + "...",
+                        )
+                        category = result.get("category_primary", "unknown")
+                        continue
+
                     summary = processed_data.get("summary", "")
                     category = processed_data.get("category", {}).get(
                         "primary_category", ""

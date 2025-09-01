@@ -1,100 +1,156 @@
 """
-Memory Agent - The heart of Memori v1.0
-Pydantic-based memory processing using OpenAI Structured Outputs
+Memory Agent - Async Pydantic-based conversation processing
+
+This agent processes conversations and extracts structured information with
+enhanced classification and conscious context detection.
 """
 
+import json
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import openai
 from loguru import logger
 
+if TYPE_CHECKING:
+    from ..core.providers import ProviderConfig
+
 from ..utils.pydantic_models import (
     ConversationContext,
-    MemoryCategoryType,
-    ProcessedMemory,
-    RetentionType,
+    MemoryClassification,
+    MemoryImportanceLevel,
+    ProcessedLongTermMemory,
 )
 
 
 class MemoryAgent:
     """
-    Pydantic-based memory agent for intelligent conversation processing.
-    Uses OpenAI Structured Outputs for reliable, structured memory extraction.
+    Async Memory Agent for processing conversations with enhanced classification
     """
 
-    SYSTEM_PROMPT = """You are an advanced Memory Processing Agent responsible for analyzing conversations and extracting structured information for long-term storage.
-
-Your primary functions:
-1. **Categorize Memory Type**: Classify information as fact, preference, skill, context, or rule
-2. **Extract Entities**: Identify people, technologies, topics, skills, projects, and keywords
-3. **Score Importance**: Determine retention type and various importance dimensions
-4. **Create Searchable Content**: Generate optimized summaries and searchable text
-5. **Make Storage Decisions**: Decide what should be stored and why
-
-**CATEGORIZATION GUIDELINES:**
-- **fact**: Factual information, definitions, technical details, specific data points
-- **preference**: User preferences, likes/dislikes, settings, personal choices, opinions
-- **skill**: Skills, abilities, competencies, learning progress, expertise levels
-- **context**: Project context, work environment, current situations, background info
-- **rule**: Rules, policies, procedures, guidelines, constraints, "should/must" statements
-
-**RETENTION GUIDELINES:**
-- **short_term**: Recent activities, temporary information, casual mentions (expires ~7 days)
-- **long_term**: Important information, learned skills, preferences, significant context
-- **permanent**: Critical rules, core preferences, essential facts, major milestones
-
-**ENTITY EXTRACTION:**
-Focus on extracting specific, searchable entities that would be useful for future retrieval:
-- People: Names, roles, relationships
-- Technologies: Tools, libraries, platforms, programming languages
-- Topics: Subjects, domains, areas of interest
-- Skills: Abilities, competencies, learning areas
-- Projects: Named projects, repositories, initiatives
-- Keywords: Important terms for search and categorization
-
-**IMPORTANCE SCORING:**
-Consider multiple dimensions:
-- Overall importance (0.0-1.0): How crucial is this information?
-- Novelty (0.0-1.0): How new or unique is this information?
-- Relevance (0.0-1.0): How relevant to the user's current interests/work?
-- Actionability (0.0-1.0): How actionable or useful is this information?
-
-Be thorough but practical. Focus on information that would genuinely help in future conversations."""
-
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
+        provider_config: Optional["ProviderConfig"] = None,
+    ):
         """
-        Initialize Memory Agent with OpenAI configuration
+        Initialize Memory Agent with LLM provider configuration
 
         Args:
-            api_key: OpenAI API key (if None, uses environment variable)
-            model: OpenAI model to use for structured output (gpt-4o recommended)
+            api_key: API key (deprecated, use provider_config)
+            model: Model to use for structured output (defaults to 'gpt-4o' if not specified)
+            provider_config: Provider configuration for LLM client
         """
-        self.client = openai.OpenAI(api_key=api_key)
-        self.model = model
+        if provider_config:
+            # Use provider configuration to create clients
+            self.client = provider_config.create_client()
+            self.async_client = provider_config.create_async_client()
+            # Use provided model, fallback to provider config model, then default to gpt-4o
+            self.model = model or provider_config.model or "gpt-4o"
+            logger.debug(f"Memory agent initialized with model: {self.model}")
+            self.provider_config = provider_config
+        else:
+            # Backward compatibility: use api_key directly
+            self.client = openai.OpenAI(api_key=api_key)
+            self.async_client = openai.AsyncOpenAI(api_key=api_key)
+            self.model = model or "gpt-4o"
+            self.provider_config = None
 
-    async def process_conversation(
+        # Determine if we're using a local/custom endpoint that might not support structured outputs
+        self._supports_structured_outputs = self._detect_structured_output_support()
+
+    SYSTEM_PROMPT = """You are an advanced Memory Processing Agent responsible for analyzing conversations and extracting structured information with intelligent classification and conscious context detection.
+
+Your primary functions:
+1. **Intelligent Classification**: Categorize memories with enhanced classification system
+2. **Conscious Context Detection**: Identify user context information for immediate promotion
+3. **Entity Extraction**: Extract comprehensive entities and keywords
+4. **Deduplication**: Identify and handle duplicate information
+5. **Context Filtering**: Determine what should be stored vs filtered out
+
+**ENHANCED CLASSIFICATION SYSTEM:**
+
+**CONSCIOUS_INFO** (Auto-promote to short-term context):
+- User's name, location, job, personal details
+- Current projects, technologies they work with
+- Preferences, work style, communication style
+- Skills, expertise, learning goals
+- Important personal context for AI interaction
+
+**ESSENTIAL**:
+- Core facts that define user's context
+- Important preferences and opinions
+- Key skills and knowledge areas
+- Critical project information
+
+**CONTEXTUAL**:
+- Current work context
+- Ongoing projects and goals
+- Environmental setup and tools
+
+**CONVERSATIONAL**:
+- Regular discussions and questions
+- Explanations and clarifications
+- Problem-solving conversations
+
+**REFERENCE**:
+- Code examples and technical references
+- Documentation and resources
+- Learning materials
+
+**PERSONAL**:
+- Life events and personal information
+- Relationships and social context
+- Personal interests and hobbies
+
+**IMPORTANCE LEVELS:**
+- **CRITICAL**: Must never be lost
+- **HIGH**: Very important for context
+- **MEDIUM**: Useful to remember
+- **LOW**: Nice to have context
+
+**CONSCIOUS CONTEXT DETECTION:**
+Mark is_user_context=True for:
+- Personal identifiers (name, location, role)
+- Work context (job, company, projects)
+- Technical preferences (languages, tools, frameworks)
+- Communication style and preferences
+- Skills and expertise areas
+- Learning goals and interests
+
+Set promotion_eligible=True for memories that should be immediately available in short-term context for all future conversations.
+
+**PROCESSING RULES:**
+1. AVOID DUPLICATES: Check if similar information already exists
+2. MERGE SIMILAR: Combine related information when appropriate
+3. FILTER UNNECESSARY: Skip trivial greetings, acknowledgments
+4. EXTRACT ENTITIES: Identify people, places, technologies, projects
+5. ASSESS IMPORTANCE: Rate based on relevance to user context
+6. FLAG USER CONTEXT: Mark information for conscious promotion
+
+Focus on extracting information that would genuinely help provide better context and assistance in future conversations."""
+
+    async def process_conversation_async(
         self,
         chat_id: str,
         user_input: str,
         ai_output: str,
         context: Optional[ConversationContext] = None,
-        mem_prompt: Optional[str] = None,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> ProcessedMemory:
+        existing_memories: Optional[List[str]] = None,
+    ) -> ProcessedLongTermMemory:
         """
-        Process a conversation using OpenAI Structured Outputs
+        Async conversation processing with classification and conscious context detection
 
         Args:
             chat_id: Conversation ID
             user_input: User's input message
             ai_output: AI's response
             context: Additional conversation context
-            mem_prompt: Optional memory filtering prompt
-            filters: Memory filters to apply
+            existing_memories: List of existing memory summaries for deduplication
 
         Returns:
-            Structured processed memory
+            Processed memory with classification and conscious flags
         """
         try:
             # Prepare conversation content
@@ -102,8 +158,14 @@ Be thorough but practical. Focus on information that would genuinely help in fut
 
             # Build system prompt
             system_prompt = self.SYSTEM_PROMPT
-            if mem_prompt:
-                system_prompt += f"\n\nSPECIAL FOCUS: {mem_prompt}"
+
+            # Add deduplication context
+            if existing_memories:
+                dedup_context = (
+                    "\n\nEXISTING MEMORIES (for deduplication):\n"
+                    + "\n".join(existing_memories[:10])
+                )
+                system_prompt += dedup_context
 
             # Prepare context information
             context_info = ""
@@ -117,206 +179,407 @@ CONVERSATION CONTEXT:
 - Topic Thread: {context.topic_thread or 'General conversation'}
 """
 
-            # Call OpenAI Structured Outputs
-            completion = self.client.beta.chat.completions.parse(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {
-                        "role": "user",
-                        "content": f"Process this conversation for memory storage:\n\n{conversation_text}\n{context_info}",
-                    },
-                ],
-                response_format=ProcessedMemory,
-                temperature=0.1,  # Low temperature for consistent processing
-            )
+            # Try structured outputs first, fall back to manual parsing
+            processed_memory = None
 
-            # Handle potential refusal
-            if completion.choices[0].message.refusal:
-                logger.warning(
-                    f"Memory processing refused for chat {chat_id}: {completion.choices[0].message.refusal}"
+            if self._supports_structured_outputs:
+                try:
+                    # Call OpenAI Structured Outputs (async)
+                    completion = await self.async_client.beta.chat.completions.parse(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {
+                                "role": "user",
+                                "content": f"Process this conversation for enhanced memory storage:\n\n{conversation_text}\n{context_info}",
+                            },
+                        ],
+                        response_format=ProcessedLongTermMemory,
+                        temperature=0.1,  # Low temperature for consistent processing
+                    )
+
+                    # Handle potential refusal
+                    if completion.choices[0].message.refusal:
+                        logger.warning(
+                            f"Memory processing refused for chat {chat_id}: {completion.choices[0].message.refusal}"
+                        )
+                        return self._create_empty_long_term_memory(
+                            chat_id, "Processing refused for safety reasons"
+                        )
+
+                    processed_memory = completion.choices[0].message.parsed
+                    processed_memory.conversation_id = chat_id
+                    processed_memory.extraction_timestamp = datetime.now()
+
+                except Exception as e:
+                    logger.warning(
+                        f"Structured outputs failed for {chat_id}, falling back to manual parsing: {e}"
+                    )
+                    self._supports_structured_outputs = (
+                        False  # Disable for future calls
+                    )
+                    processed_memory = None
+
+            # Fallback to manual parsing if structured outputs failed or not supported
+            if processed_memory is None:
+                processed_memory = await self._process_with_fallback_parsing(
+                    chat_id, system_prompt, conversation_text, context_info
                 )
-                return self._create_empty_memory(
-                    chat_id, "Processing refused for safety reasons"
-                )
-
-            processed_memory = completion.choices[0].message.parsed
-
-            # Apply filters if provided
-            if filters and not self._passes_filters(processed_memory, filters):
-                processed_memory.should_store = False
-                processed_memory.storage_reasoning = (
-                    "Filtered out based on memory filters"
-                )
-
-            # Add processing metadata
-            processed_memory.processing_metadata = {
-                "chat_id": chat_id,
-                "model": self.model,
-                "processed_at": datetime.now().isoformat(),
-                "agent_version": "v1.0_pydantic",
-            }
 
             logger.debug(
-                f"Processed conversation {chat_id}: category={processed_memory.category.primary_category}, should_store={processed_memory.should_store}"
+                f"Processed conversation {chat_id}: "
+                f"classification={processed_memory.classification}, "
+                f"importance={processed_memory.importance}, "
+                f"conscious_context={processed_memory.is_user_context}, "
+                f"promotion_eligible={processed_memory.promotion_eligible}"
             )
+
             return processed_memory
 
         except Exception as e:
             logger.error(f"Memory agent processing failed for {chat_id}: {e}")
-            return self._create_empty_memory(chat_id, f"Processing failed: {str(e)}")
+            return self._create_empty_long_term_memory(
+                chat_id, f"Processing failed: {str(e)}"
+            )
 
-    def process_conversation_sync(
+    def _create_empty_long_term_memory(
+        self, chat_id: str, reason: str
+    ) -> ProcessedLongTermMemory:
+        """Create an empty long-term memory object for error cases"""
+        return ProcessedLongTermMemory(
+            content="Processing failed",
+            summary="Processing failed",
+            classification=MemoryClassification.CONVERSATIONAL,
+            importance=MemoryImportanceLevel.LOW,
+            conversation_id=chat_id,
+            classification_reason=reason,
+            confidence_score=0.0,
+            extraction_timestamp=datetime.now(),
+        )
+
+    # === DEDUPLICATION & FILTERING METHODS ===
+
+    async def detect_duplicates(
+        self,
+        new_memory: ProcessedLongTermMemory,
+        existing_memories: List[ProcessedLongTermMemory],
+        similarity_threshold: float = 0.8,
+    ) -> Optional[str]:
+        """
+        Detect if new memory is a duplicate of existing memories
+
+        Args:
+            new_memory: New memory to check
+            existing_memories: List of existing memories to compare against
+            similarity_threshold: Threshold for considering memories similar
+
+        Returns:
+            Memory ID of duplicate if found, None otherwise
+        """
+        # Simple text similarity check - could be enhanced with embeddings
+        new_content = new_memory.content.lower().strip()
+        new_summary = new_memory.summary.lower().strip()
+
+        for existing in existing_memories:
+            existing_content = existing.content.lower().strip()
+            existing_summary = existing.summary.lower().strip()
+
+            # Check content similarity
+            content_similarity = self._calculate_similarity(
+                new_content, existing_content
+            )
+            summary_similarity = self._calculate_similarity(
+                new_summary, existing_summary
+            )
+
+            # Average similarity score
+            avg_similarity = (content_similarity + summary_similarity) / 2
+
+            if avg_similarity >= similarity_threshold:
+                logger.info(
+                    f"Duplicate detected: {avg_similarity:.2f} similarity with {existing.conversation_id}"
+                )
+                return existing.conversation_id
+
+        return None
+
+    def _calculate_similarity(self, text1: str, text2: str) -> float:
+        """
+        Simple text similarity calculation using word overlap
+        Could be enhanced with more sophisticated methods
+        """
+        if not text1 or not text2:
+            return 0.0
+
+        # Simple word-based similarity
+        words1 = set(text1.split())
+        words2 = set(text2.split())
+
+        if not words1 or not words2:
+            return 0.0
+
+        intersection = len(words1.intersection(words2))
+        union = len(words1.union(words2))
+
+        return intersection / union if union > 0 else 0.0
+
+    def _detect_structured_output_support(self) -> bool:
+        """
+        Detect if the current provider/endpoint supports OpenAI structured outputs
+
+        Returns:
+            True if structured outputs are likely supported, False otherwise
+        """
+        try:
+            # Check if we have a provider config with custom base_url
+            if self.provider_config and hasattr(self.provider_config, "base_url"):
+                base_url = self.provider_config.base_url
+                if base_url:
+                    # Local/custom endpoints typically don't support beta features
+                    if "localhost" in base_url or "127.0.0.1" in base_url:
+                        logger.debug(
+                            f"Detected local endpoint ({base_url}), disabling structured outputs"
+                        )
+                        return False
+                    # Custom endpoints that aren't OpenAI
+                    if "api.openai.com" not in base_url:
+                        logger.debug(
+                            f"Detected custom endpoint ({base_url}), disabling structured outputs"
+                        )
+                        return False
+
+            # Check for Azure endpoints (they may or may not support beta features)
+            if self.provider_config and hasattr(self.provider_config, "api_type"):
+                if self.provider_config.api_type == "azure":
+                    logger.debug(
+                        "Detected Azure endpoint, enabling structured outputs (may need manual verification)"
+                    )
+                    return (
+                        True  # Azure may support it, let it try and fallback if needed
+                    )
+                elif self.provider_config.api_type in ["custom", "openai_compatible"]:
+                    logger.debug(
+                        f"Detected {self.provider_config.api_type} endpoint, disabling structured outputs"
+                    )
+                    return False
+
+            # Default: assume OpenAI endpoint supports structured outputs
+            logger.debug("Assuming OpenAI endpoint, enabling structured outputs")
+            return True
+
+        except Exception as e:
+            logger.debug(
+                f"Error detecting structured output support: {e}, defaulting to enabled"
+            )
+            return True
+
+    async def _process_with_fallback_parsing(
         self,
         chat_id: str,
-        user_input: str,
-        ai_output: str,
-        context: Optional[ConversationContext] = None,
-        mem_prompt: Optional[str] = None,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> ProcessedMemory:
+        system_prompt: str,
+        conversation_text: str,
+        context_info: str,
+    ) -> ProcessedLongTermMemory:
         """
-        Synchronous version of process_conversation for compatibility
+        Process conversation using regular chat completions with manual JSON parsing
+
+        This method works with any OpenAI-compatible API that supports chat completions
+        but doesn't support structured outputs (like Ollama, local models, etc.)
         """
         try:
-            # Prepare conversation content
-            conversation_text = f"User: {user_input}\nAssistant: {ai_output}"
+            # Enhanced system prompt for JSON output
+            json_system_prompt = (
+                system_prompt
+                + "\n\nIMPORTANT: You MUST respond with a valid JSON object that matches this exact schema:\n"
+            )
+            json_system_prompt += self._get_json_schema_prompt()
+            json_system_prompt += "\n\nRespond ONLY with the JSON object, no additional text or formatting."
 
-            # Build system prompt
-            system_prompt = self.SYSTEM_PROMPT
-            if mem_prompt:
-                system_prompt += f"\n\nSPECIAL FOCUS: {mem_prompt}"
-
-            # Prepare context information
-            context_info = ""
-            if context:
-                context_info = f"""
-CONVERSATION CONTEXT:
-- Session: {context.session_id}
-- Model: {context.model_used}
-- User Projects: {', '.join(context.current_projects) if context.current_projects else 'None specified'}
-- Relevant Skills: {', '.join(context.relevant_skills) if context.relevant_skills else 'None specified'}
-- Topic Thread: {context.topic_thread or 'General conversation'}
-"""
-
-            # Call OpenAI Structured Outputs
-            completion = self.client.beta.chat.completions.parse(
+            # Call regular chat completions
+            completion = await self.async_client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": system_prompt},
+                    {"role": "system", "content": json_system_prompt},
                     {
                         "role": "user",
-                        "content": f"Process this conversation for memory storage:\n\n{conversation_text}\n{context_info}",
+                        "content": f"Process this conversation for enhanced memory storage:\n\n{conversation_text}\n{context_info}",
                     },
                 ],
-                response_format=ProcessedMemory,
-                temperature=0.1,
+                temperature=0.1,  # Low temperature for consistent processing
+                max_tokens=2000,  # Ensure enough tokens for full response
             )
 
-            # Handle potential refusal
-            if completion.choices[0].message.refusal:
-                logger.warning(
-                    f"Memory processing refused for chat {chat_id}: {completion.choices[0].message.refusal}"
-                )
-                return self._create_empty_memory(
-                    chat_id, "Processing refused for safety reasons"
+            # Extract and parse JSON response
+            response_text = completion.choices[0].message.content
+            if not response_text:
+                raise ValueError("Empty response from model")
+
+            # Clean up response (remove markdown formatting if present)
+            response_text = response_text.strip()
+            if response_text.startswith("```json"):
+                response_text = response_text[7:]
+            if response_text.startswith("```"):
+                response_text = response_text[3:]
+            if response_text.endswith("```"):
+                response_text = response_text[:-3]
+            response_text = response_text.strip()
+
+            # Parse JSON
+            try:
+                parsed_data = json.loads(response_text)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON response for {chat_id}: {e}")
+                logger.debug(f"Raw response: {response_text}")
+                return self._create_empty_long_term_memory(
+                    chat_id, f"JSON parsing failed: {e}"
                 )
 
-            processed_memory = completion.choices[0].message.parsed
-
-            # Apply filters if provided
-            if filters and not self._passes_filters(processed_memory, filters):
-                processed_memory.should_store = False
-                processed_memory.storage_reasoning = (
-                    "Filtered out based on memory filters"
-                )
-
-            # Add processing metadata
-            processed_memory.processing_metadata = {
-                "chat_id": chat_id,
-                "model": self.model,
-                "processed_at": datetime.now().isoformat(),
-                "agent_version": "v1.0_pydantic",
-            }
+            # Convert to ProcessedLongTermMemory object with validation and defaults
+            processed_memory = self._create_memory_from_dict(parsed_data, chat_id)
 
             logger.debug(
-                f"Processed conversation {chat_id}: category={processed_memory.category.primary_category}, should_store={processed_memory.should_store}"
+                f"Successfully parsed memory using fallback method for {chat_id}"
             )
             return processed_memory
 
         except Exception as e:
-            logger.error(f"Memory agent processing failed for {chat_id}: {e}")
-            return self._create_empty_memory(chat_id, f"Processing failed: {str(e)}")
+            logger.error(f"Fallback memory processing failed for {chat_id}: {e}")
+            return self._create_empty_long_term_memory(
+                chat_id, f"Fallback processing failed: {str(e)}"
+            )
 
-    def _passes_filters(self, memory: ProcessedMemory, filters: Dict[str, Any]) -> bool:
-        """Check if processed memory passes configured filters"""
+    def _get_json_schema_prompt(self) -> str:
+        """
+        Get JSON schema description for manual parsing
+        """
+        return """{
+  "content": "string - The actual memory content",
+  "summary": "string - Concise summary for search",
+  "classification": "string - One of: essential, contextual, conversational, reference, personal, conscious-info",
+  "importance": "string - One of: critical, high, medium, low",
+  "topic": "string or null - Main topic/subject",
+  "entities": ["array of strings - People, places, technologies mentioned"],
+  "keywords": ["array of strings - Key terms for search"],
+  "is_user_context": "boolean - Contains user personal info",
+  "is_preference": "boolean - User preference/opinion",
+  "is_skill_knowledge": "boolean - User's abilities/expertise",
+  "is_current_project": "boolean - Current work context",
+  "classification_reason": "string - Why this classification was chosen",
+  "confidence_score": "number - AI confidence in extraction (0.0-1.0)",
+  "promotion_eligible": "boolean - Should be promoted to short-term"
+}"""
 
-        # Include keywords filter
-        if "include_keywords" in filters:
-            include_keywords = filters["include_keywords"]
-            content_lower = memory.searchable_content.lower()
-            if not any(
-                keyword.lower() in content_lower for keyword in include_keywords
-            ):
-                return False
+    def _create_memory_from_dict(
+        self, data: Dict[str, Any], chat_id: str
+    ) -> ProcessedLongTermMemory:
+        """
+        Create ProcessedLongTermMemory from dictionary with proper validation and defaults
+        """
+        try:
+            # Import here to avoid circular imports
+            from ..utils.pydantic_models import (
+                MemoryClassification,
+                MemoryImportanceLevel,
+            )
 
-        # Exclude keywords filter
-        if "exclude_keywords" in filters:
-            exclude_keywords = filters["exclude_keywords"]
-            content_lower = memory.searchable_content.lower()
-            if any(keyword.lower() in content_lower for keyword in exclude_keywords):
-                return False
+            # Validate and convert classification
+            classification_str = (
+                data.get("classification", "conversational").lower().replace("_", "-")
+            )
+            try:
+                classification = MemoryClassification(classification_str)
+            except ValueError:
+                logger.warning(
+                    f"Invalid classification '{classification_str}', using 'conversational'"
+                )
+                classification = MemoryClassification.CONVERSATIONAL
 
-        # Minimum importance filter
+            # Validate and convert importance
+            importance_str = data.get("importance", "medium").lower()
+            try:
+                importance = MemoryImportanceLevel(importance_str)
+            except ValueError:
+                logger.warning(f"Invalid importance '{importance_str}', using 'medium'")
+                importance = MemoryImportanceLevel.MEDIUM
+
+            # Create memory object with proper validation
+            processed_memory = ProcessedLongTermMemory(
+                content=data.get("content", "No content extracted"),
+                summary=data.get("summary", "No summary available"),
+                classification=classification,
+                importance=importance,
+                topic=data.get("topic"),
+                entities=data.get("entities", []),
+                keywords=data.get("keywords", []),
+                is_user_context=bool(data.get("is_user_context", False)),
+                is_preference=bool(data.get("is_preference", False)),
+                is_skill_knowledge=bool(data.get("is_skill_knowledge", False)),
+                is_current_project=bool(data.get("is_current_project", False)),
+                conversation_id=chat_id,
+                confidence_score=float(data.get("confidence_score", 0.7)),
+                classification_reason=data.get(
+                    "classification_reason", "Extracted via fallback parsing"
+                ),
+                promotion_eligible=bool(data.get("promotion_eligible", False)),
+                extraction_timestamp=datetime.now(),
+            )
+
+            return processed_memory
+
+        except Exception as e:
+            logger.error(f"Error creating memory from dict: {e}")
+            return self._create_empty_long_term_memory(
+                chat_id, f"Memory creation failed: {str(e)}"
+            )
+
+    def should_filter_memory(
+        self, memory: ProcessedLongTermMemory, filters: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """
+        Determine if memory should be filtered out
+
+        Args:
+            memory: Memory to check
+            filters: Optional filtering criteria
+
+        Returns:
+            True if memory should be filtered out, False otherwise
+        """
+        if not filters:
+            return False
+
+        # Classification filter
+        if "exclude_classifications" in filters:
+            if memory.classification in filters["exclude_classifications"]:
+                return True
+
+        # Importance filter
         if "min_importance" in filters:
-            if memory.importance.importance_score < filters["min_importance"]:
-                return False
+            importance_map = {"critical": 4, "high": 3, "medium": 2, "low": 1}
 
-        # Category filter
-        if "allowed_categories" in filters:
-            if memory.category.primary_category not in filters["allowed_categories"]:
-                return False
+            min_level = importance_map.get(filters["min_importance"], 1)
+            memory_level = importance_map.get(memory.importance, 1)
 
-        return True
+            if memory_level < min_level:
+                return True
 
-    def _create_empty_memory(self, chat_id: str, reason: str) -> ProcessedMemory:
-        """Create an empty memory object for error cases"""
-        from ..utils.pydantic_models import (
-            ExtractedEntities,
-            MemoryCategory,
-            MemoryCategoryType,
-            MemoryImportance,
-            RetentionType,
-        )
+        # Confidence filter
+        if "min_confidence" in filters:
+            if memory.confidence_score < filters["min_confidence"]:
+                return True
 
-        return ProcessedMemory(
-            category=MemoryCategory(
-                primary_category=MemoryCategoryType.fact,
-                confidence_score=0.0,
-                reasoning="Failed to process",
-            ),
-            entities=ExtractedEntities(),
-            importance=MemoryImportance(
-                importance_score=0.0,
-                retention_type=RetentionType.short_term,
-                reasoning="Processing failed",
-            ),
-            summary="Processing failed",
-            searchable_content="",
-            should_store=False,
-            storage_reasoning=reason,
-            processing_metadata={"chat_id": chat_id, "error": reason},
-        )
+        # Content filters
+        if "exclude_keywords" in filters:
+            content_lower = memory.content.lower()
+            if any(
+                keyword.lower() in content_lower
+                for keyword in filters["exclude_keywords"]
+            ):
+                return True
 
-    def determine_storage_location(self, processed_memory: ProcessedMemory) -> str:
-        """Determine appropriate storage location based on memory properties"""
+        # Length filter
+        if "min_content_length" in filters:
+            if len(memory.content.strip()) < filters["min_content_length"]:
+                return True
 
-        if processed_memory.category.primary_category == MemoryCategoryType.rule:
-            return "rules_memory"
-
-        if processed_memory.importance.retention_type == RetentionType.permanent:
-            return "long_term_memory"
-        elif processed_memory.importance.retention_type == RetentionType.long_term:
-            return "long_term_memory"
-        else:
-            return "short_term_memory"
+        return False

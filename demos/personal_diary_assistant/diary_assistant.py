@@ -21,9 +21,10 @@ Requirements:
 
 import json
 import os
-import litellm
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import List, Optional
+
+import litellm
 from dotenv import load_dotenv
 
 from memori import Memori, create_memory_tool
@@ -56,16 +57,16 @@ class PersonalDiaryAssistant:
 
         # System prompts for different functionalities
         self.system_prompts = {
-            "diary": """You are a supportive personal diary assistant with advanced memory capabilities. 
-            Your role is to help users reflect on their daily experiences, track their progress, and provide 
-            personalized insights for improving their life. Use memory_search to understand the user's patterns, 
+            "diary": """You are a supportive personal diary assistant with advanced memory capabilities.
+            Your role is to help users reflect on their daily experiences, track their progress, and provide
+            personalized insights for improving their life. Use memory_search to understand the user's patterns,
             goals, and past experiences. Be empathetic, encouraging, and provide actionable advice.""",
-            "analysis": """You are an expert life coach and data analyst. Analyze the user's diary entries, 
-            mood patterns, productivity levels, and life events to provide deep insights. Use memory_search 
-            to gather comprehensive information about the user's history. Provide specific, actionable 
+            "analysis": """You are an expert life coach and data analyst. Analyze the user's diary entries,
+            mood patterns, productivity levels, and life events to provide deep insights. Use memory_search
+            to gather comprehensive information about the user's history. Provide specific, actionable
             recommendations for improvement.""",
-            "goal_tracking": """You are a goal achievement specialist. Help users set, track, and achieve 
-            their personal and professional goals. Use memory_search to understand their past goals, 
+            "goal_tracking": """You are a goal achievement specialist. Help users set, track, and achieve
+            their personal and professional goals. Use memory_search to understand their past goals,
             progress, and challenges. Provide motivation and practical steps for success.""",
         }
 
@@ -178,16 +179,16 @@ class PersonalDiaryAssistant:
             # Use LLM to analyze the patterns
             analysis_prompt = f"""
             Based on the following memories about {analysis_type} over the {time_period}:
-            
+
             {memories}
-            
+
             Please provide a comprehensive analysis including:
             1. Key patterns and trends identified
             2. Notable improvements or concerning areas
             3. Correlations between different factors
             4. Specific insights and observations
             5. Actionable recommendations for improvement
-            
+
             Be specific and provide concrete examples from the data.
             """
 
@@ -215,17 +216,17 @@ class PersonalDiaryAssistant:
 
             recommendation_prompt = f"""
             Based on the user's history and patterns in {focus_area}:
-            
+
             Recent Context: {recent_memories}
             Historical Patterns: {patterns}
-            
+
             Please provide personalized recommendations including:
             1. 3-5 specific, actionable steps for improvement
             2. Potential obstacles and how to overcome them
             3. Short-term (1 week) and medium-term (1 month) goals
             4. Resources or tools that might help
             5. Ways to track progress
-            
+
             Make recommendations specific to this user's unique situation and history.
             """
 
@@ -386,16 +387,16 @@ class PersonalDiaryAssistant:
 
             summary_prompt = f"""
             Based on today's diary entries and activities:
-            
+
             {today_memories}
-            
+
             Please provide a helpful daily summary including:
             1. Key highlights from today
             2. Mood and productivity observations
             3. Accomplishments and challenges
             4. Suggestions for tomorrow
             5. Overall reflection
-            
+
             Keep it concise but insightful.
             """
 

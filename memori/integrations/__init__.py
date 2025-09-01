@@ -39,28 +39,53 @@ from loguru import logger
 from . import anthropic_integration, litellm_integration, openai_integration
 
 __all__ = [
-    # Wrapper classes for direct SDK usage
+    # New interceptor classes (recommended)
+    "MemoriOpenAIInterceptor",
+    # Wrapper classes for direct SDK usage (legacy)
     "MemoriOpenAI",
     "MemoriAnthropic",
+    # Factory functions
+    "create_openai_client",
+    "setup_openai_interceptor",
 ]
 
 
 # For backward compatibility, provide simple passthrough
 try:
     from .anthropic_integration import MemoriAnthropic
-    from .openai_integration import MemoriOpenAI
+    from .openai_integration import (
+        MemoriOpenAI,
+        MemoriOpenAIInterceptor,
+        create_openai_client,
+        setup_openai_interceptor,
+    )
 
-    # But warn users about the better way
+    # But warn users about the better way for deprecated classes
     def __getattr__(name):
-        if name in ["MemoriOpenAI", "MemoriAnthropic"]:
+        if name == "MemoriOpenAI":
             logger.warning(
-                f"🚨 {name} wrapper classes are deprecated!\n"
-                f"✅ NEW SIMPLE WAY: Use memori.enable() and import {name.replace('Memori', '').lower()} normally"
+                "🚨 MemoriOpenAI wrapper class is deprecated!\n"
+                "✅ NEW RECOMMENDED WAY: Use MemoriOpenAIInterceptor or memori.create_openai_client()"
             )
-            if name == "MemoriOpenAI":
-                return MemoriOpenAI
-            elif name == "MemoriAnthropic":
-                return MemoriAnthropic
+            return MemoriOpenAI
+        elif name == "MemoriAnthropic":
+            logger.warning(
+                "🚨 MemoriAnthropic wrapper class is deprecated!\n"
+                "✅ NEW SIMPLE WAY: Use memori.enable() and import anthropic normally"
+            )
+            return MemoriAnthropic
+        elif name in [
+            "MemoriOpenAIInterceptor",
+            "create_openai_client",
+            "setup_openai_interceptor",
+        ]:
+            # These are the new recommended classes/functions
+            if name == "MemoriOpenAIInterceptor":
+                return MemoriOpenAIInterceptor
+            elif name == "create_openai_client":
+                return create_openai_client
+            elif name == "setup_openai_interceptor":
+                return setup_openai_interceptor
         raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 except ImportError:

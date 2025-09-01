@@ -18,10 +18,11 @@ Requirements:
 - Run with: streamlit run streamlit_app.py
 """
 
-import streamlit as st
-import plotly.express as px
-from datetime import datetime, date
+from datetime import date, datetime
+
 import pandas as pd
+import plotly.express as px
+import streamlit as st
 from diary_assistant import PersonalDiaryAssistant
 
 # Page configuration
@@ -165,12 +166,12 @@ def create_mood_chart(mood_data):
     )
 
     fig.update_layout(
-        yaxis=dict(
-            range=[1, 5],
-            tickmode="array",
-            tickvals=[1, 2, 3, 4, 5],
-            ticktext=["Low", "Below Average", "Neutral", "Good", "Excellent"],
-        )
+        yaxis={
+            "range": [1, 5],
+            "tickmode": "array",
+            "tickvals": [1, 2, 3, 4, 5],
+            "ticktext": ["Low", "Below Average", "Neutral", "Good", "Excellent"],
+        }
     )
 
     return fig
@@ -192,7 +193,7 @@ def create_productivity_chart(productivity_data):
         labels={"productivity": "Productivity (1-10)", "date": "Date"},
     )
 
-    fig.update_layout(yaxis=dict(range=[0, 10]))
+    fig.update_layout(yaxis={"range": [0, 10]})
 
     return fig
 

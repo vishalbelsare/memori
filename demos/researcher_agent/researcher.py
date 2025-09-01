@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
@@ -21,9 +20,10 @@ if not tmp.exists():
 
 today = datetime.now().strftime("%Y-%m-%d")
 
+
 class Researcher:
     """A researcher class that manages Memori initialization and agent creation"""
-    
+
     def __init__(self):
         self.memori = Memori(
             database_connect="sqlite:///research_memori.db",
@@ -34,12 +34,13 @@ class Researcher:
         self.memori.enable()
         self.memory_tool = create_memory_tool(self.memori)
         self.memory_search_function = self._create_memory_search_function()
-        
+
         self.research_agent = None
         self.memory_agent = None
-    
+
     def _create_memory_search_function(self):
         """Create memory search function that works with Agno agents"""
+
         def search_memory(query: str) -> str:
             """Search the agent's memory for past conversations and research information.
 
@@ -55,19 +56,19 @@ class Researcher:
 
             except Exception as e:
                 return f"Memory search error: {str(e)}"
-        
+
         return search_memory
-    
+
     def run_agent_with_memory(self, agent, user_input: str):
         """Run agent and record each internal conversation step"""
         try:
             # Store original model response method
             original_response = agent.model.response
-            
+
             def memory_recording_response(messages, **kwargs):
                 # Call the original response method
                 result = original_response(messages, **kwargs)
-                
+
                 # Extract user input and AI output for recording
                 user_msg = ""
                 for msg in reversed(messages):
@@ -77,68 +78,68 @@ class Researcher:
                     elif hasattr(msg, "role") and msg.role == "user":
                         user_msg = msg.content or ""
                         break
-                
+
                 ai_output = ""
                 if hasattr(result, "content"):
                     ai_output = result.content or ""
                 elif hasattr(result, "choices") and result.choices:
                     choice = result.choices[0]
-                    if hasattr(choice, "message") and hasattr(choice.message, "content"):
+                    if hasattr(choice, "message") and hasattr(
+                        choice.message, "content"
+                    ):
                         ai_output = choice.message.content or ""
-                
+
                 # Record this conversation step
                 if user_msg or ai_output:
                     try:
                         self.memori.record_conversation(
-                            user_input=user_msg,
-                            ai_output=ai_output
+                            user_input=user_msg, ai_output=ai_output
                         )
                     except Exception as e:
                         print(f"Memory recording error: {str(e)}")
-                
+
                 return result
-            
+
             # Temporarily replace the model's response method
             agent.model.response = memory_recording_response
-            
+
             # Run the agent
             result = agent.run(user_input)
-            
+
             # Restore the original method
             agent.model.response = original_response
-            
+
             return result
-            
+
         except Exception as e:
             # Make sure to restore original method even if there's an error
-            if 'original_response' in locals():
+            if "original_response" in locals():
                 agent.model.response = original_response
             print(f"Agent execution error: {str(e)}")
             raise
-    
-    
+
     def define_agents(self):
         """Define and create research and memory agents"""
         # Create research agent
         self.research_agent = self._create_research_agent()
-        
+
         # Create memory agent
         self.memory_agent = self._create_memory_agent()
-        
+
         return self.research_agent, self.memory_agent
-    
+
     def get_research_agent(self):
         """Get the research agent, creating it if necessary"""
         if self.research_agent is None:
             self.define_agents()
         return self.research_agent
-    
+
     def get_memory_agent(self):
         """Get the memory agent, creating it if necessary"""
         if self.memory_agent is None:
             self.define_agents()
         return self.memory_agent
-    
+
     def _create_research_agent(self):
         """Create a research agent with Memori memory capabilities and Exa search"""
         agent = Agent(
@@ -159,7 +160,7 @@ class Researcher:
 
                 Your writing style is:
                 - Clear and authoritative
-                - Engaging but professional  
+                - Engaging but professional
                 - Fact-focused with proper citations
                 - Accessible to educated non-specialists
                 - Builds upon previous research when relevant
@@ -190,7 +191,7 @@ class Researcher:
             {Brief overview of key findings and significance}
             {Note any connections to previous research if found}
 
-            ## Introduction  
+            ## Introduction
             {Context and importance of the topic}
             {Current state of research/discussion}
 
@@ -204,7 +205,7 @@ class Researcher:
 
             ## Key Takeaways
             - {Bullet point 1}
-            - {Bullet point 2} 
+            - {Bullet point 2}
             - {Bullet point 3}
 
             ## References
@@ -262,5 +263,3 @@ class Researcher:
             show_tool_calls=True,
         )
         return agent
-
-
