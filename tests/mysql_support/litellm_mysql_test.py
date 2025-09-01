@@ -12,6 +12,7 @@ from pathlib import Path
 # Add the memori package to the Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+
 def test_litellm_mysql_integration():
     """Test that LiteLLM integration works with MySQL backend"""
     print("🚀 Testing LiteLLM + MySQL Integration")
@@ -25,7 +26,7 @@ def test_litellm_mysql_integration():
             database_connect="mysql+mysqlconnector://root:@127.0.0.1:3306/memori_test",
             conscious_ingest=False,
             auto_ingest=False,
-            verbose=True
+            verbose=True,
         )
 
         print("✅ Memori initialized with MySQL backend successfully")
@@ -36,7 +37,9 @@ def test_litellm_mysql_integration():
 
         # Test database functionality
         stats_before = memory.db_manager.get_memory_stats("default")
-        print(f"📊 Initial stats: {stats_before['database_type']} database with {stats_before['chat_history_count']} chats")
+        print(
+            f"📊 Initial stats: {stats_before['database_type']} database with {stats_before['chat_history_count']} chats"
+        )
 
         # Simulate a conversation (without actual LLM calls)
         memory.db_manager.store_chat_history(
@@ -48,7 +51,7 @@ def test_litellm_mysql_integration():
             session_id="litellm_test_session",
             namespace="default",
             tokens_used=85,
-            metadata={"test": "litellm_mysql", "provider": "test"}
+            metadata={"test": "litellm_mysql", "provider": "test"},
         )
 
         # Verify the data was stored
@@ -56,7 +59,9 @@ def test_litellm_mysql_integration():
         print(f"📊 After storage: {stats_after['chat_history_count']} chats")
 
         # Test search functionality
-        results = memory.db_manager.search_memories("MySQL integration", namespace="default")
+        results = memory.db_manager.search_memories(
+            "MySQL integration", namespace="default"
+        )
         print(f"🔍 Search results: {len(results)} matches")
 
         # Test history retrieval
@@ -78,6 +83,7 @@ def test_litellm_mysql_integration():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

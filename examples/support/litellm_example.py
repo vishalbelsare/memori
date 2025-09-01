@@ -22,11 +22,11 @@ while 1:
         user_input = input("User: ")
         if not user_input.strip():
             continue
-        
-        if user_input.lower() == 'exit':
+
+        if user_input.lower() == "exit":
             print("Goodbye!")
             break
-            
+
         print("Processing your message with memory tracking...")
         response = completion(
             model="gpt-4o", messages=[{"role": "user", "content": user_input}]

@@ -1,4 +1,5 @@
 from openai import OpenAI
+
 from memori import Memori
 
 # Initialize OpenAI client

@@ -487,35 +487,41 @@ Be strategic and comprehensive in your search planning."""
     def _test_azure_structured_outputs_support(self) -> bool:
         """
         Test if Azure OpenAI supports structured outputs by making a test call
-        
+
         Returns:
             True if structured outputs are supported, False otherwise
         """
         try:
             from pydantic import BaseModel
-            
+
             # Simple test model
             class TestModel(BaseModel):
                 test_field: str
-            
+
             # Try to make a structured output call
             test_response = self.client.beta.chat.completions.parse(
                 model=self.model,
-                messages=[
-                    {"role": "user", "content": "Say hello"}
-                ],
+                messages=[{"role": "user", "content": "Say hello"}],
                 response_format=TestModel,
                 max_tokens=10,
-                temperature=0
+                temperature=0,
             )
-            
-            if test_response and hasattr(test_response, 'choices') and test_response.choices:
-                logger.debug("Azure endpoint supports structured outputs - test successful")
+
+            if (
+                test_response
+                and hasattr(test_response, "choices")
+                and test_response.choices
+            ):
+                logger.debug(
+                    "Azure endpoint supports structured outputs - test successful"
+                )
                 return True
             else:
-                logger.debug("Azure endpoint structured outputs test failed - response invalid")
+                logger.debug(
+                    "Azure endpoint structured outputs test failed - response invalid"
+                )
                 return False
-                
+
         except Exception as e:
             # If structured outputs fail, log the error and fall back to regular completions
             logger.debug(f"Azure endpoint doesn't support structured outputs: {e}")

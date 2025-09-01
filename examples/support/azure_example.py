@@ -1,5 +1,7 @@
 import os
+
 from dotenv import load_dotenv
+
 from memori import Memori
 from memori.core.providers import ProviderConfig
 
@@ -11,7 +13,7 @@ azure_provider = ProviderConfig.from_azure(
     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
     azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
     api_version="2024-02-01",
-    model=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+    model=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
 )
 
 print("Initializing Memori with Azure OpenAI...")
@@ -38,14 +40,15 @@ while 1:
         user_input = input("User: ")
         if not user_input.strip():
             continue
-        
-        if user_input.lower() == 'exit':
+
+        if user_input.lower() == "exit":
             print("Goodbye!")
             break
-            
+
         print("Processing your message with memory tracking...")
         response = client.chat.completions.create(
-            model=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"), messages=[{"role": "user", "content": user_input}]
+            model=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
+            messages=[{"role": "user", "content": user_input}],
         )
         print(f"AI: {response.choices[0].message.content}")
         print()  # Add blank line for readability
