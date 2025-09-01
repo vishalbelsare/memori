@@ -3,6 +3,7 @@ SQLAlchemy-based database manager for Memori v2.0
 Replaces the existing database.py with cross-database compatibility
 """
 
+import importlib.util
 import json
 import ssl
 import uuid
@@ -76,35 +77,19 @@ class SQLAlchemyDatabaseManager:
                 "mysqlconnector" in database_connect
                 or "mysql+mysqlconnector" in database_connect
             ):
-                try:
-                    import mysql.connector
-
+                if importlib.util.find_spec("mysql.connector") is not None:
                     mysql_drivers.append("mysql-connector-python")
-                except ImportError:
-                    pass
 
             if "pymysql" in database_connect:
-                try:
-                    import pymysql
-
+                if importlib.util.find_spec("pymysql") is not None:
                     mysql_drivers.append("PyMySQL")
-                except ImportError:
-                    pass
 
             # If using generic mysql:// try both drivers
             if database_connect.startswith("mysql://"):
-                try:
-                    import mysql.connector
-
+                if importlib.util.find_spec("mysql.connector") is not None:
                     mysql_drivers.append("mysql-connector-python")
-                except ImportError:
-                    pass
-                try:
-                    import pymysql
-
+                if importlib.util.find_spec("pymysql") is not None:
                     mysql_drivers.append("PyMySQL")
-                except ImportError:
-                    pass
 
             if not mysql_drivers:
                 error_msg = (
@@ -122,19 +107,14 @@ class SQLAlchemyDatabaseManager:
             "postgresql+"
         ):
             # Check for PostgreSQL drivers
-            try:
-                import psycopg2
-            except ImportError:
-                try:
-                    import asyncpg
-                except ImportError:
-                    error_msg = (
-                        "❌ No PostgreSQL driver found. Install one of the following:\n\n"
-                        "Option 1 (Recommended): pip install psycopg2-binary\n"
-                        "Option 2: pip install memorisdk[postgres]\n\n"
-                        "Then use connection string: postgresql://user:pass@host:port/db"
-                    )
-                    raise DatabaseError(error_msg)
+            if importlib.util.find_spec("psycopg2") is None and importlib.util.find_spec("asyncpg") is None:
+                error_msg = (
+                    "❌ No PostgreSQL driver found. Install one of the following:\n\n"
+                    "Option 1 (Recommended): pip install psycopg2-binary\n"
+                    "Option 2: pip install memorisdk[postgres]\n\n"
+                    "Then use connection string: postgresql://user:pass@host:port/db"
+                )
+                raise DatabaseError(error_msg)
 
     def _create_engine(self, database_connect: str):
         """Create SQLAlchemy engine with appropriate configuration"""
