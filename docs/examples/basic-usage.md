@@ -195,9 +195,3 @@ echo "OPENAI_API_KEY=sk-your-key-here" > .env
 ```bash
 python basic_example.py
 ```
-
-## Next Steps
-
-- [Examples](https://github.com/GibsonAI/memori/tree/main/examples) - Explore more examples
-- [Framework Integrations](https://github.com/GibsonAI/memori/tree/main/examples/integrations) - See how Memori works seamlessly with popular AI Agent frameworks
-- [Demos](https://github.com/GibsonAI/memori/tree/main/demos) - Explore Memori's capabilities through these demos

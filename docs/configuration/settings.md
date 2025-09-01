@@ -335,10 +335,3 @@ export MEMORI_MEMORY__IMPORTANCE_THRESHOLD="0.3"
 export MEMORI_LOGGING__LEVEL="INFO"
 export MEMORI_LOGGING__LOG_TO_FILE="true"
 ```
-
-## Next Steps
-
-- [Database Setup](database.md) - Database-specific configuration
-- [Examples](https://github.com/GibsonAI/memori/tree/main/examples) - Explore more examples
-- [Framework Integrations](https://github.com/GibsonAI/memori/tree/main/examples/integrations) - See how Memori works seamlessly with popular AI Agent frameworks
-- [Demos](https://github.com/GibsonAI/memori/tree/main/demos) - Explore Memori's capabilities through these demos

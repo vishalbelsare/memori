@@ -165,14 +165,6 @@ memori = Memori()
 memori.enable()
 ```
 
-## Next Steps
-
-- [Installation Guide](getting-started/installation.md) - Detailed setup instructions
-- [Quick Start](getting-started/quick-start.md) - Get running in 3 minutes  
-- [Basic Usage](getting-started/basic-usage.md) - Core concepts and examples
-- [Configuration](configuration/settings.md) - Production setup
-- [Examples](https://github.com/GibsonAI/memori/tree/main/examples) - Real-world use cases
-
 ---
 
 *Made for developers who want their AI agents to remember and learn*

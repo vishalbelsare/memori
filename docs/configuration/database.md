@@ -363,10 +363,3 @@ memori = Memori(
     debug=True  # Enables detailed logging
 )
 ```
-
-## Next Steps
-
-- [Settings](settings.md) - Full configuration options
-- [Examples](https://github.com/GibsonAI/memori/tree/main/examples) - Explore more examples
-- [Framework Integrations](https://github.com/GibsonAI/memori/tree/main/examples/integrations) - See how Memori works seamlessly with popular AI Agent frameworks
-- [Demos](https://github.com/GibsonAI/memori/tree/main/demos) - Explore Memori's capabilities through these demos
