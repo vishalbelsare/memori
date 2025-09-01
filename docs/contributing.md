@@ -145,14 +145,14 @@ Use the GitHub issue template:
 - Expected vs actual behavior
 - Environment details
 
-### ✨ Feature Requests
+### Feature Requests
 
 Before implementing a new feature:
 1. **Check existing issues** - Avoid duplicates
 2. **Open a discussion** - Propose the feature first
 3. **Wait for approval** - Ensure it aligns with project goals
 
-### 📚 Documentation
+### Documentation
 
 Documentation improvements are always welcome:
 - Fix typos and grammar
@@ -160,7 +160,7 @@ Documentation improvements are always welcome:
 - Improve clarity and organization
 - Translate to other languages
 
-### 🧪 Testing
+### Testing
 
 Help improve test coverage:
 - Add unit tests for untested code

@@ -70,8 +70,3 @@ from memori import Memori
 
 memori = Memori(openai_api_key="sk-your-openai-key-here")
 ```
-
-## Next Steps
-
-- [Quick Start](quick-start.md) - Get running in 5 minutes
-- [Basic Usage](basic-usage.md) - Core concepts and examples

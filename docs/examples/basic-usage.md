@@ -21,19 +21,19 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def main():
-    print("🧠 Memori v1.1 - AI Memory with Conscious Ingestion")
+    print("Memori v1.1 - AI Memory with Conscious Ingestion")
     
     # Initialize your workspace memory with conscious ingestion
     office_work = Memori(
         database_connect="sqlite:///office_memory.db",
-        conscious_ingest=True,  # 🔥 Enable AI-powered background analysis
+        conscious_ingest=True,  # Enable AI-powered background analysis
         verbose=True,  # Show what's happening behind the scenes
         openai_api_key=None  # Uses OPENAI_API_KEY from environment
     )
     
     # Enable memory recording
     office_work.enable()
-    print("✅ Memory enabled - all conversations will be recorded!")
+    print("Memory enabled - all conversations will be recorded!")
     
     # First conversation - establishing context
     print("\n--- First conversation ---")
@@ -68,11 +68,11 @@ def main():
     )
     print(f"Assistant: {response3.choices[0].message.content}")
     
-    print("\n🎉 That's it! Your AI now remembers your:")
+    print("\nThat's it! Your AI now remembers your:")
     print("  - Tech stack (FastAPI, PostgreSQL)")  
     print("  - Coding preferences (clean code, type hints)")
     print("  - Project context (user models, database connections)")
-    print("\n🧠 With conscious_ingest=True:")
+    print("\nWith conscious_ingest=True:")
     print("  - Background analysis will identify essential information")
     print("  - Key facts automatically promoted for instant access")
     print("  - Context injection gets smarter over time")
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 ```python
 office_work = Memori(
     database_connect="sqlite:///office_memory.db",
-    conscious_ingest=True,  # 🔥 The magic happens here
+    conscious_ingest=True,  # The magic happens here
     verbose=True,  # Show background activity
     openai_api_key=None  # Uses environment variable
 )
@@ -96,10 +96,10 @@ office_work = Memori(
 
 **What `conscious_ingest=True` enables:**
 
-- 🧠 **Background Analysis**: AI analyzes memory patterns every 6 hours
-- 🎯 **Essential Memory Promotion**: Key personal facts promoted to immediate access
-- 📝 **Smart Context Injection**: 3-5 most relevant memories automatically included
-- 🔄 **Continuous Learning**: System adapts to your preferences and patterns
+- **Background Analysis**: AI analyzes memory patterns every 6 hours
+- **Essential Memory Promotion**: Key personal facts promoted to immediate access
+- **Smart Context Injection**: 3-5 most relevant memories automatically included
+- **Continuous Learning**: System adapts to your preferences and patterns
 
 **Intelligence Layers:**
 
@@ -136,8 +136,8 @@ Each conversation builds on the previous with AI-powered selection:
 ## Expected Output
 
 ```
-🧠 Memori - Your AI's Second Memory
-✅ Memory enabled - all conversations will be recorded!
+Memori - Your AI's Second Memory
+Memory enabled - all conversations will be recorded!
 
 --- First conversation ---
 Assistant: Great! FastAPI with PostgreSQL is an excellent stack for building modern APIs...
@@ -148,7 +148,7 @@ Assistant: Since you're working with FastAPI and PostgreSQL, here's how to set u
 --- Third conversation (preferences remembered) ---
 Assistant: I'll keep that in mind! Clean, well-documented code with type hints is definitely the way to go...
 
-🎉 That's it! Your AI now remembers your:
+That's it! Your AI now remembers your:
   - Tech stack (FastAPI, PostgreSQL)
   - Coding preferences (clean code, type hints)  
   - Project context (user models, database connections)
@@ -195,9 +195,3 @@ echo "OPENAI_API_KEY=sk-your-key-here" > .env
 ```bash
 python basic_example.py
 ```
-
-## Next Steps
-
-- [Examples](https://github.com/GibsonAI/memori/tree/main/examples) - Explore more examples
-- [Framework Integrations](https://github.com/GibsonAI/memori/tree/main/examples/integrations) - See how Memori works seamlessly with popular AI Agent frameworks
-- [Demos](https://github.com/GibsonAI/memori/tree/main/demos) - Explore Memori's capabilities through these demos

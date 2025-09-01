@@ -28,12 +28,12 @@ memori = Memori(database_connect="sqlite:///memori.db")
 ```
 
 ### Features
-- ✅ No installation required
-- ✅ File-based storage
-- ✅ Full-text search (FTS5)
-- ✅ Perfect for development and small deployments
-- ❌ No concurrent writes
-- ❌ Limited scalability
+- No installation required
+- File-based storage
+- Full-text search (FTS5)
+- Perfect for development and small deployments
+- No concurrent writes
+- Limited scalability
 
 ## PostgreSQL
 
@@ -72,12 +72,12 @@ memori = Memori(
 ```
 
 ### Features
-- ✅ Production-ready
-- ✅ Concurrent access
-- ✅ Advanced indexing
-- ✅ Full-text search
-- ✅ JSON support
-- ✅ Excellent performance
+- Production-ready
+- Concurrent access
+- Advanced indexing
+- Full-text search
+- JSON support
+- Excellent performance
 
 ### Production Setup
 ```sql
@@ -129,11 +129,11 @@ memori = Memori(
 ```
 
 ### Features
-- ✅ Popular and well-supported
-- ✅ Good performance
-- ✅ Concurrent access
-- ✅ Replication support
-- ❌ Limited full-text search compared to PostgreSQL
+- Popular and well-supported
+- Good performance
+- Concurrent access
+- Replication support
+- Limited full-text search compared to PostgreSQL
 
 ## Connection Pooling
 
@@ -363,10 +363,3 @@ memori = Memori(
     debug=True  # Enables detailed logging
 )
 ```
-
-## Next Steps
-
-- [Settings](settings.md) - Full configuration options
-- [Examples](https://github.com/GibsonAI/memori/tree/main/examples) - Explore more examples
-- [Framework Integrations](https://github.com/GibsonAI/memori/tree/main/examples/integrations) - See how Memori works seamlessly with popular AI Agent frameworks
-- [Demos](https://github.com/GibsonAI/memori/tree/main/demos) - Explore Memori's capabilities through these demos
