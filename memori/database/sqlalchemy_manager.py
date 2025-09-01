@@ -107,7 +107,10 @@ class SQLAlchemyDatabaseManager:
             "postgresql+"
         ):
             # Check for PostgreSQL drivers
-            if importlib.util.find_spec("psycopg2") is None and importlib.util.find_spec("asyncpg") is None:
+            if (
+                importlib.util.find_spec("psycopg2") is None
+                and importlib.util.find_spec("asyncpg") is None
+            ):
                 error_msg = (
                     "❌ No PostgreSQL driver found. Install one of the following:\n\n"
                     "Option 1 (Recommended): pip install psycopg2-binary\n"
