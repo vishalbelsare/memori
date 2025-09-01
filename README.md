@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://gibsonai.github.io/memori/">Learn more</a>
+  <a href="https://memori.gibsonai.com/docs">Learn more</a>
   ·
   <a href="https://www.gibsonai.com/discord">Join Discord</a>
 </p>
