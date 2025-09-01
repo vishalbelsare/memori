@@ -22,7 +22,7 @@ openai>=1.0.0
 
 # Optional: Additional AI/LLM integrations (install as needed)
 # anthropic>=0.3.0
-# litellm>=1.0.0
+litellm>=1.0.0
 
 # Optional: Development and testing dependencies
 # For full development environment, use: pip install -r requirements-dev.txt
