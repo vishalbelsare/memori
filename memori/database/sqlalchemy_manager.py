@@ -66,37 +66,46 @@ class SQLAlchemyDatabaseManager:
 
     def _validate_database_dependencies(self, database_connect: str):
         """Validate that required database drivers are installed"""
-        if database_connect.startswith("mysql:") or database_connect.startswith("mysql+"):
+        if database_connect.startswith("mysql:") or database_connect.startswith(
+            "mysql+"
+        ):
             # Check for MySQL drivers
             mysql_drivers = []
-            
-            if "mysqlconnector" in database_connect or "mysql+mysqlconnector" in database_connect:
+
+            if (
+                "mysqlconnector" in database_connect
+                or "mysql+mysqlconnector" in database_connect
+            ):
                 try:
                     import mysql.connector
+
                     mysql_drivers.append("mysql-connector-python")
                 except ImportError:
                     pass
-            
+
             if "pymysql" in database_connect:
                 try:
                     import pymysql
+
                     mysql_drivers.append("PyMySQL")
                 except ImportError:
                     pass
-            
+
             # If using generic mysql:// try both drivers
             if database_connect.startswith("mysql://"):
                 try:
                     import mysql.connector
+
                     mysql_drivers.append("mysql-connector-python")
                 except ImportError:
                     pass
                 try:
                     import pymysql
+
                     mysql_drivers.append("PyMySQL")
                 except ImportError:
                     pass
-            
+
             if not mysql_drivers:
                 error_msg = (
                     "❌ No MySQL driver found. Install one of the following:\n\n"
@@ -108,8 +117,10 @@ class SQLAlchemyDatabaseManager:
                     "- For PyMySQL: mysql+pymysql://user:pass@host:port/db"
                 )
                 raise DatabaseError(error_msg)
-        
-        elif database_connect.startswith("postgresql:") or database_connect.startswith("postgresql+"):
+
+        elif database_connect.startswith("postgresql:") or database_connect.startswith(
+            "postgresql+"
+        ):
             # Check for PostgreSQL drivers
             try:
                 import psycopg2
