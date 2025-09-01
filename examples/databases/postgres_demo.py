@@ -1,6 +1,8 @@
-from litellm import completion
-
+from openai import OpenAI
 from memori import Memori
+
+# Initialize OpenAI client
+openai_client = OpenAI()
 
 print("Initializing Memori with PostgreSQL database...")
 litellm_memory = Memori(
@@ -27,10 +29,10 @@ while 1:
             print("Goodbye!")
             break
         print("Processing your message with memory tracking...")
-        response = completion(
+        response = openai_client.chat.completions.create(
             model="gpt-4o", messages=[{"role": "user", "content": user_input}]
         )
-        print(f"AI: {response.choices[0].message['content']}")
+        print(f"AI: {response.choices[0].message.content}")
         print()  # Add blank line for readability
     except (EOFError, KeyboardInterrupt):
         print("\nExiting...")

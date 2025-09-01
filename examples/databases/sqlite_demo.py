@@ -1,10 +1,12 @@
-from litellm import completion
-
+from openai import OpenAI
 from memori import Memori
+
+# Initialize OpenAI client
+openai_client = OpenAI()
 
 print("Initializing Memori with SQLite database...")
 litellm_memory = Memori(
-    database_connect="sqlite:///litellm_demo.db",
+    database_connect="sqlite:///sqlite_demo.db",
     conscious_ingest=True,
     auto_ingest=True,
     # verbose=True,
@@ -22,16 +24,16 @@ while 1:
         user_input = input("User: ")
         if not user_input.strip():
             continue
-        
-        if user_input.lower() == 'exit':
+
+        if user_input.lower() == "exit":
             print("Goodbye!")
             break
-            
+
         print("Processing your message with memory tracking...")
-        response = completion(
+        response = openai_client.chat.completions.create(
             model="gpt-4o", messages=[{"role": "user", "content": user_input}]
         )
-        print(f"AI: {response.choices[0].message['content']}")
+        print(f"AI: {response.choices[0].message.content}")
         print()  # Add blank line for readability
     except (EOFError, KeyboardInterrupt):
         print("\nExiting...")
