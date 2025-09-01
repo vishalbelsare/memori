@@ -145,7 +145,7 @@ Use the GitHub issue template:
 - Expected vs actual behavior
 - Environment details
 
-### ✨ Feature Requests
+### Feature Requests
 
 Before implementing a new feature:
 1. **Check existing issues** - Avoid duplicates
@@ -160,7 +160,7 @@ Documentation improvements are always welcome:
 - Improve clarity and organization
 - Translate to other languages
 
-### 🧪 Testing
+### Testing
 
 Help improve test coverage:
 - Add unit tests for untested code
