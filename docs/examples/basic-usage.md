@@ -1,6 +1,6 @@
 # Basic Example with Conscious Ingestion
 
-Simple demonstration of Memori v1.1's enhanced conscious ingestion system.
+Simple demonstration of Memori enhanced conscious ingestion system.
 
 ## Overview
 
@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def main():
-    print("Memori v1.1 - AI Memory with Conscious Ingestion")
+    print("Memori - AI Memory with Conscious Ingestion")
     
     # Initialize your workspace memory with conscious ingestion
     office_work = Memori(

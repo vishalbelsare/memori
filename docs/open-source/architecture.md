@@ -1,6 +1,6 @@
 # Architecture Overview
 
-Memori v1.1 is built with a modular, production-ready architecture designed for reliability, performance, and extensibility with dual memory modes and intelligent context injection.
+Memori is built with a modular, production-ready architecture designed for reliability, performance, and extensibility with dual memory modes and intelligent context injection.
 
 ## System Architecture
 
@@ -634,4 +634,4 @@ def health_check():
     }
 ```
 
-This v1.1 architecture ensures Memori can scale from simple personal projects to enterprise-grade AI applications while maintaining reliability, performance, and intelligent context awareness through dual memory modes.
+This architecture ensures Memori can scale from simple personal projects to enterprise-grade AI applications while maintaining reliability, performance, and intelligent context awareness through dual memory modes.
