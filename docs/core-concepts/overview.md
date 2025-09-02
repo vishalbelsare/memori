@@ -41,7 +41,7 @@ from memori import Memori
 
 memori = Memori(
     database_connect="sqlite:///my_memory.db",
-    conscious_ingest=True,  # 🔥 The magic parameter
+    conscious_ingest=True,  # The magic parameter
     openai_api_key="sk-..."  # Required for AI agents
 )
 
@@ -50,10 +50,10 @@ memori.enable()  # Start recording and analysis
 
 ### What Happens
 
-✅ **Background Analysis**: AI agent runs every 6 hours  
-✅ **Essential Promotion**: Key personal facts moved to immediate access  
-✅ **Smart Context**: 3-5 most relevant memories auto-injected  
-✅ **Continuous Learning**: System adapts to your patterns  
+**Background Analysis**: AI agent runs every 6 hours  
+**Essential Promotion**: Key personal facts moved to immediate access  
+**Smart Context**: 3-5 most relevant memories auto-injected  
+**Continuous Learning**: System adapts to your patterns  
 
 ## What Gets Learned
 
@@ -98,11 +98,11 @@ Every piece of information gets categorized for intelligent retrieval:
 
 | Category | Description | Auto-Promoted |
 |----------|-------------|---------------|
-| **fact** | Objective information, technical details | ✅ High frequency |
-| **preference** | Personal choices, likes/dislikes | ✅ Personal identity |
-| **skill** | Abilities, expertise, learning progress | ✅ Expertise areas |
-| **context** | Project info, work environment | ✅ Current projects |
-| **rule** | Guidelines, policies, constraints | ✅ Work patterns |
+| **fact** | Objective information, technical details | High frequency |
+| **preference** | Personal choices, likes/dislikes | Personal identity |
+| **skill** | Abilities, expertise, learning progress | Expertise areas |
+| **context** | Project info, work environment | Current projects |
+| **rule** | Guidelines, policies, constraints | Work patterns |
 
 ## Context Injection Strategy
 
@@ -230,10 +230,10 @@ personal_memori = Memori(conscious_ingest=True, namespace="personal")
 
 ```
 Traditional Context Injection:
-❌ 2000+ tokens of conversation history
+2000+ tokens of conversation history
 
 Conscious Ingestion:
-✅ 200-500 tokens of essential + relevant facts
+200-500 tokens of essential + relevant facts
 ```
 
 ## Monitoring
@@ -255,12 +255,12 @@ With `verbose=True`, you'll see:
 ```python
 # Verify system is working
 if memori.conscious_ingest:
-    print("✅ Conscious ingestion active")
+    print("Conscious ingestion active")
     
 if memori.conscious_agent.last_analysis:
-    print(f"✅ Last analysis: {memori.conscious_agent.last_analysis}")
+    print(f"Last analysis: {memori.conscious_agent.last_analysis}")
 else:
-    print("⏳ Analysis pending")
+    print("Analysis pending")
 ```
 
 ## Troubleshooting
@@ -295,9 +295,9 @@ print(f"Last analysis: {memori.conscious_agent.last_analysis}")
 # Force analysis
 try:
     memori.trigger_conscious_analysis()
-    print("✅ Analysis successful")
+    print("Analysis successful")
 except Exception as e:
-    print(f"❌ Analysis failed: {e}")
+    print(f"Analysis failed: {e}")
 
 # Check memory count
 essential = memori.get_essential_conversations()
@@ -364,4 +364,4 @@ Ready to try conscious ingestion? Start with our examples:
 - [Framework Integrations](https://github.com/GibsonAI/memori/tree/main/examples/integrations) - See how Memori works seamlessly with popular AI Agent frameworks
 - [Demos](https://github.com/GibsonAI/memori/tree/main/demos) - Explore Memori's capabilities through these demos
 
-The future of AI memory is here - no more repeating yourself! 🧠✨
+The future of AI memory is here - no more repeating yourself!

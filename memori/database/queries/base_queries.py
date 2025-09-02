@@ -85,7 +85,7 @@ class SchemaQueries:
                 rule_text TEXT NOT NULL,
                 rule_type TEXT NOT NULL,
                 priority INTEGER DEFAULT 5,
-                active BOOLEAN DEFAULT 1,
+                active BOOLEAN DEFAULT TRUE,
                 context_conditions TEXT,
                 namespace TEXT NOT NULL DEFAULT 'default',
                 created_at TIMESTAMP NOT NULL,

@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://gibsonai.github.io/memori/">Learn more</a>
+  <a href="https://memori.gibsonai.com/docs">Learn more</a>
   ·
   <a href="https://www.gibsonai.com/discord">Join Discord</a>
 </p>
@@ -49,12 +49,12 @@ Install Memori:
 pip install memorisdk
 ```
 
-### Example with LiteLLM
+### Example with OpenAI
 
-1. Install LiteLLM:
+1. Install OpenAI:
 
 ```bash
-pip install litellm
+pip install openai
 ```
 
 2. Set OpenAI API Key:
@@ -67,14 +67,17 @@ export OPENAI_API_KEY="sk-your-openai-key-here"
 
 ```python
 from memori import Memori
-from litellm import completion
+from openai import OpenAI
+
+# Initialize OpenAI client
+openai_client = OpenAI()
 
 # Initialize memory
 memori = Memori(conscious_ingest=True)
 memori.enable()
 
 print("=== First Conversation - Establishing Context ===")
-response1 = completion(
+response1 = openai_client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[{
         "role": "user", 
@@ -86,7 +89,7 @@ print("Assistant:", response1.choices[0].message.content)
 print("\n" + "="*50)
 print("=== Second Conversation - Memory Provides Context ===")
 
-response2 = completion(
+response2 = openai_client.chat.completions.create(
     model="gpt-4o-mini", 
     messages=[{
         "role": "user",
@@ -272,14 +275,14 @@ Works with **ANY** LLM library:
 ```python
 memori.enable()  # Enable universal recording
 
-# LiteLLM (recommended)
+# OpenAI
+from openai import OpenAI
+client = OpenAI()
+client.chat.completions.create(...)
+
+# LiteLLM
 from litellm import completion
 completion(model="gpt-4", messages=[...])
-
-# OpenAI
-import openai
-client = openai.OpenAI()
-client.chat.completions.create(...)
 
 # Anthropic  
 import anthropic
@@ -371,7 +374,8 @@ Memori works seamlessly with popular AI frameworks:
 | 👥 [CrewAI](./examples/integrations/crewai_example.py) | Multi-agent system with shared memory across agent interactions | Collaborative agents with memory | Agent coordination, shared memory, task-based workflows |
 | 🌊 [Digital Ocean AI](./examples/integrations/digital_ocean_example.py) | Memory-enhanced customer support using Digital Ocean's AI platform | Customer support assistant with conversation history | Context injection, session continuity, support analytics |
 | 🔗 [LangChain](./examples/integrations/langchain_example.py) | Enterprise-grade agent framework with advanced memory integration | AI assistant with LangChain tools and memory | Custom tools, agent executors, memory persistence, error handling |
-| 🚀 [Swarms](./examples/integrations/swarms_example.py) | Multi-agent system framework with persistent memory capabilities | Memory-enhanced Swarms agents with auto/conscious ingestion | Agent memory persistence, multi-agent coordination, contextual awareness |
+| � [OpenAI Agent](./examples/integrations/openai_agent_example.py) | Memory-enhanced OpenAI Agent with function calling and user preference tracking | Interactive assistant with memory search and user info storage | Function calling tools, memory search, preference tracking, async conversations |
+| �🚀 [Swarms](./examples/integrations/swarms_example.py) | Multi-agent system framework with persistent memory capabilities | Memory-enhanced Swarms agents with auto/conscious ingestion | Agent memory persistence, multi-agent coordination, contextual awareness |
 
 ## Interactive Demos
 

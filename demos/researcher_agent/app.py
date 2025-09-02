@@ -29,7 +29,7 @@ def main():
 
         The research agent can:
         - 🔍 Conduct comprehensive research using Exa
-        - 🧠 Remember all previous research 
+        - 🧠 Remember all previous research
         - 📚 Build upon past research
         - 💾 Store findings for future reference
         """
@@ -56,7 +56,9 @@ def main():
 
     # Get agents from researcher
     if "research_agent" not in st.session_state:
-        st.session_state.research_agent = st.session_state.researcher.get_research_agent()
+        st.session_state.research_agent = (
+            st.session_state.researcher.get_research_agent()
+        )
 
     if "memory_agent" not in st.session_state:
         st.session_state.memory_agent = st.session_state.researcher.get_memory_agent()
@@ -94,16 +96,17 @@ def main():
                     try:
                         # Get response from research agent with automatic memory recording
                         response = st.session_state.researcher.run_agent_with_memory(
-                            st.session_state.research_agent, 
-                            research_prompt
+                            st.session_state.research_agent, research_prompt
                         )
 
                         # Display the response
                         st.markdown(response.content)
-                        
+
                         # Show confirmation that individual conversations were recorded
-                        st.success("✅ All agent conversations recorded to memory!", icon="🧠")
-                        
+                        st.success(
+                            "✅ All agent conversations recorded to memory!", icon="🧠"
+                        )
+
                         # Add assistant response to chat history
                         st.session_state.research_messages.append(
                             {"role": "assistant", "content": response.content}
@@ -188,16 +191,15 @@ def main():
                     try:
                         # Get response from memory agent with automatic memory recording
                         response = st.session_state.researcher.run_agent_with_memory(
-                            st.session_state.memory_agent, 
-                            memory_prompt
+                            st.session_state.memory_agent, memory_prompt
                         )
 
                         # Display the response
                         st.markdown(response.content)
-                        
+
                         # Show confirmation that conversations were recorded
                         st.success("✅ Memory agent conversations recorded!", icon="🧠")
-                        
+
                         # Add assistant response to chat history
                         st.session_state.memory_messages.append(
                             {"role": "assistant", "content": response.content}

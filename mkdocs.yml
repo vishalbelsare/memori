@@ -70,8 +70,8 @@ nav:
     - Settings: configuration/settings.md
     - Database Setup: configuration/database.md
   - Core Concepts:
-    - Overview: conscious-ingestion/overview.md
-    - Agents: conscious-ingestion/agents.md
+    - Overview: core-concepts/overview.md
+    - Agents: core-concepts/agents.md
   - Integrations:
     - Overview: integrations/overview.md
   - Examples:
