@@ -1,10 +1,10 @@
 # Dual Memory Modes System
 
-Memori v1.1 introduces a revolutionary dual memory system with two distinct modes that can work independently or together to provide intelligent, context-aware AI interactions.
+Memori introduces a revolutionary dual memory system with two distinct modes that can work independently or together to provide intelligent, context-aware AI interactions.
 
 ## What are the Dual Memory Modes?
 
-Memori v1.1 features two complementary memory modes:
+Memori features two complementary memory modes:
 
 ### 1. Conscious Ingest Mode (`conscious_ingest=True`)
 - **One-shot context injection** at conversation start

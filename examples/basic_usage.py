@@ -12,7 +12,7 @@ load_dotenv()
 
 
 def main():
-    print("🧠 Memori v1.1 - AI Memory with Conscious Ingestion")
+    print("🧠 Memori - AI Memory with Conscious Ingestion")
     print("=" * 55)
 
     # Initialize your workspace memory with conscious ingestion

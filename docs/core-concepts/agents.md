@@ -1,6 +1,6 @@
 # Agent System Documentation
 
-Memori v1.1 features a sophisticated multi-agent system for intelligent memory processing with dual memory modes and provider configuration support.
+Memori features a sophisticated multi-agent system for intelligent memory processing with dual memory modes and provider configuration support.
 
 ## Overview
 
@@ -12,7 +12,7 @@ The agent system consists of three specialized AI agents that work together to p
 
 ## Dual Memory Modes
 
-Memori v1.1 introduces two distinct memory modes that can be used separately or together:
+Memori introduces two distinct memory modes that can be used separately or together:
 
 ### Conscious Ingest Mode (`conscious_ingest=True`)
 - **One-shot Context Injection**: Injects context at conversation start
