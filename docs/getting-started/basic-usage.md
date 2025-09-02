@@ -14,6 +14,14 @@ Learn Memori's core concepts with practical examples.
 | **Rules** | Constraints & guidelines | "Always write tests first" |
 | **Context** | Session information | "Working on e-commerce project" |
 
+### Memory Modes
+
+| Mode | Behavior | Use Case |
+|------|----------|----------|
+| **Conscious Ingest** | One-shot working memory injection | Quick access to essential info |
+| **Auto Ingest** | Dynamic database search per query | Context-aware conversations |
+| **Manual** | Explicit memory operations | Full control over memory |
+
 ### How It Works
 
 ```mermaid
@@ -35,10 +43,11 @@ graph LR
 ```python
 from memori import Memori
 
-# Initialize
+# Initialize with conscious ingestion (recommended)
 memori = Memori(
     database_connect="sqlite:///my_project.db",
-    conscious_ingest=True,
+    conscious_ingest=True,  # Enable intelligent context injection
+    auto_ingest=False,      # Optional: dynamic memory search
     openai_api_key="sk-..."
 )
 
@@ -68,31 +77,39 @@ completion(
 # Response will include clean code with documentation!
 ```
 
+## Memory Modes Explained
+
+### Conscious Ingest Mode
+```python
+memori = Memori(conscious_ingest=True)
+```
+- **One-shot injection**: Essential memories injected once at conversation start
+- **Background analysis**: AI analyzes patterns every 6 hours
+- **Working memory**: Like human short-term memory for immediate access
+- **Performance**: Minimal token usage, fast response times
+
+### Auto Ingest Mode
+```python
+memori = Memori(auto_ingest=True)
+```
+- **Dynamic search**: Analyzes each query for relevant memories
+- **Full database search**: Searches entire memory database
+- **Context-aware**: Injects 3-5 most relevant memories per call
+- **Performance**: Higher token usage, intelligent context
+
 ## Manual Memory Operations
 
 ### Record Conversations
 ```python
+# Manual conversation recording
 chat_id = memori.record_conversation(
     user_input="I'm learning machine learning",
     ai_output="Start with Python basics and scikit-learn...",
-    model="gpt-4o"
+    model="gpt-4o-mini"
 )
-```
 
-### Search Memories
-```python
-# Search by content
-memories = memori.retrieve_context("machine learning", limit=5)
-
-# Get all memories
-all_memories = memori.get_memories(limit=10)
-```
-
-### Memory Statistics
-```python
-stats = memori.get_memory_stats()
-print(f"Total conversations: {stats['chat_history_count']}")
-print(f"Long-term memories: {stats['long_term_count']}")
+# Trigger conscious analysis manually
+memori.trigger_conscious_analysis()
 ```
 
 ## Configuration Options
@@ -102,6 +119,7 @@ print(f"Long-term memories: {stats['long_term_count']}")
 memori = Memori(
     database_connect="sqlite:///memori.db",  # Database connection
     conscious_ingest=True,                   # Enable smart context injection
+    auto_ingest=False,                       # Disable dynamic search
     namespace="default",                     # Memory namespace
     openai_api_key="sk-..."                 # OpenAI API key
 )
@@ -112,8 +130,8 @@ memori = Memori(
 memori = Memori(
     database_connect="postgresql://user:pass@localhost/memori",
     template="basic",
-    mem_prompt="Focus on Python and web development",
     conscious_ingest=True,
+    auto_ingest=True,                        # Enable both modes
     namespace="web_project", 
     shared_memory=False,
     memory_filters={
@@ -121,6 +139,25 @@ memori = Memori(
         "categories": ["fact", "preference", "skill"]
     },
     openai_api_key="sk-..."
+)
+```
+
+### Provider Configuration
+```python
+from memori.core.providers import ProviderConfig
+
+# Azure OpenAI
+azure_provider = ProviderConfig.from_azure(
+    api_key="your-azure-key",
+    azure_endpoint="https://your-resource.openai.azure.com/",
+    azure_deployment="gpt-4o",
+    api_version="2024-12-01-preview"
+)
+
+memori = Memori(
+    database_connect="sqlite:///azure_memory.db",
+    provider_config=azure_provider,
+    conscious_ingest=True
 )
 ```
 
@@ -180,53 +217,89 @@ completion(model="gemini-pro", messages=[...])
 
 ### Function Calling Integration
 ```python
-from memori.tools import create_memory_tool
+from memori import create_memory_tool
 
-# Create search tool
+# Create search tool for AI agents
 memory_tool = create_memory_tool(memori)
 
-# Use in LLM function calling
+# Use in function calling frameworks
+def search_memory(query: str) -> str:
+    """Search agent's memory for past conversations"""
+    result = memory_tool.execute(query=query)
+    return str(result) if result else "No relevant memories found"
+
+# Use with LLM function calling
 response = completion(
-    model="gpt-4",
+    model="gpt-4o",
     messages=[{"role": "user", "content": "What did I say about testing?"}],
-    tools=[memory_tool]
+    tools=[{
+        "type": "function",
+        "function": {
+            "name": "search_memory",
+            "description": "Search memory for relevant past conversations",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query"}
+                },
+                "required": ["query"]
+            }
+        }
+    }]
 )
 ```
 
 ### Direct Search
 ```python
-from memori.tools import create_memory_search_tool
+# Search by content
+memories = memori.retrieve_context("machine learning", limit=5)
 
-search_tool = create_memory_search_tool(memori)
-result = search_tool("Python preferences", max_results=3)
-print(result)
+# Get all memories
+all_memories = memori.get_memories(limit=10)
+
+# Memory statistics
+stats = memori.get_memory_stats()
+print(f"Total conversations: {stats['chat_history_count']}")
+print(f"Long-term memories: {stats['long_term_count']}")
 ```
 
 ## Best Practices
 
-### 1. Use Namespaces
+### 1. Choose the Right Memory Mode
+```python
+# For immediate context and essential info
+memori = Memori(conscious_ingest=True, auto_ingest=False)
+
+# For intelligent, context-aware conversations
+memori = Memori(conscious_ingest=True, auto_ingest=True)
+
+# For maximum control
+memori = Memori(conscious_ingest=False, auto_ingest=False)
+```
+
+### 2. Use Namespaces for Organization
 ```python
 # Separate memories by project/context
-work = Memori(namespace="work")
-personal = Memori(namespace="personal")
+work = Memori(namespace="work_project")
+personal = Memori(namespace="personal_assistant")
+research = Memori(namespace="research_project")
 ```
 
-### 2. Configure Retention
+### 3. Configure for Your Use Case
 ```python
+# Performance-focused
 memori = Memori(
-    memory_filters={
-        "importance_threshold": 0.3,  # Only store important memories
-        "max_short_term": 1000,       # Limit short-term memories
-    }
+    conscious_ingest=True,
+    auto_ingest=False,  # Reduce token usage
+    memory_filters={"importance_threshold": 0.5}
 )
-```
 
-### 3. Monitor Memory Usage
-```python
-stats = memori.get_memory_stats()
-if stats['short_term_count'] > 1000:
-    # Consider cleanup or adjust filters
-    pass
+# Context-rich conversations
+memori = Memori(
+    conscious_ingest=True,
+    auto_ingest=True,   # Enable dynamic search
+    memory_filters={"importance_threshold": 0.3}
+)
 ```
 
 ### 4. Use Configuration Files
@@ -237,6 +310,19 @@ config = ConfigManager()
 config.auto_load()  # Loads from memori.json, env vars
 
 memori = Memori()  # Uses loaded config
+memori.enable()
+```
+
+### 5. Monitor Memory Usage
+```python
+stats = memori.get_memory_stats()
+print(f"Conversations: {stats.get('chat_history_count', 0)}")
+print(f"Short-term: {stats.get('short_term_count', 0)}")
+print(f"Long-term: {stats.get('long_term_count', 0)}")
+
+# Trigger cleanup if needed
+if stats.get('short_term_count', 0) > 1000:
+    memori.trigger_conscious_analysis()
 ```
 
 ## Troubleshooting
@@ -244,14 +330,16 @@ memori = Memori()  # Uses loaded config
 ### Memory Not Recording
 ```python
 # Check if enabled
-if not memori.is_enabled:
+if not memori._enabled:
     memori.enable()
 
-# Verify API key
-print(memori.openai_api_key)  # Should not be None
+# Verify API key configuration
+config_info = memori.memory_manager.get_config_info() if hasattr(memori, 'memory_manager') else {}
+print(f"Configuration loaded: {config_info}")
 
 # Check conscious ingestion
-print(memori.conscious_ingest)  # Should be True
+print(f"Conscious ingest: {memori.conscious_ingest}")
+print(f"Auto ingest: {memori.auto_ingest}")
 ```
 
 ### Context Not Injecting
@@ -262,6 +350,23 @@ memori = Memori(conscious_ingest=True)
 # Check for relevant memories
 memories = memori.retrieve_context("your query", limit=3)
 print(f"Found {len(memories)} relevant memories")
+
+# Manually trigger conscious analysis
+memori.trigger_conscious_analysis()
+```
+
+### Performance Issues
+```python
+# Check memory statistics
+stats = memori.get_memory_stats()
+print(f"Total memories: {stats.get('total_memories', 0)}")
+
+# Optimize settings for performance
+memori = Memori(
+    conscious_ingest=True,
+    auto_ingest=False,  # Disable if not needed
+    memory_filters={"importance_threshold": 0.5}  # Higher threshold
+)
 ```
 
 ### Database Issues
@@ -270,6 +375,13 @@ print(f"Found {len(memories)} relevant memories")
 try:
     stats = memori.get_memory_stats()
     print("Database connection OK")
+    print(f"Database URL: {memori.database_connect}")
 except Exception as e:
     print(f"Database error: {e}")
+    
+# Check database path for SQLite
+import os
+if memori.database_connect.startswith("sqlite:///"):
+    db_path = memori.database_connect.replace("sqlite:///", "")
+    print(f"Database file exists: {os.path.exists(db_path)}")
 ```

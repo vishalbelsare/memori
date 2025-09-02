@@ -1,6 +1,6 @@
 # Architecture Overview
 
-Memoriai is built with a modular, production-ready architecture designed for reliability, performance, and extensibility.
+Memori v1.1 is built with a modular, production-ready architecture designed for reliability, performance, and extensibility with dual memory modes and intelligent context injection.
 
 ## System Architecture
 
@@ -8,47 +8,60 @@ Memoriai is built with a modular, production-ready architecture designed for rel
 graph TB
     subgraph "Application Layer"
         A[Your AI Application]
-        B[LLM Library<br/>LiteLLM/OpenAI/Anthropic]
+        B[LLM Library<br/>LiteLLM/OpenAI/Anthropic/Azure]
     end
     
-    subgraph "Memoriai Core"
+    subgraph "Memori Core"
         C[Memori Class]
-        D[Universal Interceptor]
+        D[Memory Manager]
         E[Configuration Manager]
+        F[Provider Config]
+    end
+    
+    subgraph "Dual Memory System"
+        G[Conscious Mode<br/>One-shot Working Memory]
+        H[Auto Mode<br/>Dynamic Search]
+        I[Memory Tools<br/>Function Calling]
     end
     
     subgraph "Agent System"
-        F[Memory Agent<br/>Pydantic Processing]
-        G[Conscious Agent<br/>Background Analysis]
-        H[Retrieval Agent<br/>Context Selection]
+        J[Memory Agent<br/>Pydantic Processing]
+        K[Conscious Agent<br/>Background Analysis]
+        L[Retrieval Agent<br/>Context Selection]
     end
     
     subgraph "Storage Layer"
-        I[Database Manager]
-        J[Query Engine]
-        K[Schema Manager]
+        M[Database Manager]
+        N[Query Engine]
+        O[Schema Manager]
     end
     
     subgraph "Database"
-        L[(SQLite/PostgreSQL/MySQL)]
-        M[Full-Text Search]
-        N[Indexed Queries]
+        P[(SQLite/PostgreSQL/MySQL)]
+        Q[Full-Text Search]
+        R[Indexed Queries]
     end
     
     A --> B
     B --> C
     C --> D
     C --> E
-    D --> F
-    F --> G
-    G --> H
-    H --> I
+    C --> F
+    D --> G
+    D --> H
+    D --> I
+    G --> J
+    H --> L
     I --> J
-    I --> K
-    J --> L
+    J --> K
     K --> L
     L --> M
-    L --> N
+    M --> N
+    M --> O
+    N --> P
+    O --> P
+    P --> Q
+    P --> R
 ```
 
 ## Core Components
@@ -58,48 +71,81 @@ The main interface that users interact with:
 
 ```python
 class Memori:
-    def __init__(self, database_connect, conscious_ingest=True, ...):
+    def __init__(self, 
+                 database_connect, 
+                 conscious_ingest=True, 
+                 auto_ingest=False,
+                 provider_config=None,
+                 ...):
         # Initialize all subsystems
     
     def enable(self):
-        # Start universal recording
+        # Start universal recording using LiteLLM callbacks
     
     def disable(self):
         # Stop recording and cleanup
+        
+    def trigger_conscious_analysis(self):
+        # Manually trigger background analysis
 ```
 
 **Responsibilities:**
-- Configuration management
-- Component initialization
-- Lifecycle management
-- Public API surface
+- Configuration management through ConfigManager
+- Component initialization with provider support
+- Lifecycle management for both memory modes
+- Public API surface with memory tools
 
-### 2. Universal Interceptor
-Automatically captures conversations from any LLM library:
+### 2. Memory Manager & LiteLLM Integration
+Native integration with LiteLLM's callback system:
 
 ```python
-class UniversalInterceptor:
-    def install_hooks(self):
-        # Monkey-patch LLM libraries
+class MemoryManager:
+    def enable(self, interceptors=None):
+        # Use LiteLLM native callbacks for universal recording
     
-    def capture_conversation(self, request, response):
-        # Extract and process conversations
+    def record_conversation(self, user_input, ai_output, model):
+        # Process and store conversations automatically
 ```
 
 **How it works:**
-- Dynamically patches LLM library imports
-- Intercepts API calls at the module level
-- Extracts conversation data without breaking functionality
-- Supports LiteLLM, OpenAI, Anthropic out of the box
+- Uses LiteLLM's native callback system for universal recording
+- Supports OpenAI, Anthropic, Azure OpenAI, and 100+ providers
+- Automatic conversation extraction without monkey-patching
+- Provider configuration support for Azure and custom endpoints
 
-### 3. Agent System
+### 3. Dual Memory System
+Two complementary memory modes for different use cases:
+
+#### Conscious Ingest Mode
+```python
+class ConsciouscMode:
+    def __init__(self, conscious_ingest=True):
+        # One-shot working memory injection
+        
+    def inject_context(self, messages):
+        # Inject essential memories once per session
+        # Like human short-term memory
+```
+
+#### Auto Ingest Mode
+```python
+class AutoIngestMode:
+    def __init__(self, auto_ingest=True):
+        # Dynamic memory search per query
+        
+    def get_context(self, user_input):
+        # Search entire database for relevant memories
+        # Inject 3-5 most relevant memories per call
+```
+
+### 4. Agent System
 Three specialized AI agents for intelligent memory processing:
 
 #### Memory Agent
 ```python
 class MemoryAgent:
     def process_conversation(self, user_input, ai_output):
-        # Use OpenAI Structured Outputs
+        # Use OpenAI Structured Outputs with Pydantic
         return ProcessedMemory(
             category=...,
             entities=...,
@@ -113,98 +159,153 @@ class MemoryAgent:
 class ConsciouscAgent:
     def analyze_patterns(self):
         # Every 6 hours, analyze memory patterns
-        # Promote essential conversations
+        # Promote essential conversations to working memory
         return EssentialMemoriesAnalysis(
             essential_memories=[...],
             analysis_reasoning="..."
         )
+        
+    def run_conscious_ingest(self, db_manager, namespace):
+        # Background analysis for memory promotion
 ```
 
 #### Retrieval Agent
 ```python
 class RetrievalAgent:
-    def plan_search(self, query):
-        # Understand query intent
-        # Plan search strategy
-        return MemorySearchQuery(
-            search_terms=[...],
-            categories=[...],
-            strategy="semantic"
+    def execute_search(self, query, db_manager, namespace, limit=5):
+        # Intelligent database search for auto-ingest mode
+        # Understand query intent and find relevant memories
+        return RelevantMemories(
+            memories=[...],
+            search_strategy="semantic",
+            relevance_scores=[...]
         )
 ```
 
-### 4. Database Layer
+### 5. Provider Configuration System
+Support for multiple LLM providers with unified configuration:
+
+```python
+class ProviderConfig:
+    @classmethod
+    def from_azure(cls, api_key, azure_endpoint, azure_deployment, ...):
+        # Azure OpenAI configuration
+        
+    @classmethod
+    def from_openai(cls, api_key, organization=None, ...):
+        # Standard OpenAI configuration
+        
+    @classmethod
+    def from_custom(cls, base_url, api_key, model):
+        # Custom endpoint configuration (Ollama, etc.)
+        
+    def create_client(self):
+        # Create configured OpenAI-compatible client
+```
+
+### 6. Memory Tools System
+Function calling integration for AI agents:
+
+```python
+from memori import create_memory_tool
+
+def setup_memory_tools(memori_instance):
+    # Create memory search tool for function calling
+    memory_tool = create_memory_tool(memori_instance)
+    
+    return {
+        "type": "function",
+        "function": {
+            "name": "search_memory",
+            "description": "Search memory for relevant past conversations",
+            "parameters": {...}
+        }
+    }
+```
+
+### 7. Database Layer
 Multi-database support with intelligent querying:
 
 ```python
 class DatabaseManager:
     def __init__(self, connection_string):
         # Support SQLite, PostgreSQL, MySQL
+        # Cloud databases: Neon, Supabase, GibsonAI
     
     def initialize_schema(self):
         # Create tables, indexes, FTS
     
     def store_memory(self, processed_memory):
-        # Store with relationships
+        # Store with relationships and full-text indexing
     
-    def search_memories(self, query):
-        # Full-text search with ranking
+    def search_memories(self, query, namespace, limit=5):
+        # Full-text search with ranking and namespace isolation
 ```
 
 ## Data Flow
 
-### 1. Conversation Capture
+### 1. Conversation Capture (LiteLLM Native)
 ```mermaid
 sequenceDiagram
     participant App as Your App
-    participant LLM as LLM Library
-    participant Int as Interceptor
+    participant LLM as LiteLLM/OpenAI
+    participant CB as LiteLLM Callbacks
     participant Mem as Memory Agent
+    participant DB as Database
     
     App->>LLM: API Call
-    LLM->>Int: Captured Request
-    Int->>LLM: Forward Request
-    LLM->>Int: Captured Response
-    Int->>Mem: Process Conversation
-    Mem->>Mem: Extract Entities
-    Mem->>Mem: Categorize Memory
-    Mem->>Mem: Score Importance
-    Int->>LLM: Forward Response
+    LLM->>CB: Native Callback Trigger
+    CB->>Mem: Process Conversation
+    Mem->>Mem: Extract Entities & Categorize
+    Mem->>DB: Store Processed Memory
     LLM->>App: Original Response
 ```
 
-### 2. Background Analysis
+### 2. Conscious Mode: Background Analysis & Promotion
 ```mermaid
 sequenceDiagram
     participant Timer as 6-Hour Timer
     participant CA as Conscious Agent
-    participant DB as Database
+    participant LTM as Long-term Memory
     participant STM as Short-term Memory
     
     Timer->>CA: Trigger Analysis
-    CA->>DB: Get Long-term Memories
-    CA->>CA: Analyze Patterns
-    CA->>CA: Score Conversations
-    CA->>CA: Select Essentials
-    CA->>STM: Promote Memories
-    CA->>CA: Update Last Analysis
+    CA->>LTM: Get All Memories
+    CA->>CA: Analyze Patterns & Importance
+    CA->>CA: Select Essential Memories
+    CA->>STM: Promote to Working Memory
+    CA->>CA: Update Analysis Timestamp
 ```
 
-### 3. Context Injection
+### 3. Auto Mode: Dynamic Context Retrieval
 ```mermaid
 sequenceDiagram
     participant App as Your App
     participant RA as Retrieval Agent
-    participant STM as Short-term Memory
-    participant LTM as Long-term Memory
+    participant DB as Database
     participant LLM as LLM API
     
     App->>RA: New Query
-    RA->>STM: Get Essential Memories (3)
-    RA->>LTM: Search Relevant (2)
-    RA->>RA: Combine & Deduplicate
+    RA->>DB: Intelligent Search
+    RA->>RA: Rank & Select Top 5
     RA->>LLM: Inject Context
     LLM->>App: Contextualized Response
+```
+
+### 4. Memory Tools: Function Calling
+```mermaid
+sequenceDiagram
+    participant Agent as AI Agent
+    participant Tool as Memory Tool
+    participant DB as Database
+    participant LLM as LLM API
+    
+    Agent->>LLM: Query with Tools
+    LLM->>Tool: Call search_memory(query)
+    Tool->>DB: Search Database
+    DB->>Tool: Return Results
+    Tool->>LLM: Formatted Results
+    LLM->>Agent: Response with Memory Context
 ```
 
 ## Database Schema
@@ -295,43 +396,67 @@ CREATE INDEX idx_entities_type ON memory_entities(entity_type, entity_value);
 
 ## Configuration Architecture
 
-### Layered Configuration
+### Layered Configuration with ConfigManager
 ```python
-# 1. Default settings
-class DefaultSettings:
-    database = DatabaseSettings(
-        connection_string="sqlite:///memori.db"
-    )
-    agents = AgentSettings(
-        conscious_ingest=True
-    )
+# 1. Default settings from Pydantic models
+class MemoriSettings(BaseModel):
+    database: DatabaseSettings = DatabaseSettings()
+    agents: AgentSettings = AgentSettings()
+    memory: MemorySettings = MemorySettings()
+    logging: LoggingSettings = LoggingSettings()
+    integrations: IntegrationSettings = IntegrationSettings()
 
 # 2. File-based configuration (memori.json)
 {
     "database": {
-        "connection_string": "postgresql://..."
+        "connection_string": "postgresql://...",
+        "pool_size": 20
     },
     "agents": {
-        "openai_api_key": "sk-..."
+        "openai_api_key": "sk-...",
+        "default_model": "gpt-4o-mini"
+    },
+    "memory": {
+        "namespace": "production",
+        "retention_policy": "30_days"
     }
 }
 
-# 3. Environment variables
-MEMORI_DATABASE_CONNECTION_STRING=postgresql://...
-MEMORI_AGENTS_OPENAI_API_KEY=sk-...
+# 3. Environment variables with nested support
+MEMORI_DATABASE__CONNECTION_STRING=postgresql://...
+MEMORI_AGENTS__OPENAI_API_KEY=sk-...
+MEMORI_MEMORY__NAMESPACE=production
 
-# 4. Direct parameters
+# 4. Direct parameters with provider config
+from memori.core.providers import ProviderConfig
+
+azure_provider = ProviderConfig.from_azure(...)
 memori = Memori(
     database_connect="postgresql://...",
-    conscious_ingest=True
+    conscious_ingest=True,
+    auto_ingest=True,
+    provider_config=azure_provider
 )
 ```
 
-### Configuration Priority
-1. Direct parameters (highest)
-2. Environment variables
-3. Configuration files
-4. Default settings (lowest)
+### Configuration Priority (Highest to Lowest)
+1. Direct constructor parameters
+2. Environment variables (`MEMORI_*`)
+3. `MEMORI_CONFIG_PATH` environment variable
+4. Configuration files (`memori.json`, `memori.yaml`)
+5. Default Pydantic settings
+
+### Auto-Loading with ConfigManager
+```python
+from memori import ConfigManager, Memori
+
+# Recommended approach
+config = ConfigManager()
+config.auto_load()  # Loads from all sources automatically
+
+memori = Memori()  # Uses loaded configuration
+memori.enable()
+```
 
 ## Error Handling & Resilience
 
@@ -345,19 +470,29 @@ class MemoriError(Exception):
         self.cause = cause
         super().__init__(message)
 
-# Component-specific error handling
+# Component-specific error handling with fallbacks
 try:
+    # Try conscious agent analysis
     conscious_agent.analyze_patterns()
 except Exception as e:
     logger.warning(f"Conscious analysis failed: {e}")
-    # Continue without analysis
+    # Continue with basic memory recording
+
+try:
+    # Try auto-ingest with retrieval agent
+    context = retrieval_agent.execute_search(query)
+except Exception as e:
+    logger.warning(f"Auto-ingest failed: {e}")
+    # Fallback to direct database search
+    context = db_manager.search_memories(query, limit=3)
 ```
 
 ### Recovery Strategies
 - **Database Connection Loss**: Automatic reconnection with exponential backoff
-- **API Rate Limits**: Graceful degradation, queue requests
-- **Agent Failures**: Continue core functionality without advanced features
+- **API Rate Limits**: Graceful degradation, queue requests, fallback models
+- **Agent Failures**: Continue core functionality, disable advanced features
 - **Memory Corruption**: Automatic schema validation and repair
+- **Provider Failures**: Fallback to basic OpenAI client configuration
 
 ## Performance Optimizations
 
@@ -373,16 +508,30 @@ except Exception as e:
 - **Cleanup Routines**: Automatic cleanup of expired data
 - **Compression**: Compress old memories to save space
 
-### Token Optimization
+### Token Optimization Strategy
 ```python
-# Traditional approach
+# Traditional approach: Full conversation history
 context = get_all_conversation_history()  # 2000+ tokens
 
-# Memoriai approach
+# Conscious Mode: Essential working memory
 essential = get_essential_memories(limit=3)    # 150 tokens
-relevant = get_relevant_memories(limit=2)      # 100 tokens
-context = essential + relevant                 # 250 tokens total
+context = essential                            # 150 tokens total
+
+# Auto Mode: Dynamic relevant context  
+relevant = get_relevant_memories(query, limit=5)  # 250 tokens
+context = relevant                                 # 250 tokens total
+
+# Combined Mode: Best of both worlds
+essential = get_essential_memories(limit=2)       # 100 tokens
+relevant = get_relevant_memories(query, limit=3)  # 150 tokens
+context = essential + relevant                     # 250 tokens total
 ```
+
+### Performance Optimizations
+- **LiteLLM Native Callbacks**: No monkey-patching overhead
+- **Async Processing**: Background analysis doesn't block conversations
+- **Caching**: Intelligent caching of search results and essential memories
+- **Provider Configuration**: Optimized client creation and connection reuse
 
 ## Security Considerations
 
@@ -404,31 +553,55 @@ context = essential + relevant                 # 250 tokens total
 ```python
 class CustomAgent(BaseAgent):
     def process_memory(self, conversation):
-        # Custom processing logic
+        # Custom processing logic with domain-specific rules
         return CustomProcessedMemory(...)
+```
+
+### Provider Adapters
+```python
+class CustomProviderConfig(ProviderConfig):
+    @classmethod
+    def from_custom_service(cls, endpoint, credentials):
+        # Custom provider configuration
+        return cls(base_url=endpoint, api_key=credentials, ...)
+```
+
+### Memory Tools Extensions
+```python
+from memori import create_memory_tool
+
+def create_domain_specific_tool(memori_instance, domain):
+    """Create specialized memory tools for specific domains"""
+    base_tool = create_memory_tool(memori_instance)
+    
+    # Add domain-specific search logic
+    def domain_search(query):
+        return base_tool.execute(
+            query=f"{domain}: {query}",
+            filters={"category": domain}
+        )
+    
+    return domain_search
 ```
 
 ### Database Adapters
 ```python
 class CustomDatabaseAdapter(BaseDatabaseAdapter):
     def store_memory(self, memory):
-        # Custom storage logic
-```
-
-### Integration Hooks
-```python
-class CustomIntegration(BaseIntegration):
-    def capture_conversation(self, request, response):
-        # Custom capture logic
+        # Custom storage logic for specialized databases
+    
+    def search_memories(self, query, namespace, limit):
+        # Custom search implementation
 ```
 
 ## Monitoring & Observability
 
 ### Metrics Collection
-- **Conversation Volume**: Track processing throughput
-- **Memory Growth**: Monitor database size and growth
-- **Agent Performance**: Track analysis success rates
-- **Context Effectiveness**: Measure context injection impact
+- **Conversation Volume**: Track processing throughput across providers
+- **Memory Growth**: Monitor database size, cleanup effectiveness
+- **Agent Performance**: Track analysis success rates, processing times
+- **Context Effectiveness**: Measure impact of conscious vs auto modes
+- **Provider Health**: Monitor API response times and error rates
 
 ### Logging Strategy
 ```python
@@ -439,7 +612,9 @@ logger.info(
         "memory_id": memory.id,
         "category": memory.category,
         "importance": memory.importance_score,
-        "namespace": memory.namespace
+        "namespace": memory.namespace,
+        "mode": "conscious" or "auto",
+        "provider": provider_config.api_type if provider_config else "default"
     }
 )
 ```
@@ -450,8 +625,13 @@ def health_check():
     return {
         "database": check_database_connection(),
         "agents": check_agent_availability(),
-        "memory_stats": get_memory_statistics()
+        "memory_stats": get_memory_statistics(),
+        "provider_config": check_provider_health(),
+        "memory_modes": {
+            "conscious_enabled": memori.conscious_ingest,
+            "auto_enabled": memori.auto_ingest
+        }
     }
 ```
 
-This architecture ensures Memoriai can scale from simple personal projects to enterprise-grade AI applications while maintaining reliability and performance.
+This v1.1 architecture ensures Memori can scale from simple personal projects to enterprise-grade AI applications while maintaining reliability, performance, and intelligent context awareness through dual memory modes.

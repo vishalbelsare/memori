@@ -1,6 +1,6 @@
 # LLM Provider Configuration
 
-Configuration examples for different LLM providers with Memori, based on working examples from the support folder.
+Configuration examples for different LLM providers with Memori.
 
 ## Provider Configuration Overview
 

@@ -27,7 +27,7 @@ memori = Memori(
 )
 ```
 
-### PostgreSQL (Recommended for Production)
+### PostgreSQL
 ```python
 from memori import Memori
 

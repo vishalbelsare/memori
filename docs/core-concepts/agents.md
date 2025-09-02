@@ -1,18 +1,57 @@
 # Agent System Documentation
 
-Memori v1.1 features a sophisticated multi-agent system for intelligent memory processing and conscious ingestion.
+Memori v1.1 features a sophisticated multi-agent system for intelligent memory processing with dual memory modes and provider configuration support.
 
 ## Overview
 
 The agent system consists of three specialized AI agents that work together to provide intelligent memory management:
 
-1. **Memory Agent** - Processes every conversation with structured outputs
-2. **Conscious Agent** - Analyzes memory patterns and promotes essential information
-3. **Retrieval Agent** - Intelligently selects relevant context for injection
+1. **Memory Agent** - Processes every conversation with structured outputs using Pydantic models
+2. **Conscious Agent** - Copies conscious-info labeled memories to short-term memory for immediate access
+3. **Memory Search Engine** - Intelligently retrieves and injects relevant context based on user queries
+
+## Dual Memory Modes
+
+Memori v1.1 introduces two distinct memory modes that can be used separately or together:
+
+### Conscious Ingest Mode (`conscious_ingest=True`)
+- **One-shot Context Injection**: Injects context at conversation start
+- **Essential Memory Promotion**: Copies conscious-info labeled memories to short-term memory
+- **Background Processing**: Runs once at program startup
+- **Use Case**: Persistent context for entire conversation sessions
+
+### Auto Ingest Mode (`auto_ingest=True`)
+- **Real-time Context Injection**: Injects relevant memories on every LLM call
+- **Dynamic Retrieval**: Uses Memory Search Engine to find contextually relevant memories
+- **Intelligent Search**: Analyzes user input to retrieve the most appropriate memories
+- **Use Case**: Dynamic, query-specific memory injection
 
 ## Memory Agent
 
-The Memory Agent is responsible for processing every conversation and extracting structured information using OpenAI's Structured Outputs with Pydantic models.
+The Memory Agent is responsible for processing every conversation and extracting structured information using OpenAI's Structured Outputs with Pydantic models. It supports multiple provider configurations for flexibility.
+
+### Provider Configuration
+
+The Memory Agent can be configured with various LLM providers:
+
+```python
+from memori import Memori
+from memori.core.providers import ProviderConfig
+
+# Azure OpenAI configuration
+azure_config = ProviderConfig.from_azure(
+    api_key="your-azure-key",
+    azure_endpoint="https://your-resource.openai.azure.com/",
+    azure_deployment="gpt-4o",
+    api_version="2024-02-01"
+)
+
+memori = Memori(
+    database_connect="sqlite:///memory.db",
+    provider_config=azure_config,
+    conscious_ingest=True
+)
+```
 
 ### Functionality
 
@@ -40,61 +79,91 @@ The Memory Agent is responsible for processing every conversation and extracting
 
 ## Conscious Agent
 
-The Conscious Agent runs background analysis to identify essential personal facts and promote them to short-term memory for immediate access.
+The Conscious Agent is responsible for copying conscious-info labeled memories from long-term memory directly to short-term memory for immediate context availability.
 
-### Background Analysis
+### Background Processing
 
-**Frequency**: Every 6 hours when `conscious_ingest=True`
+**Execution**: Runs once at program startup when `conscious_ingest=True`
 
-**Selection Criteria**:
-1. **Personal Identity**: Name, occupation, location, basic information
-2. **Preferences & Habits**: Likes, dislikes, routines, work patterns
-3. **Skills & Expertise**: Technical skills, programming languages, tools
-4. **Current Projects**: Ongoing work, projects, learning goals
-5. **Relationships**: Important people, colleagues, connections
-6. **Repeated References**: Information frequently mentioned or referenced
+**Function**: Copies all memories with `conscious-info` labels to short-term memory
 
-### Scoring System
+**Purpose**: Provides persistent context throughout the conversation session
 
-The Conscious Agent uses multi-dimensional scoring:
+### How It Works
 
-- **Frequency Score**: How often information is referenced
-- **Recency Score**: How recent and relevant the information is
-- **Importance Score**: How critical the information is for understanding the person
+1. **Startup Analysis**: Scans all long-term memories for conscious-info labels
+2. **Memory Transfer**: Copies labeled memories to short-term memory
+3. **Persistent Context**: These memories remain available for the entire session
+4. **One-Shot Operation**: Runs once at initialization, not continuously
 
-### Essential Memory Promotion
-
-Essential conversations are promoted to short-term memory for immediate context injection:
+### Usage
 
 ```python
-# Get essential conversations
-essential = memori.get_essential_conversations(limit=10)
+from memori import Memori
 
-# Manually trigger analysis
-memori.trigger_conscious_analysis()
+memori = Memori(
+    database_connect="sqlite:///memory.db",
+    conscious_ingest=True,  # Enable conscious agent
+    verbose=True  # See conscious agent activity
+)
+
+memori.enable()  # Triggers conscious agent startup
 ```
 
-## Retrieval Agent
+## Memory Search Engine
 
-The Retrieval Agent understands user queries and plans effective memory retrieval strategies using intelligent search planning.
+The Memory Search Engine (formerly Retrieval Agent) is responsible for intelligent memory retrieval and context injection, particularly for auto-ingest mode.
 
 ### Query Understanding
 
 - **Intent Analysis**: Understands what the user is actually looking for
-- **Parameter Extraction**: Identifies key entities, topics, and concepts
+- **Parameter Extraction**: Identifies key entities, topics, and concepts  
 - **Strategy Planning**: Recommends the best approach to find relevant memories
 - **Filter Recommendations**: Suggests appropriate filters for category, importance, etc.
 
+### Auto-Ingest Context Retrieval
+
+When `auto_ingest=True`, the Memory Search Engine:
+
+1. **Analyzes User Input**: Understands the context and intent of each query
+2. **Searches Database**: Performs intelligent search across all memories
+3. **Selects Relevant Context**: Returns 5 most relevant memories
+4. **Injects Context**: Automatically adds context to the current conversation
+
+### Usage with Auto-Ingest
+
+```python
+from memori import Memori
+
+memori = Memori(
+    database_connect="sqlite:///memory.db",
+    auto_ingest=True,  # Enable auto-ingest mode
+    verbose=True  # See search engine activity
+)
+
+# Every completion call will automatically include relevant context
+from litellm import completion
+
+response = completion(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "What are my Python preferences?"}]
+)
+# Automatically includes relevant memories about Python preferences
+```
+
 ### Search Strategies
+
+The Memory Search Engine supports multiple search approaches:
 
 | Strategy | Description | Use Case |
 |----------|-------------|----------|
+| **direct_database_search** | Primary method using database full-text search | Most reliable for keyword matching |
+| **semantic_search** | AI-powered contextual understanding | Complex queries requiring inference |
 | **keyword_search** | Direct keyword/phrase matching | Specific terms or technologies |
 | **entity_search** | Search by entities (people, tech, topics) | "What did Mike say about React?" |
 | **category_filter** | Filter by memory categories | "My preferences for code style" |
 | **importance_filter** | Filter by importance levels | "Important information about project X" |
 | **temporal_filter** | Search within specific time ranges | "Recent work on microservices" |
-| **semantic_search** | Conceptual/meaning-based search | Similar concepts and related topics |
 
 ### Query Examples
 
@@ -106,65 +175,106 @@ The Retrieval Agent understands user queries and plans effective memory retrieva
 
 ## Configuration
 
-### Enabling Conscious Ingestion
+### Dual Memory Mode Setup
+
+You can use either mode individually or combine them:
 
 ```python
 from memori import Memori
 
-memori = Memori(
+# Conscious ingest only (one-shot context at startup)
+memori_conscious = Memori(
     database_connect="sqlite:///memory.db",
-    conscious_ingest=True,  # Enable conscious agent system
-    openai_api_key="sk-..."  # Required for agents
+    conscious_ingest=True,  # Enable conscious agent
+    openai_api_key="sk-..."  # Required for memory processing
 )
 
-memori.enable()  # Start background analysis
+# Auto ingest only (dynamic context on every call)
+memori_auto = Memori(
+    database_connect="sqlite:///memory.db",
+    auto_ingest=True,  # Enable auto-ingest mode
+    openai_api_key="sk-..."  # Required for memory processing
+)
+
+# Both modes together (maximum intelligence)
+memori_combined = Memori(
+    database_connect="sqlite:///memory.db",
+    conscious_ingest=True,  # Essential context at startup
+    auto_ingest=True,       # Dynamic context per query
+    openai_api_key="sk-..."  # Required for both agents
+)
+
+memori_combined.enable()  # Start all enabled agents
 ```
 
-### Agent Settings
+### Provider Configuration
 
-The agents use OpenAI's structured outputs and require an API key:
-
-- **Model**: GPT-4o (recommended for best results)
-- **API Key**: Set via `openai_api_key` parameter or `OPENAI_API_KEY` environment variable
-- **Analysis Interval**: 6 hours (configurable)
-
-### Manual Control
+Configure different LLM providers for the agents:
 
 ```python
-# Manually trigger conscious analysis
-memori.trigger_conscious_analysis()
+from memori.core.providers import ProviderConfig
 
-# Get essential conversations
-essential = memori.get_essential_conversations(limit=5)
+# OpenAI (default)
+openai_config = ProviderConfig.from_openai(
+    api_key="sk-...",
+    model="gpt-4o"
+)
 
-# Check if conscious ingestion is enabled
-if memori.conscious_ingest:
-    print("Conscious ingestion is active")
+# Azure OpenAI
+azure_config = ProviderConfig.from_azure(
+    api_key="your-azure-key",
+    azure_endpoint="https://your-resource.openai.azure.com/",
+    azure_deployment="gpt-4o",
+    api_version="2024-02-01"
+)
 
-# Get analysis statistics
-stats = memori.get_memory_stats()
+# Custom endpoint (Ollama, etc.)
+custom_config = ProviderConfig.from_custom(
+    base_url="http://localhost:11434/v1",
+    api_key="not-required",
+    model="llama3"
+)
+
+memori = Memori(
+    database_connect="sqlite:///memory.db",
+    provider_config=azure_config,  # Use any configuration
+    conscious_ingest=True,
+    auto_ingest=True
+)
 ```
 
 ## Context Injection Strategy
 
-When `conscious_ingest=True`, the system uses an intelligent context injection strategy:
+### Conscious Ingest Mode
 
-### Priority System
+When `conscious_ingest=True`:
 
-1. **Essential Conversations** (3 memories): Always included from promoted memories
-2. **Contextually Relevant** (2 memories): Selected based on current query
-3. **Smart Limits**: Maximum 5 memories to avoid token overflow
+1. **Startup Analysis**: Conscious Agent scans for conscious-info labeled memories
+2. **One-shot Transfer**: Transfers all labeled memories to short-term memory
+3. **Session Persistence**: Context remains available throughout the session
+4. **No Re-analysis**: Context stays fixed until next program restart
 
-### Selection Algorithm
+### Auto Ingest Mode
+
+When `auto_ingest=True`:
+
+1. **Per-Query Analysis**: Memory Search Engine analyzes each user input
+2. **Dynamic Retrieval**: Searches entire database for relevant memories
+3. **Context Selection**: Returns up to 5 most relevant memories
+4. **Real-time Injection**: Injects context into each LLM call
+
+### Combined Mode Strategy
+
+When both modes are enabled:
 
 ```python
-# Pseudo-code for context selection
-essential_memories = get_essential_conversations(limit=3)
-relevant_memories = search_relevant_memories(query, limit=2)
+# Combined context injection
+essential_context = conscious_agent.get_short_term_memories()  # Fixed context
+dynamic_context = search_engine.retrieve_context(user_input)  # Query-specific context
 
-# Combine with deduplication
-context = combine_and_deduplicate(essential_memories, relevant_memories)
-inject_context(context)
+# Both contexts are intelligently merged and injected
+total_context = merge_contexts(essential_context, dynamic_context)
+inject_context(total_context)
 ```
 
 ## Monitoring and Debugging
@@ -177,33 +287,85 @@ Enable verbose logging to see agent activity:
 memori = Memori(
     database_connect="sqlite:///memory.db",
     conscious_ingest=True,
-    verbose=True  # Show agent activity
+    auto_ingest=True,
+    verbose=True  # Show all agent activity
 )
 ```
 
 ### Log Messages
 
-- Memory processing by Memory Agent
-- Background analysis by Conscious Agent
-- Context injection by Retrieval Agent
-- Essential memory promotions
-- Analysis intervals and triggers
+With `verbose=True`, you'll see:
+
+**Memory Agent Activity**:
+```
+[MEMORY] Processing conversation: "I prefer FastAPI"
+[MEMORY] Categorized as 'preference', importance: 0.8
+[MEMORY] Extracted entities: {'technologies': ['FastAPI']}
+```
+
+**Conscious Agent Activity**:
+```
+[CONSCIOUS] Starting conscious ingest at startup
+[CONSCIOUS] Found 5 conscious-info labeled memories
+[CONSCIOUS] Copied 5 memories to short-term memory
+[CONSCIOUS] Conscious ingest complete
+```
+
+**Memory Search Engine Activity**:
+```
+[AUTO-INGEST] Starting context retrieval for query: 'What are my Python preferences?'
+[AUTO-INGEST] Direct database search returned 3 results
+[AUTO-INGEST] Context injection successful: 3 memories
+```
+
+### Manual Control
+
+```python
+# Check agent status
+print(f"Conscious ingest enabled: {memori.conscious_ingest}")
+print(f"Auto ingest enabled: {memori.auto_ingest}")
+
+# Get memory statistics
+stats = memori.get_memory_stats()
+print(f"Total memories: {stats.get('total_memories', 0)}")
+
+# Check short-term memory (conscious ingest)
+if memori.conscious_ingest:
+    short_term = memori.db_manager.get_short_term_memories(namespace=memori.namespace)
+    print(f"Short-term memories: {len(short_term)}")
+
+# Test auto-ingest context retrieval
+if memori.auto_ingest:
+    context = memori._get_auto_ingest_context("What are my preferences?")
+    print(f"Auto-ingest context: {len(context)} memories")
+```
 
 ## Performance Considerations
 
 ### Token Usage
 
-The agent system is designed to be token-efficient:
+The dual agent system is designed to be token-efficient:
 
-- **Structured Outputs**: Reduces parsing overhead
-- **Essential Memory**: Prioritizes most important information
-- **Smart Limits**: Prevents context overflow
-- **Summarization**: Creates concise, searchable content
+- **Structured Outputs**: Pydantic models reduce parsing overhead
+- **Smart Context Limits**: Automatic limits prevent token overflow
+- **Mode Selection**: Choose the right mode for your use case
+- **Provider Flexibility**: Use cost-effective models like GPT-4o-mini
+
+### Mode Comparison
+
+| Feature | Conscious Ingest | Auto Ingest | Combined |
+|---------|------------------|-------------|----------|
+| **Context Type** | Fixed essential | Dynamic relevant | Both |
+| **When Active** | Startup only | Every LLM call | Both |
+| **Token Usage** | Low (one-time) | Medium (per call) | Higher |
+| **Responsiveness** | Fast | Real-time | Fast + Real-time |
+| **Best For** | Persistent context | Query-specific context | Maximum intelligence |
 
 ### Background Processing
 
-- **Asynchronous**: Analysis runs in background without blocking
-- **Interval-based**: Only runs every 6 hours to minimize API calls
+- **Conscious Mode**: Minimal overhead (startup only)
+- **Auto Mode**: Real-time processing with recursion protection
+- **Provider Support**: All modes work with any configured provider
 - **Graceful Degradation**: Continues working if agents fail
 
 ## Troubleshooting
@@ -212,62 +374,102 @@ The agent system is designed to be token-efficient:
 
 **No API Key**:
 ```
-ConsciouscAgent: No OpenAI API key found. Set OPENAI_API_KEY environment variable
+Memory Agent initialization failed: No API key provided
 ```
-**Solution**: Set API key in environment or pass to constructor
+**Solution**: Configure provider or set OPENAI_API_KEY environment variable
 
-**Analysis Fails**:
+**Auto-Ingest Recursion**:
 ```
-Failed to analyze memories: API rate limit exceeded
+Auto-ingest: Recursion detected, using direct database search
 ```
-**Solution**: Wait for rate limit reset or upgrade API plan
+**Solution**: This is normal - the system prevents infinite loops automatically
 
-**No Essential Memories**:
+**No Context Retrieved**:
 ```
-No essential information available yet
+Auto-ingest: Direct database search returned 0 results
 ```
-**Solution**: Have more conversations to build up memory base
+**Solution**: Build up more memory data through conversations
+
+**Conscious Ingest No Memories**:
+```
+ConsciouscAgent: No conscious-info memories found
+```
+**Solution**: Label important memories with conscious-info or have more conversations
 
 ### Debug Commands
 
 ```python
-# Check if agents are working
-print(f"Conscious ingest enabled: {memori.conscious_ingest}")
+# Check agent configuration
+print(f"Conscious ingest: {memori.conscious_ingest}")
+print(f"Auto ingest: {memori.auto_ingest}")
+print(f"Provider: {memori.provider_config.api_type if memori.provider_config else 'Default'}")
 
-# Get last analysis time
-print(f"Last analysis: {memori.conscious_agent.last_analysis}")
+# Test memory processing
+try:
+    # Test memory agent (if available)
+    if hasattr(memori, 'memory_agent'):
+        print("Memory agent available")
+    
+    # Test context retrieval
+    if memori.auto_ingest:
+        context = memori._get_auto_ingest_context("test query")
+        print(f"Auto-ingest working: {len(context)} results")
+        
+    # Check short-term memory
+    if memori.conscious_ingest:
+        short_term = memori.db_manager.get_short_term_memories(namespace=memori.namespace)
+        print(f"Short-term memories: {len(short_term)}")
+        
+except Exception as e:
+    print(f"Agent test failed: {e}")
 
 # Check memory statistics
 stats = memori.get_memory_stats()
-print(f"Total memories: {stats.get('total_memories', 0)}")
-
-# Get essential conversations
-essential = memori.get_essential_conversations()
-print(f"Essential conversations: {len(essential)}")
+for key, value in stats.items():
+    print(f"{key}: {value}")
 ```
 
 ## Best Practices
 
 ### For Users
 
-1. **Be Specific**: Share clear information about yourself, preferences, and projects
-2. **Be Consistent**: Use consistent terminology for technologies and concepts
-3. **Share Context**: Mention your role, current projects, and goals
-4. **Reference Previous**: Build on previous conversations naturally
+1. **Choose the Right Mode**: 
+   - Use `conscious_ingest` for persistent context needs
+   - Use `auto_ingest` for dynamic, query-specific context
+   - Use both for maximum intelligence
+   
+2. **Label Important Memories**: Use conscious-info labels for essential context in conscious mode
+
+3. **Be Specific**: Share clear information about yourself, preferences, and projects
+
+4. **Be Consistent**: Use consistent terminology for technologies and concepts
+
+5. **Share Context**: Mention your role, current projects, and goals
+
+6. **Reference Previous**: Build on previous conversations naturally
 
 ### For Developers
 
-1. **API Key Management**: Always use environment variables for API keys
-2. **Error Handling**: Implement graceful degradation when agents fail
-3. **Monitoring**: Use verbose mode to understand agent behavior
-4. **Testing**: Test with different conversation patterns and user types
+1. **Provider Configuration**: Use ProviderConfig for flexible LLM provider setup
+
+2. **API Key Management**: Always use environment variables for API keys
+
+3. **Error Handling**: Implement graceful degradation when agents fail
+
+4. **Monitoring**: Use verbose mode to understand agent behavior
+
+5. **Testing**: Test with different conversation patterns and memory modes
+
+6. **Resource Management**: Consider token usage when choosing between modes
 
 ## Future Enhancements
 
 Planned improvements to the agent system:
 
-- **Multi-Model Support**: Support for other structured output models
-- **Custom Agents**: Ability to create specialized agents for specific domains
+- **Multi-Model Support**: Enhanced support for Claude, Gemini, and other structured output models
+- **Custom Agents**: Ability to create specialized agents for specific domains  
 - **Advanced Reasoning**: More sophisticated memory relationship analysis
-- **Adaptive Intervals**: Dynamic analysis frequency based on conversation patterns
+- **Adaptive Context**: Dynamic context size based on query complexity
 - **Memory Compression**: Intelligent memory consolidation over time
+- **Hybrid Search**: Combining multiple search strategies for better results
+- **Real-time Learning**: Continuous improvement of context selection algorithms
