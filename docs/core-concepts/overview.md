@@ -1,15 +1,27 @@
-# Conscious Ingestion System
+# Dual Memory Modes System
 
-Memori v1.1 introduces a revolutionary conscious ingestion system that mimics human memory patterns to provide intelligent, context-aware AI interactions.
+Memori v1.1 introduces a revolutionary dual memory system with two distinct modes that can work independently or together to provide intelligent, context-aware AI interactions.
 
-## What is Conscious Ingestion?
+## What are the Dual Memory Modes?
 
-Conscious ingestion is an AI-powered memory management system that:
+Memori v1.1 features two complementary memory modes:
 
-1. **Automatically analyzes** your conversation patterns and preferences
-2. **Identifies essential information** worth keeping in immediate memory
-3. **Promotes key facts** to short-term memory for instant access
-4. **Intelligently injects context** into every AI conversation
+### 1. Conscious Ingest Mode (`conscious_ingest=True`)
+- **One-shot context injection** at conversation start
+- **Persistent essential context** throughout the session
+- **Conscious-info labeled memories** automatically transferred to short-term memory
+- **Startup processing** - runs once when the system initializes
+
+### 2. Auto Ingest Mode (`auto_ingest=True`)  
+- **Real-time context injection** on every LLM call
+- **Dynamic memory retrieval** based on current query
+- **Intelligent search** to find the most relevant memories
+- **Query-specific context** tailored to each user input
+
+### 3. Combined Mode (Both enabled)
+- **Maximum intelligence** with both persistent and dynamic context
+- **Essential + relevant** memories for comprehensive understanding
+- **Optimal performance** for complex, ongoing conversations
 
 ## How It Works
 
@@ -17,203 +29,348 @@ Conscious ingestion is an AI-powered memory management system that:
 
 ```
 ┌─────────────────────┐
-│   Retrieval Agent   │ ← Selects relevant context for injection
+│ Memory Search Engine│ ← Auto-ingest: Dynamic context per query
 ├─────────────────────┤
-│  Conscious Agent    │ ← Analyzes patterns, promotes essentials  
+│  Conscious Agent    │ ← Conscious-ingest: Essential context at startup  
 ├─────────────────────┤
-│   Memory Agent      │ ← Processes every conversation
+│   Memory Agent      │ ← Processes every conversation with Pydantic models
 └─────────────────────┘
 ```
 
-### The Process
+### The Dual Process
 
-1. **Every Conversation** → Memory Agent processes with Pydantic structured outputs
-2. **Every 6 Hours** → Conscious Agent analyzes patterns and promotes essentials
-3. **Every Query** → Retrieval Agent selects 3-5 most relevant memories
-4. **Automatic Context** → Essential + relevant memories injected seamlessly
+**Conscious Ingest Process**:
+1. **System Startup** → Conscious Agent scans for conscious-info labeled memories
+2. **One-Shot Transfer** → Essential memories copied to short-term memory  
+3. **Session Context** → Persistent context available for entire conversation
+4. **No Re-processing** → Context remains fixed until next startup
 
-## Enabling Conscious Ingestion
+**Auto Ingest Process**:
+1. **Every Query** → Memory Search Engine analyzes user input
+2. **Dynamic Search** → Intelligent retrieval from entire memory database
+3. **Context Selection** → Up to 5 most relevant memories selected
+4. **Real-time Injection** → Context automatically added to LLM call
 
-### Simple Setup
+## Enabling Dual Memory Modes
+
+### Conscious Ingest Only
 
 ```python
 from memori import Memori
 
 memori = Memori(
     database_connect="sqlite:///my_memory.db",
-    conscious_ingest=True,  # The magic parameter
-    openai_api_key="sk-..."  # Required for AI agents
+    conscious_ingest=True,  # Essential context at startup
+    openai_api_key="sk-..."  # Required for agents
 )
 
-memori.enable()  # Start recording and analysis
+memori.enable()  # Triggers conscious agent startup
 ```
 
-### What Happens
+**What Happens**: Conscious Agent copies all conscious-info labeled memories to short-term memory for persistent context throughout the session.
 
-**Background Analysis**: AI agent runs every 6 hours  
-**Essential Promotion**: Key personal facts moved to immediate access  
-**Smart Context**: 3-5 most relevant memories auto-injected  
-**Continuous Learning**: System adapts to your patterns  
+### Auto Ingest Only
 
-## What Gets Learned
+```python
+from memori import Memori
 
-### Personal Identity
-- Name, role, location
-- Company, team, responsibilities
-- Contact preferences
+memori = Memori(
+    database_connect="sqlite:///my_memory.db",
+    auto_ingest=True,  # Dynamic context per query
+    openai_api_key="sk-..."  # Required for agents
+)
 
-### Preferences & Habits
-- Technology preferences
-- Coding style preferences
-- Work schedule and patterns
-- Communication style
+# Every LLM call automatically includes relevant context
+from litellm import completion
 
-### Skills & Expertise
-- Programming languages
-- Frameworks and tools
-- Domain knowledge
-- Learning goals
+response = completion(
+    model="gpt-4o-mini", 
+    messages=[{"role": "user", "content": "What are my Python preferences?"}]
+)
+# Automatically includes relevant memories about Python preferences
+```
 
-### Current Projects
-- Active work projects
-- Learning objectives
-- Immediate priorities
-- Deadlines and milestones
+**What Happens**: Memory Search Engine analyzes each query and injects up to 5 relevant memories in real-time.
 
-### Relationships
-- Team members and roles
-- Important contacts
-- Collaboration patterns
-- Communication preferences
+### Combined Mode (Maximum Intelligence)
 
-### Rules & Guidelines
-- Work policies
-- Personal principles
-- Development standards
-- Decision-making criteria
+```python
+from memori import Memori
+
+memori = Memori(
+    database_connect="sqlite:///my_memory.db",
+    conscious_ingest=True,  # Essential context at startup
+    auto_ingest=True,       # Dynamic context per query  
+    openai_api_key="sk-..."  # Required for both agents
+)
+
+memori.enable()  # Start both agents
+```
+
+**What Happens**: 
+- **Startup**: Essential memories transferred to short-term memory
+- **Per Query**: Additional relevant memories dynamically retrieved
+- **Result**: Both persistent and dynamic context for optimal intelligence  
+
+## Mode Comparison
+
+### When to Use Each Mode
+
+| Feature | Conscious Ingest | Auto Ingest | Combined |
+|---------|------------------|-------------|----------|
+| **Context Type** | Essential/Persistent | Dynamic/Relevant | Both |
+| **Processing** | Once at startup | Every LLM call | Both |
+| **Performance** | Fast (minimal overhead) | Real-time | Balanced |
+| **Token Usage** | Low | Medium | Higher |
+| **Best For** | Persistent identity/preferences | Query-specific context | Maximum intelligence |
+| **Use Case** | Personal assistants, role-based agents | Q&A systems, search interfaces | Advanced conversational AI |
+
+### Example Scenarios
+
+**Conscious Ingest**: Perfect for personal assistants that need to remember your core preferences, work style, and essential facts throughout a conversation.
+
+**Auto Ingest**: Ideal for knowledge bases, research assistants, or any system where each query might need different contextual information.
+
+**Combined Mode**: Best for sophisticated AI agents that need both persistent personality/preferences AND dynamic knowledge retrieval.
 
 ## Memory Categories
 
-Every piece of information gets categorized for intelligent retrieval:
+Every piece of information gets categorized for intelligent retrieval across both modes:
 
-| Category | Description | Auto-Promoted |
-|----------|-------------|---------------|
-| **fact** | Objective information, technical details | High frequency |
-| **preference** | Personal choices, likes/dislikes | Personal identity |
-| **skill** | Abilities, expertise, learning progress | Expertise areas |
-| **context** | Project info, work environment | Current projects |
-| **rule** | Guidelines, policies, constraints | Work patterns |
+| Category | Description | Conscious Ingest | Auto Ingest |
+|----------|-------------|------------------|-------------|
+| **fact** | Objective information, technical details | If labeled conscious-info | High relevance matching |
+| **preference** | Personal choices, likes/dislikes | If labeled conscious-info | Preference-based queries |
+| **skill** | Abilities, expertise, learning progress | If labeled conscious-info | Skill-related questions |
+| **context** | Project info, work environment | If labeled conscious-info | Project-specific queries |
+| **rule** | Guidelines, policies, constraints | If labeled conscious-info | Rule/policy questions |
 
 ## Context Injection Strategy
 
-### Priority System
-
-When you ask a question, the system injects:
-
-1. **Essential Memories (3)**: Your most important promoted facts
-2. **Contextually Relevant (2)**: Specific to your current query
-3. **Smart Deduplication**: No repeated information
-
-### Selection Algorithm
+### Conscious Ingest Strategy
 
 ```python
-# Simplified selection process
-essential = get_promoted_essentials(limit=3)
-relevant = search_contextual(query, limit=2)
-context = combine_without_duplicates(essential, relevant)
+# At startup
+conscious_memories = scan_for_conscious_labels()
+transfer_to_short_term_memory(conscious_memories)
+
+# During conversation  
+context = get_short_term_memories()  # Always available
 inject_into_conversation(context)
+```
+
+### Auto Ingest Strategy
+
+```python
+# For each user query
+user_query = "What are my Python preferences?"
+relevant_memories = search_database(query=user_query, limit=5)
+context = select_most_relevant(relevant_memories)
+inject_into_conversation(context)
+```
+
+### Combined Strategy
+
+```python
+# Startup + per-query
+essential_context = get_short_term_memories()      # Conscious ingest
+dynamic_context = search_relevant(user_query)     # Auto ingest
+combined_context = merge_contexts(essential_context, dynamic_context)
+inject_into_conversation(combined_context)
 ```
 
 ## Examples
 
-### Personal Assistant
+### Personal Assistant (Conscious Ingest)
 
 ```python
-# After a few conversations about your preferences
+# Set up personal assistant with persistent context
 memori = Memori(conscious_ingest=True)
 
-# This query automatically includes:
-# - Your name and role (essential)
-# - Your technology preferences (essential)  
-# - Recent project context (relevant)
+# Label important preferences (one-time setup)
+memori.add_memory("I prefer Python and FastAPI for web development", 
+                  category="preference", 
+                  labels=["conscious-info"])
+
+# Every conversation automatically includes your core preferences
 response = completion(
     model="gpt-4",
-    messages=[{"role": "user", "content": "Help me choose a database"}]
+    messages=[{"role": "user", "content": "Help me choose technologies for a new API"}]
 )
-# AI knows you prefer PostgreSQL, your current project needs, etc.
+# AI automatically knows you prefer Python and FastAPI
 ```
 
-### Code Assistant
+### Knowledge Q&A (Auto Ingest)
 
 ```python
-# System learns your coding patterns
+# Set up Q&A system with dynamic context
+memori = Memori(auto_ingest=True)
+
+# Build knowledge base through conversations
 conversations = [
-    "I'm a Python developer who prefers FastAPI",
-    "I always write tests first",
-    "I like clean, documented code with type hints"
+    "Our authentication system uses JWT tokens",
+    "The database runs on PostgreSQL 14",
+    "We deploy using Docker containers on AWS ECS"
 ]
 
-# Later query gets automatic context:
-query = "Help me structure this new microservice"
-# AI knows: Python, FastAPI, test-first, clean code preferences
+for conv in conversations:
+    completion(model="gpt-4", messages=[{"role": "user", "content": conv}])
+
+# Later queries automatically get relevant context
+response = completion(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "How does our authentication work?"}]
+)
+# Automatically includes JWT token information
+```
+
+### Advanced Assistant (Combined Mode)
+
+```python
+# Maximum intelligence with both modes
+memori = Memori(conscious_ingest=True, auto_ingest=True)
+
+# Essential context (conscious ingest)
+memori.add_memory("I'm a senior Python developer at TechCorp", 
+                  labels=["conscious-info"])
+memori.add_memory("I prefer clean, documented code with type hints", 
+                  category="preference", 
+                  labels=["conscious-info"])
+
+# Dynamic knowledge base (auto ingest)
+memori.add_memory("Currently working on microservices migration project")
+memori.add_memory("Using FastAPI, PostgreSQL, and Docker")
+
+# Every query gets both personal context + relevant project info
+response = completion(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Review this API endpoint code"}]
+)
+# AI knows: You're a senior dev, prefer clean code, working on microservices with FastAPI
 ```
 
 ## Manual Control
 
-### Trigger Analysis
+### Memory Management
 
 ```python
-# Force background analysis (normally every 6 hours)
-memori.trigger_conscious_analysis()
+# Add conscious-info labeled memories
+memori.add_memory(
+    "I'm a Python developer who prefers minimal dependencies",
+    category="preference",
+    labels=["conscious-info"]  # Will be picked up by conscious ingest
+)
+
+# Test auto-ingest context retrieval  
+context = memori._get_auto_ingest_context("What are my coding preferences?")
+print(f"Retrieved {len(context)} relevant memories")
+
+# Check short-term memory (conscious ingest)
+short_term = memori.db_manager.get_short_term_memories(namespace=memori.namespace)
+print(f"Short-term memories: {len(short_term)}")
 ```
 
-### View Essential Memories
+### Mode Testing
 
 ```python
-# See what's been promoted to essential status
-essential = memori.get_essential_conversations(limit=10)
-for conv in essential:
-    print(f"Essential: {conv.get('summary', '')}")
-```
+# Test conscious ingest
+if memori.conscious_ingest:
+    print("Conscious ingest enabled - essential context at startup")
+    
+# Test auto ingest  
+if memori.auto_ingest:
+    print("Auto ingest enabled - dynamic context per query")
+    context = memori._get_auto_ingest_context("test query")
+    print(f"Auto-ingest working: {len(context)} results")
 
-### Memory Statistics
-
-```python
-# Check memory system health
+# Memory statistics
 stats = memori.get_memory_stats()
 print(f"Total conversations: {stats['total_conversations']}")
-print(f"Essential memories: {len(memori.get_essential_conversations())}")
+```
+
+### Memory Search
+
+```python
+# Search specific categories (works with both modes)
+preferences = memori.search_memories_by_category("preference", limit=5)
+facts = memori.search_memories_by_category("fact", limit=5)
+skills = memori.search_memories_by_category("skill", limit=5)
+
+# Search by keywords
+python_memories = memori.search_memories(query="Python", limit=10)
+
+# Get all conscious-info labeled memories
+conscious_memories = memori.search_memories_by_labels(["conscious-info"])
 ```
 
 ## Configuration Options
 
-### Analysis Interval
+### Provider Configuration
+
+Both modes work with any LLM provider:
 
 ```python
-# Default: 6 hours
-# Can be configured when creating custom conscious agents
-from memori.agents import ConsciouscAgent
+from memori.core.providers import ProviderConfig
 
-agent = ConsciouscAgent(api_key="sk-...")
-agent.analysis_interval = timedelta(hours=3)  # More frequent
-```
+# Azure OpenAI
+azure_config = ProviderConfig.from_azure(
+    api_key="your-azure-key",
+    azure_endpoint="https://your-resource.openai.azure.com/",
+    azure_deployment="gpt-4o",
+    api_version="2024-02-01"
+)
 
-### Verbose Mode
+# Custom endpoint (Ollama, etc.)
+custom_config = ProviderConfig.from_custom(
+    base_url="http://localhost:11434/v1",
+    api_key="not-required",
+    model="llama3"
+)
 
-```python
-# See what's happening behind the scenes
 memori = Memori(
+    database_connect="sqlite:///memory.db",
+    provider_config=azure_config,  # Works with both modes
     conscious_ingest=True,
-    verbose=True  # Shows agent activity
+    auto_ingest=True
 )
 ```
 
-### Namespace Separation
+### Mode-Specific Settings
 
 ```python
-# Separate memory spaces for different contexts
-work_memori = Memori(conscious_ingest=True, namespace="work")
-personal_memori = Memori(conscious_ingest=True, namespace="personal")
+# Conscious ingest only
+memori_conscious = Memori(
+    conscious_ingest=True,
+    verbose=True  # See startup processing
+)
+
+# Auto ingest only
+memori_auto = Memori(
+    auto_ingest=True, 
+    verbose=True  # See per-query processing
+)
+
+# Combined with namespacing
+memori_combined = Memori(
+    conscious_ingest=True,
+    auto_ingest=True,
+    namespace="my_project",  # Separate memory space
+    verbose=True  # See all activity
+)
+```
+
+### Environment Configuration
+
+```python
+# Using environment variables
+import os
+os.environ['OPENAI_API_KEY'] = 'sk-...'
+
+# Configuration file support
+from memori.config import ConfigManager
+
+config = ConfigManager()
+memori = Memori.from_config(config, conscious_ingest=True, auto_ingest=True)
 ```
 
 ## Performance & Token Usage
@@ -221,46 +378,92 @@ personal_memori = Memori(conscious_ingest=True, namespace="personal")
 ### Efficiency Features
 
 - **Structured Outputs**: Pydantic models reduce parsing overhead
-- **Essential Priority**: Most important info always included
-- **Smart Limits**: Maximum 5 memories to prevent token overflow
-- **Background Processing**: Analysis doesn't block conversations
-- **Graceful Degradation**: Works even if analysis fails
+- **Smart Context Limits**: Automatic limits prevent token overflow (5 memories max for auto-ingest)
+- **Mode Selection**: Choose the right mode for your performance needs
+- **Provider Flexibility**: Use cost-effective models like GPT-4o-mini
+- **Recursion Protection**: Auto-ingest prevents infinite loops automatically
 
 ### Token Optimization
 
+**Traditional Context Injection**:
 ```
-Traditional Context Injection:
 2000+ tokens of conversation history
-
-Conscious Ingestion:
-200-500 tokens of essential + relevant facts
 ```
+
+**Conscious Ingest Mode**:
+```
+100-300 tokens of essential facts (one-time at startup)
+```
+
+**Auto Ingest Mode**:
+```
+200-500 tokens of relevant context (per query)
+```
+
+**Combined Mode**:
+```
+300-800 tokens of essential + relevant context (optimal intelligence)
+```
+
+### Performance Comparison
+
+| Metric | Conscious Only | Auto Only | Combined |
+|--------|----------------|-----------|----------|
+| **Startup Time** | Fast | Instant | Fast |
+| **Per-Query Time** | Instant | Fast | Fast |
+| **Token Usage** | Low | Medium | Higher |
+| **API Calls** | Minimal | Per query | Both |
+| **Memory Accuracy** | Fixed context | Dynamic context | Optimal |
 
 ## Monitoring
 
 ### Log Messages
 
-With `verbose=True`, you'll see:
+With `verbose=True`, you'll see different messages for each mode:
 
+**Conscious Ingest**:
 ```
-[CONSCIOUS] Starting background analysis...
+[CONSCIOUS] Starting conscious ingest at startup
+[CONSCIOUS] Found 3 conscious-info labeled memories  
+[CONSCIOUS] Copied 3 memories to short-term memory
+[CONSCIOUS] Conscious ingest complete
+```
+
+**Auto Ingest**:
+```
+[AUTO-INGEST] Starting context retrieval for query: 'Python preferences?'
+[AUTO-INGEST] Direct database search returned 4 results
+[AUTO-INGEST] Context injection successful: 4 memories
+```
+
+**Memory Processing**:
+```
 [MEMORY] Processing conversation: "I prefer FastAPI"
 [MEMORY] Categorized as 'preference', importance: 0.8
-[CONSCIOUS] Promoted 3 essential memories
-[RETRIEVAL] Injecting 5 relevant memories for query
+[MEMORY] Extracted entities: {'technologies': ['FastAPI']}
 ```
 
 ### Health Checks
 
 ```python
-# Verify system is working
+# Check mode status
+print(f"Conscious ingest: {memori.conscious_ingest}")
+print(f"Auto ingest: {memori.auto_ingest}")
+
+# Test conscious ingest
 if memori.conscious_ingest:
-    print("Conscious ingestion active")
-    
-if memori.conscious_agent.last_analysis:
-    print(f"Last analysis: {memori.conscious_agent.last_analysis}")
-else:
-    print("Analysis pending")
+    short_term = memori.db_manager.get_short_term_memories(namespace=memori.namespace)
+    print(f"Short-term memories loaded: {len(short_term)}")
+
+# Test auto ingest
+if memori.auto_ingest:
+    context = memori._get_auto_ingest_context("test query")
+    print(f"Auto-ingest functional: {len(context)} results")
+
+# Memory statistics
+stats = memori.get_memory_stats()
+for key, value in stats.items():
+    print(f"{key}: {value}")
 ```
 
 ## Troubleshooting
@@ -269,92 +472,158 @@ else:
 
 **No API Key**
 ```
-ConsciouscAgent: No OpenAI API key found
+Memory Agent initialization failed: No API key provided
 ```
-Solution: Set `OPENAI_API_KEY` environment variable
+Solution: Set `OPENAI_API_KEY` environment variable or use provider configuration
 
-**Analysis Fails**
+**Auto-Ingest No Results**
 ```
-Failed to analyze memories: rate limit exceeded
+Auto-ingest: Direct database search returned 0 results
 ```
-Solution: Wait for rate limit reset or upgrade plan
+Solution: Build up more memory data through conversations
 
-**No Essential Memories**
+**Conscious Ingest No Memories**
 ```
-No essential information available yet
+ConsciouscAgent: No conscious-info memories found
 ```
-Solution: Have more conversations to build memory base
+Solution: Label important memories with conscious-info or add more conversations
+
+**Recursion Protection Triggered**
+```
+Auto-ingest: Recursion detected, using direct database search
+```
+Solution: This is normal behavior to prevent infinite loops - the system continues working
 
 ### Debug Commands
 
 ```python
-# Check agent status
+# Mode verification
 print(f"Conscious ingest: {memori.conscious_ingest}")
-print(f"Last analysis: {memori.conscious_agent.last_analysis}")
+print(f"Auto ingest: {memori.auto_ingest}")
+print(f"Provider: {memori.provider_config.api_type if memori.provider_config else 'Default'}")
 
-# Force analysis
+# Test memory agents
 try:
-    memori.trigger_conscious_analysis()
-    print("Analysis successful")
+    # Test conscious ingest
+    if memori.conscious_ingest:
+        short_term = memori.db_manager.get_short_term_memories(namespace=memori.namespace)
+        print(f"Conscious ingest working: {len(short_term)} short-term memories")
+    
+    # Test auto ingest
+    if memori.auto_ingest:
+        context = memori._get_auto_ingest_context("test preferences")
+        print(f"Auto ingest working: {len(context)} context memories")
+        
+    # Test memory processing
+    if hasattr(memori, 'memory_agent'):
+        print("Memory agent available and configured")
+        
 except Exception as e:
-    print(f"Analysis failed: {e}")
+    print(f"Agent test failed: {e}")
 
-# Check memory count
-essential = memori.get_essential_conversations()
-print(f"Essential memories: {len(essential)}")
+# Memory statistics
+stats = memori.get_memory_stats()
+for key, value in stats.items():
+    print(f"{key}: {value}")
 ```
 
 ## Best Practices
 
+### Mode Selection
+
+1. **Choose Conscious Ingest** for:
+   - Personal assistants that need consistent personality
+   - Role-based agents with fixed preferences
+   - Applications where core context rarely changes
+   - Scenarios prioritizing performance and low token usage
+
+2. **Choose Auto Ingest** for:
+   - Q&A systems with dynamic knowledge bases
+   - Research assistants needing query-specific context
+   - Applications where context varies significantly per query
+   - Systems requiring real-time memory retrieval
+
+3. **Choose Combined Mode** for:
+   - Advanced conversational AI requiring both personality and knowledge
+   - Enterprise assistants needing persistent identity + dynamic expertise
+   - Applications where maximum intelligence is worth higher token costs
+   - Complex multi-domain systems
+
 ### For Better Results
 
-1. **Be Specific**: Share clear information about yourself and preferences
-2. **Be Consistent**: Use consistent terminology for technologies and projects
-3. **Share Context**: Mention your role, current work, and goals
-4. **Natural Conversation**: Talk normally, the system learns from everything
+1. **Label Strategically**: Use conscious-info labels for truly essential, persistent information
+2. **Be Specific**: Share clear information about yourself, preferences, and projects
+3. **Be Consistent**: Use consistent terminology for technologies and concepts
+4. **Build Gradually**: Let the system learn through natural conversation
+5. **Monitor Performance**: Use verbose mode to understand system behavior
 
 ### For Developers
 
-1. **API Key Security**: Always use environment variables
-2. **Error Handling**: Implement graceful degradation when agents fail
-3. **Monitoring**: Use verbose mode to understand behavior
-4. **Testing**: Test with different user profiles and conversation patterns
+1. **Provider Configuration**: Use ProviderConfig for flexible LLM provider setup
+2. **API Key Security**: Always use environment variables for API keys
+3. **Error Handling**: Implement graceful degradation when agents fail
+4. **Performance Monitoring**: Track token usage and response times
+5. **Testing**: Test with different memory modes and conversation patterns
+6. **Resource Planning**: Consider API costs when choosing between modes
 
 ## Comparison
 
-### Without Conscious Ingestion
+### Without Dual Memory Modes
 
 ```python
-memori = Memori(conscious_ingest=False)
+# Traditional approach - manual context management
+memori = Memori()  # No intelligent context injection
 
-# Every conversation needs manual context
 messages = [
     {"role": "system", "content": "User prefers Python, FastAPI, PostgreSQL..."},
     {"role": "user", "content": "Help me build an API"}
 ]
+# Manual context specification required every time
 ```
 
-### With Conscious Ingestion
+### With Conscious Ingest
 
 ```python
+# Persistent context approach
 memori = Memori(conscious_ingest=True)
 
-# Context automatically injected
-messages = [
-    {"role": "user", "content": "Help me build an API"}
-]
-# System automatically knows: Python, FastAPI, PostgreSQL preferences
+# Label essential preferences once
+memori.add_memory("I prefer Python, FastAPI, PostgreSQL", 
+                  labels=["conscious-info"])
+
+# All future conversations include this context automatically
+messages = [{"role": "user", "content": "Help me build an API"}]
+# System knows: Python, FastAPI, PostgreSQL preferences
 ```
 
-## Future Enhancements
+### With Auto Ingest
 
-Planned improvements:
+```python
+# Dynamic context approach
+memori = Memori(auto_ingest=True)
 
-- **Multi-model Support**: Support for Claude, Gemini structured outputs
-- **Custom Agents**: Domain-specific conscious agents
-- **Memory Compression**: Intelligent consolidation over time
-- **Adaptive Intervals**: Dynamic analysis frequency
-- **Memory Relationships**: Understanding connections between facts
+# Build knowledge through conversations
+conversations = [
+    "I'm working on a microservices project",
+    "We use Docker containers for deployment", 
+    "Our main database is PostgreSQL"
+]
+
+# Every query gets relevant context
+messages = [{"role": "user", "content": "How should we deploy the API?"}]
+# System automatically retrieves: Docker, microservices info
+```
+
+### With Combined Mode
+
+```python
+# Maximum intelligence approach
+memori = Memori(conscious_ingest=True, auto_ingest=True)
+
+# Essential context (conscious) + dynamic context (auto)
+messages = [{"role": "user", "content": "Review this database query"}]
+# System knows: Your preferences (conscious) + current project details (auto)
+```
 
 ## Getting Started
 
