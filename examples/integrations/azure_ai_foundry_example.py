@@ -7,8 +7,20 @@ with Azure AI Foundry agents for persistent memory across conversations.
 
 Requirements:
 - pip install memorisdk azure-ai-projects azure-identity python-dotenv
-- Set PROJECT_ENDPOINT and MODEL_DEPLOYMENT_NAME in environment or .env file
+- Set the following environment variables in your .env file or environment:
+  * PROJECT_ENDPOINT: Your Azure AI Foundry project endpoint URL
+  * AZURE_OPENAI_API_KEY: Your Azure OpenAI API key
+  * AZURE_OPENAI_ENDPOINT: Your Azure OpenAI endpoint URL
+  * AZURE_OPENAI_DEPLOYMENT_NAME: Your Azure OpenAI model deployment name
+  * AZURE_OPENAI_API_VERSION: Azure OpenAI API version (e.g., "2024-12-01-preview")
 - Configure Azure authentication (Azure CLI login or managed identity)
+
+Example .env file:
+    PROJECT_ENDPOINT=https://your-project.eastus2.ai.azure.com
+    AZURE_OPENAI_API_KEY=your-azure-openai-api-key-here
+    AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+    AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4o
+    AZURE_OPENAI_API_VERSION=2024-12-01-preview
 
 Usage:
     python azure_ai_foundry_example.py
@@ -21,29 +33,22 @@ import time
 from azure.ai.agents.models import FunctionTool
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
-from dotenv import load_dotenv
-
+from memori.core.providers import ProviderConfig
 from memori import Memori, create_memory_tool
+
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-# Check for required environment variables
-if not os.getenv("PROJECT_ENDPOINT"):
-    print("❌ Error: PROJECT_ENDPOINT not found in environment variables")
-    print("Please set your Azure AI Project endpoint:")
-    print("export PROJECT_ENDPOINT='your-project-endpoint-here'")
-    print("or create a .env file with: PROJECT_ENDPOINT=your-project-endpoint-here")
-    exit(1)
-
-if not os.getenv("MODEL_DEPLOYMENT_NAME"):
-    print("❌ Error: MODEL_DEPLOYMENT_NAME not found in environment variables")
-    print("Please set your Azure model deployment name:")
-    print("export MODEL_DEPLOYMENT_NAME='your-model-deployment-name'")
-    print(
-        "or create a .env file with: MODEL_DEPLOYMENT_NAME=your-model-deployment-name"
-    )
-    exit(1)
+# Create Azure provider configuration for Memori
+azure_provider = ProviderConfig.from_azure(
+    api_key=os.environ["AZURE_OPENAI_API_KEY"],
+    azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+    azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
+    api_version=os.environ["AZURE_OPENAI_API_VERSION"],
+    model=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
+)
 
 print("🧠 Initializing Memori memory system...")
 
@@ -51,7 +56,9 @@ print("🧠 Initializing Memori memory system...")
 memory_system = Memori(
     database_connect="sqlite:///azure_ai_foundry_memory.db",
     conscious_ingest=True,
+    auto_ingest=True,
     verbose=False,
+    provider_config=azure_provider,
     namespace="azure_ai_foundry_example",
 )
 
@@ -65,7 +72,7 @@ print("🤖 Setting up Azure AI Foundry client...")
 
 # Get configuration from environment
 project_endpoint = os.environ["PROJECT_ENDPOINT"]
-model_name = os.environ["MODEL_DEPLOYMENT_NAME"]
+model_name = os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"]
 
 # Initialize the AIProjectClient
 project_client = AIProjectClient(

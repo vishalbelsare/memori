@@ -68,12 +68,47 @@ Each product includes:
 
 ## 🚀 Running the Demo
 
-```bash
-# Set environment variables
-export PROJECT_ENDPOINT="your-azure-ai-project-endpoint"
-export MODEL_DEPLOYMENT_NAME="your-model-deployment-name"
+### Prerequisites
 
-# Run the demo
+1. **Install Dependencies**:
+```bash
+pip install memorisdk azure-ai-projects azure-identity python-dotenv
+```
+
+2. **Set Environment Variables**:
+Create a `.env` file or set the following environment variables:
+
+```bash
+# Azure AI Foundry Project Configuration
+export PROJECT_ENDPOINT="https://your-project.eastus2.ai.azure.com"
+
+# Azure OpenAI Configuration
+export AZURE_OPENAI_API_KEY="your-azure-openai-api-key-here"
+export AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/"
+export AZURE_OPENAI_DEPLOYMENT_NAME="gpt-4o"
+export AZURE_OPENAI_API_VERSION="2024-12-01-preview"
+```
+
+### Example .env File
+
+```env
+PROJECT_ENDPOINT=https://your-project.eastus2.ai.azure.com
+AZURE_OPENAI_API_KEY=your-azure-openai-api-key-here
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4o
+AZURE_OPENAI_API_VERSION=2024-12-01-preview
+```
+
+3. **Configure Azure Authentication**:
+```bash
+# Login to Azure CLI
+az login
+
+# Or set up managed identity for production environments
+```
+
+4. **Run the Demo**:
+```bash
 python smart_shopping_demo.py
 ```
 

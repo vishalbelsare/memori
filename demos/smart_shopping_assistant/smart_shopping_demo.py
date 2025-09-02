@@ -15,8 +15,20 @@ This demo showcases:
 
 Requirements:
 - pip install memorisdk azure-ai-projects azure-identity python-dotenv
-- Set PROJECT_ENDPOINT and MODEL_DEPLOYMENT_NAME in environment or .env file
+- Set the following environment variables in your .env file or environment:
+  * PROJECT_ENDPOINT: Your Azure AI Foundry project endpoint URL
+  * AZURE_OPENAI_API_KEY: Your Azure OpenAI API key
+  * AZURE_OPENAI_ENDPOINT: Your Azure OpenAI endpoint URL
+  * AZURE_OPENAI_DEPLOYMENT_NAME: Your Azure OpenAI model deployment name
+  * AZURE_OPENAI_API_VERSION: Azure OpenAI API version (e.g., "2024-12-01-preview")
 - Configure Azure authentication (Azure CLI login or managed identity)
+
+Example .env file:
+    PROJECT_ENDPOINT=https://your-project.eastus2.ai.azure.com
+    AZURE_OPENAI_API_KEY=your-azure-openai-api-key-here
+    AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+    AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4o
+    AZURE_OPENAI_API_VERSION=2024-12-01-preview
 
 Usage:
     python smart_shopping_demo.py
@@ -35,6 +47,7 @@ from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
 
+from memori.core.providers import ProviderConfig
 from memori import Memori, create_memory_tool
 
 # Constants
@@ -151,7 +164,7 @@ class Config:
         load_dotenv()
 
         project_endpoint = os.getenv("PROJECT_ENDPOINT")
-        model_name = os.getenv("MODEL_DEPLOYMENT_NAME")
+        model_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
 
         if not project_endpoint:
             print("❌ Error: PROJECT_ENDPOINT not found in environment variables")
@@ -159,9 +172,11 @@ class Config:
             sys.exit(1)
 
         if not model_name:
-            print("❌ Error: MODEL_DEPLOYMENT_NAME not found in environment variables")
             print(
-                "Please set: export MODEL_DEPLOYMENT_NAME='your-model-deployment-name'"
+                "❌ Error: AZURE_OPENAI_DEPLOYMENT_NAME not found in environment variables"
+            )
+            print(
+                "Please set: export AZURE_OPENAI_DEPLOYMENT_NAME='your-model-deployment-name'"
             )
             sys.exit(1)
 
@@ -190,13 +205,25 @@ class SmartShoppingAssistant:
 
     def _setup_memory(self) -> Memori:
         """Initialize and enable memory system"""
+
+        # Create Azure provider configuration for Memori
+        azure_provider = ProviderConfig.from_azure(
+            api_key=os.environ["AZURE_OPENAI_API_KEY"],
+            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+            azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
+            api_version=os.environ["AZURE_OPENAI_API_VERSION"],
+            model=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
+        )
+
         print("🧠 Initializing Smart Shopping Memory System...")
         memory = Memori(
             database_connect=DATABASE_PATH,
             conscious_ingest=True,
             verbose=False,
             namespace=NAMESPACE,
+            provider_config=azure_provider,
         )
+
         memory.enable()
         return memory
 
