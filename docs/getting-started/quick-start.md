@@ -5,7 +5,7 @@ Get Memori running in 3 minutes.
 ## 1. Install
 
 ```bash
-pip install memorisdk litellm
+pip install memorisdk openai
 ```
 
 ## 2. Set API Key
@@ -20,14 +20,17 @@ Create `demo.py`:
 
 ```python
 from memori import Memori
-from litellm import completion
+from openai import OpenAI
+
+# Initialize OpenAI client
+openai_client = OpenAI()
 
 # Initialize memory
 memori = Memori(conscious_ingest=True)
 memori.enable()
 
 # First conversation - establish context
-response1 = completion(
+response1 = openai_client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[{
         "role": "user", 
@@ -37,7 +40,7 @@ response1 = completion(
 print("Assistant:", response1.choices[0].message.content)
 
 # Second conversation - memory provides context  
-response2 = completion(
+response2 = openai_client.chat.completions.create(
     model="gpt-4o-mini", 
     messages=[{
         "role": "user",
