@@ -18,7 +18,10 @@ Give your AI agents structured, persistent memory with professional-grade archit
 
 ```python
 # Before: Repeating context every time
-response = completion(
+from openai import OpenAI
+client = OpenAI()
+
+response = client.chat.completions.create(
     model="gpt-4",
     messages=[
         {"role": "system", "content": "You are a Python expert..."},
@@ -34,7 +37,7 @@ memori = Memori(openai_api_key="your-key")
 memori.enable()  # Auto-records ALL LLM conversations
 
 # Context automatically injected from memory
-response = completion(
+response = client.chat.completions.create(
     model="gpt-4", 
     messages=[{"role": "user", "content": "Help me with authentication"}]
 )
@@ -59,12 +62,12 @@ response = completion(
 pip install memorisdk
 ```
 
-### Basic Usage with LiteLLM
+### Basic Usage with OpenAI
 
-Install LiteLLM:
+Install OpenAI:
 
 ```bash
-pip install litellm
+pip install openai
 ```
 
 Set OpenAI API Key:
@@ -77,14 +80,17 @@ Run the following Python script:
 
 ```python
 from memori import Memori
-from litellm import completion
+from openai import OpenAI
+
+# Initialize OpenAI client
+openai_client = OpenAI()
 
 # Initialize memory
 memori = Memori(conscious_ingest=True)
 memori.enable()
 
 print("=== First Conversation - Establishing Context ===")
-response1 = completion(
+response1 = openai_client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[{
         "role": "user", 
@@ -96,7 +102,7 @@ print("Assistant:", response1.choices[0].message.content)
 print("\n" + "="*50)
 print("=== Second Conversation - Memory Provides Context ===")
 
-response2 = completion(
+response2 = openai_client.chat.completions.create(
     model="gpt-4o-mini", 
     messages=[{
         "role": "user",
@@ -123,14 +129,14 @@ Works with **ANY** LLM library:
 ```python
 memori.enable()  # Enable universal recording
 
-# LiteLLM (recommended)
+# OpenAI (recommended)
+from openai import OpenAI
+client = OpenAI()
+client.chat.completions.create(...)
+
+# LiteLLM
 from litellm import completion
 completion(model="gpt-4", messages=[...])
-
-# OpenAI
-import openai
-client = openai.OpenAI()
-client.chat.completions.create(...)
 
 # Anthropic  
 import anthropic
