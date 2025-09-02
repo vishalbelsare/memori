@@ -33,10 +33,10 @@ import time
 from azure.ai.agents.models import FunctionTool
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
-from memori.core.providers import ProviderConfig
-from memori import Memori, create_memory_tool
-
 from dotenv import load_dotenv
+
+from memori import Memori, create_memory_tool
+from memori.core.providers import ProviderConfig
 
 # Load environment variables
 load_dotenv()
